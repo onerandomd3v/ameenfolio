@@ -3,6 +3,7 @@
 // has never been set up.
 export const portfolioIdentity = {
   name: "Aliameen Kareem",
+  handle: "onerandomd3v",
   role: "Full-Stack Engineer",
   // `\n` starts a new line, rendered by `whitespace-pre-line` on the intro
   // paragraph, and **double asterisks** make a phrase bold and underlined.
