@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   refreshPublicContent,
+  scheduleIndexNow,
   validationFailure,
   type ActionResult,
 } from "@/app/admin/actions/shared";
@@ -61,16 +62,21 @@ export async function savePost(
     // Read first, for two reasons: an edit of a row that has since been
     // deleted must not silently insert, and renaming a post leaves a cached
     // page at the old address that has to be cleared too.
-    let previousSlug: string | undefined;
+    let previous:
+      | {
+          slug: string;
+          published: boolean;
+        }
+      | undefined;
     if (id) {
       const [existing] = await db
-        .select({ slug: posts.slug })
+        .select({ slug: posts.slug, published: posts.published })
         .from(posts)
         .where(eq(posts.id, id))
         .limit(1);
       if (!existing)
         return { ok: false, message: "That post no longer exists." };
-      previousSlug = existing.slug;
+      previous = existing;
     }
 
     // Generated up front so the links can be written in the same batch as the
@@ -105,8 +111,16 @@ export async function savePost(
       : db.batch([postMutation, clearLinks]));
 
     refreshWriting(parsed.data.slug);
-    if (previousSlug && previousSlug !== parsed.data.slug) {
-      refreshWriting(previousSlug);
+    if (previous?.slug && previous.slug !== parsed.data.slug) {
+      refreshWriting(previous.slug);
+    }
+
+    const isPublished = publish ?? previous?.published ?? false;
+    if (previous?.published || isPublished) {
+      scheduleIndexNow([
+        ...(previous?.published ? [`/writing/${previous.slug}`] : []),
+        ...(isPublished ? [`/writing/${parsed.data.slug}`] : []),
+      ]);
     }
     return { ok: true, id: postId };
   } catch (error) {
@@ -130,8 +144,9 @@ export async function deletePost(id: string): Promise<ActionResult> {
     const [row] = await getDb()
       .delete(posts)
       .where(eq(posts.id, id))
-      .returning({ slug: posts.slug });
+      .returning({ slug: posts.slug, published: posts.published });
     refreshWriting(row?.slug);
+    if (row?.published) scheduleIndexNow([`/writing/${row.slug}`]);
     return { ok: true };
   } catch (error) {
     logServer("error", "admin.post_delete_failed", { error: String(error) });
