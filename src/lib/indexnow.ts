@@ -13,10 +13,7 @@ const REQUEST_TIMEOUT_MS = 5_000;
  * admin mutation that caused the notification.
  */
 export async function notifyIndexNow(urls: Iterable<string>) {
-  const payload = buildIndexNowPayload(
-    getServerEnv().CANONICAL_SITE_URL,
-    urls,
-  );
+  const payload = buildIndexNowPayload(getServerEnv().CANONICAL_SITE_URL, urls);
   if (!payload) return;
 
   try {

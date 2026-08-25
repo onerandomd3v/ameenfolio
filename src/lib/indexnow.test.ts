@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildIndexNowPayload,
-  INDEXNOW_KEY,
-} from "@/lib/indexnow-payload";
+import { buildIndexNowPayload, INDEXNOW_KEY } from "@/lib/indexnow-payload";
 
 describe("IndexNow payload", () => {
   it("normalizes, deduplicates and limits URLs to the canonical origin", () => {
