@@ -16,7 +16,10 @@ export const metadata: Metadata = {
   title: "Projects",
   description:
     "A complete archive of software products and experiments built by Ameen.",
-  alternates: { canonical: "/projects" },
+  alternates: {
+    canonical: "/projects",
+    types: { "application/rss+xml": "/feed.xml" },
+  },
 };
 
 export default async function ProjectsPage() {

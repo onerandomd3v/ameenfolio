@@ -53,7 +53,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: settings.seoTitle,
     description: settings.seoDescription,
-    alternates: { canonical: "/" },
+    alternates: {
+      canonical: "/",
+      types: { "application/rss+xml": "/feed.xml" },
+    },
     openGraph: {
       title: settings.seoTitle,
       description: settings.seoDescription,
