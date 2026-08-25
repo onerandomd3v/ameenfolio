@@ -23,6 +23,7 @@ import {
   siteSettings,
   statsSnapshot,
   techStackItems,
+  type ContactLinks,
   type Recognition,
   type SiteSettings,
   type TechStackItem,
@@ -348,13 +349,15 @@ export async function getAdminSettings() {
   return rows[0] ?? defaultSiteSettings;
 }
 
-// A narrow read for the places that need only the name and role — the page
-// title and the share card — so neither pays for the whole portfolio query.
+// A narrow read for the places that describe the portfolio owner — page
+// titles, share cards, and public Person/author structured data — so none of
+// them pays for the whole portfolio query.
 export async function getIdentitySettings() {
   const fallback = {
     displayName: null,
     role: null,
     introduction: null,
+    contactLinks: {} as ContactLinks,
   };
   if (!canQueryDatabase()) return fallback;
 
@@ -364,6 +367,7 @@ export async function getIdentitySettings() {
         displayName: siteSettings.displayName,
         role: siteSettings.role,
         introduction: siteSettings.introduction,
+        contactLinks: siteSettings.contactLinks,
       })
       .from(siteSettings)
       .where(eq(siteSettings.id, 1))
