@@ -18,9 +18,20 @@ describe("IndexNow payload", () => {
     });
   });
 
-  it("does not notify from local or insecure environments", () => {
-    expect(buildIndexNowPayload("http://localhost:3000", ["/"])).toBeNull();
-    expect(buildIndexNowPayload("http://onerandomdev.cv", ["/"])).toBeNull();
+  it.each([
+    "http://localhost:3000",
+    "http://onerandomdev.cv",
+    "https://localhost",
+    "https://localhost.",
+    "https://preview.localhost",
+    "https://preview.localhost.",
+    "https://127.0.0.1",
+    "https://127.0.0.2",
+    "https://127.255.255.255",
+    "https://127.1",
+    "https://[::1]",
+  ])("does not notify from local or insecure origin %s", (origin) => {
+    expect(buildIndexNowPayload(origin, ["/"])).toBeNull();
   });
 
   it("returns null when every candidate is external", () => {

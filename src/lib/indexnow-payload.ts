@@ -8,6 +8,21 @@ export type IndexNowPayload = {
   urlList: string[];
 };
 
+/** Returns whether a canonical host points at a local preview environment. */
+function isLocalCanonicalHost(rawHostname: string) {
+  const hostname = rawHostname
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.+$/, "")
+    .toLowerCase();
+
+  return (
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    hostname === "::1" ||
+    /^127(?:\.\d{1,3}){3}$/.test(hostname)
+  );
+}
+
 /**
  * Builds the public IndexNow payload and rejects URLs outside the canonical
  * origin. Keeping this pure makes the protocol boundary straightforward to
@@ -20,11 +35,7 @@ export function buildIndexNowPayload(
   const origin = new URL(canonicalSiteUrl);
 
   // Local saves and previews must never notify search engines.
-  if (
-    origin.protocol !== "https:" ||
-    origin.hostname === "localhost" ||
-    origin.hostname === "127.0.0.1"
-  ) {
+  if (origin.protocol !== "https:" || isLocalCanonicalHost(origin.hostname)) {
     return null;
   }
 
