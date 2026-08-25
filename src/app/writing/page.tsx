@@ -16,7 +16,10 @@ export const metadata: Metadata = {
   title: "Writing",
   description:
     "Notes, articles and what I am learning while building — by Aliameen Kareem.",
-  alternates: { canonical: "/writing" },
+  alternates: {
+    canonical: "/writing",
+    types: { "application/rss+xml": "/feed.xml" },
+  },
 };
 
 export default async function WritingPage() {

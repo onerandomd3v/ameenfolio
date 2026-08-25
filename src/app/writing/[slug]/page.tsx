@@ -37,6 +37,7 @@ export async function generateMetadata({
       canonical: `/writing/${found.post.slug}`,
       types: {
         "text/markdown": `/writing/${found.post.slug}.md`,
+        "application/rss+xml": "/feed.xml",
       },
     },
     robots: { index: true, follow: true },
