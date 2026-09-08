@@ -105,6 +105,10 @@ export function ExperienceSection({ items }: { items: PublicExperience[] }) {
   useLayoutEffect(() => {
     const sources = pendingRects.current;
     if (!sources) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      pendingRects.current = null;
+      return;
+    }
 
     const targets = expanded
       ? expandedItemRefs.current

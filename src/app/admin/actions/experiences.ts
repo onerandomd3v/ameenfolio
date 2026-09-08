@@ -1,6 +1,8 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { eq, ne } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import {
   refreshPublicContent,
   validationFailure,
@@ -39,46 +41,54 @@ export async function saveExperience(
       published: publish,
       updatedAt: new Date(),
     };
-    const result = await db.transaction(async (tx) => {
-      let experienceId = id;
-      if (value.pinned) {
-        const unpin = tx
-          .update(experiences)
-          .set({ pinned: false, updatedAt: new Date() });
-        if (id) await unpin.where(ne(experiences.id, id));
-        else await unpin;
-      }
-      if (id) {
-        const [row] = await tx
-          .update(experiences)
-          .set(data)
-          .where(eq(experiences.id, id))
-          .returning({ id: experiences.id });
-        if (!row) return null;
-        await tx
-          .delete(experienceHighlights)
-          .where(eq(experienceHighlights.experienceId, id));
-      } else {
-        const [{ id: createdId }] = await tx
+    if (id) {
+      const [existing] = await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.id, id))
+        .limit(1);
+      if (!existing) return { ok: false, message: "Experience not found." };
+    }
+
+    const experienceId = id ?? randomUUID();
+    const experienceMutation = id
+      ? db.update(experiences).set(data).where(eq(experiences.id, id))
+      : db
           .insert(experiences)
-          .values({ ...data, displayOrder: 0 })
-          .returning({ id: experiences.id });
-        experienceId = createdId;
-      }
-      if (value.highlights.length) {
-        await tx.insert(experienceHighlights).values(
+          .values({ id: experienceId, ...data, displayOrder: 0 });
+    const writes: BatchItem<"pg">[] = [experienceMutation];
+
+    if (value.pinned) {
+      const unpin = db
+        .update(experiences)
+        .set({ pinned: false, updatedAt: new Date() });
+      writes.unshift(id ? unpin.where(ne(experiences.id, id)) : unpin);
+    }
+    if (id) {
+      writes.push(
+        db
+          .delete(experienceHighlights)
+          .where(eq(experienceHighlights.experienceId, id)),
+      );
+    }
+    if (value.highlights.length) {
+      writes.push(
+        db.insert(experienceHighlights).values(
           value.highlights.map((highlight, index) => ({
-            experienceId: experienceId!,
+            experienceId,
             body: highlight.body,
             displayOrder: index,
           })),
-        );
-      }
-      return experienceId;
-    });
-    if (!result) return { ok: false, message: "Experience not found." };
+        ),
+      );
+    }
+
+    // neon-http has no callback transaction API. Its batch endpoint executes
+    // the statements atomically, matching the established writing and
+    // recognition save paths in this repository.
+    await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
     refreshPublicContent();
-    return { ok: true, id: result };
+    return { ok: true, id: experienceId };
   } catch (error) {
     logServer("error", "crud.experience_failed", { id, error: String(error) });
     return { ok: false, message: "The experience could not be saved." };
@@ -106,16 +116,16 @@ export async function deleteExperience(id: string): Promise<ActionResult> {
 
 export async function reorderExperiences(ids: string[]): Promise<ActionResult> {
   await requireAdmin();
+  if (!ids.length) return { ok: true };
   try {
     const db = getDb();
-    await db.transaction(async (tx) => {
-      for (const [index, id] of ids.entries()) {
-        await tx
-          .update(experiences)
-          .set({ displayOrder: index, updatedAt: new Date() })
-          .where(eq(experiences.id, id));
-      }
-    });
+    const writes: BatchItem<"pg">[] = ids.map((id, index) =>
+      db
+        .update(experiences)
+        .set({ displayOrder: index, updatedAt: new Date() })
+        .where(eq(experiences.id, id)),
+    );
+    await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
     refreshPublicContent();
     return { ok: true };
   } catch (error) {

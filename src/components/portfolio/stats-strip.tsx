@@ -114,9 +114,7 @@ export function StatsStrip({
     },
     {
       label: "Projects (prod)",
-      value: inProductionProjectCount
-        ? inProductionProjectCount.toLocaleString("en-US")
-        : null,
+      value: inProductionProjectCount.toLocaleString("en-US"),
     },
   ];
 
