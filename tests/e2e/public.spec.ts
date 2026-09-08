@@ -143,13 +143,12 @@ test("resume is not presented as a standalone homepage section", async ({
   );
   await expect(page.getByRole("link", { name: "Email me" })).toHaveCount(0);
 
-  // The résumé is one of the two closing calls to action, not footer fine
-  // print, so it is asserted inside the contact section rather than <footer>.
+  // The closing call to action is the message dialog; the résumé is offered
+  // in the contact links above rather than repeated here.
   const contact = page.locator("#contact");
-  // One sentence, not a heading over a button row: both actions sit in the
-  // running text, so the whole invitation reads as a single line.
+  // The invitation ends after the message action.
   await expect(contact.locator("p")).toHaveText(
-    /Open to a nice conversation, send a message or view resume\./,
+    /Open to a nice conversation, send a message\./,
   );
   // A dialog trigger, not a mailto link: it offers a choice of channel rather
   // than committing the visitor to email before they have picked one.
@@ -160,11 +159,10 @@ test("resume is not presented as a standalone homepage section", async ({
     /^mailto:/,
   );
   await page.keyboard.press("Escape");
-  // A button, not a link: the résumé is fetched and downloaded in place rather
-  // than navigated to, so there is deliberately no href to follow.
+  // The résumé is not repeated in the closing contact sentence.
   await expect(
     contact.getByRole("button", { name: "view resume" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(page.getByRole("link", { name: /view resume/i })).toHaveCount(0);
 });
 
