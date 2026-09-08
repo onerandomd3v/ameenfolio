@@ -105,7 +105,7 @@
 }
 
 .dark {
-  --background: #000000;
+  --background: #0b0b0b;
   --foreground: #ffffff;
   --card: #09090b;
   --card-foreground: #ffffff;
@@ -146,16 +146,17 @@
   }
 }
 
-/* Only while the theme is switching, set by toggleTheme in lib/theme.ts.
+/* Only for browsers without View Transition support, set by toggleTheme in
+   lib/theme.ts.
 
    Everything eases together rather than the body easing while its contents
    snap, which is the tearing that makes a theme switch read as a flash. It is
    scoped to that window so hovers and focus rings keep their own timing, and
    so a fresh page never animates in from the previous theme's colours. */
-html[data-theme-transition],
-html[data-theme-transition] *,
-html[data-theme-transition] *::before,
-html[data-theme-transition] *::after {
+html[data-theme-transition="fallback"],
+html[data-theme-transition="fallback"] *,
+html[data-theme-transition="fallback"] *::before,
+html[data-theme-transition="fallback"] *::after {
   transition:
     background-color 220ms ease-in-out,
     border-color 220ms ease-in-out,
@@ -165,12 +166,38 @@ html[data-theme-transition] *::after {
     text-decoration-color 220ms ease-in-out !important;
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+html[data-theme-transition="active"]::view-transition-new(root) {
+  clip-path: var(--theme-transition-clip-from);
+}
+
+html[data-theme-transition="active"]::view-transition-group(root) {
+  animation-duration: var(--theme-transition-duration, 400ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  html[data-theme-transition],
-  html[data-theme-transition] *,
-  html[data-theme-transition] *::before,
-  html[data-theme-transition] *::after {
+  html[data-theme-transition="fallback"],
+  html[data-theme-transition="fallback"] *,
+  html[data-theme-transition="fallback"] *::before,
+  html[data-theme-transition="fallback"] *::after {
     transition: none !important;
+  }
+
+  html[data-theme-transition="active"]::view-transition-new(root) {
+    clip-path: none !important;
   }
 }
 
