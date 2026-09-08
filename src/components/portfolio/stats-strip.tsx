@@ -113,7 +113,7 @@ export function StatsStrip({
       value: hackathonWins ? `${hackathonWins}×` : null,
     },
     {
-      label: "Projects (prod)",
+      label: "Projects (in prod)",
       value: inProductionProjectCount.toLocaleString("en-US"),
     },
   ];
@@ -163,7 +163,7 @@ export function StatsStrip({
                     to wrap: at four across the row has 99px and the pair needed
                     102, so the date dropped under the figure. A smaller note
                     and a tighter gap fit it back on the baseline. */}
-                <span className="flex items-baseline gap-x-1.5">
+                <span className="flex items-baseline gap-x-1 sm:gap-x-1.5">
                   <span
                     className={cn(
                       "text-2xl font-medium tabular-nums",
@@ -173,7 +173,7 @@ export function StatsStrip({
                     {cell.value ?? "—"}
                   </span>
                   {valueNote ? (
-                    <span className="ml-auto shrink-0 whitespace-nowrap text-[10px] leading-4 text-muted-foreground">
+                    <span className="ml-0 shrink-0 whitespace-nowrap text-[10px] leading-4 text-muted-foreground sm:ml-auto">
                       {valueNote}
                     </span>
                   ) : null}
