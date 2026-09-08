@@ -2,10 +2,8 @@
 
 import { useRef, useState } from "react";
 import { ArrowUpRight, Newspaper } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { RECOGNITION_IMAGE_SIZE } from "@/lib/image/crop";
 import { recognitionImageAlt } from "@/lib/recognition";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +42,7 @@ export function RecognitionDialog({
           onto a plain background and needs nothing. */}
       <DialogContent
         className={cn(
-          "sm:max-w-md",
+          "border-0 bg-transparent p-0 shadow-none sm:max-w-md",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
           "[&_[data-slot=dialog-close]]:bg-background/70 [&_[data-slot=dialog-close]]:p-1",
           "[&_[data-slot=dialog-close]]:opacity-90 [&_[data-slot=dialog-close]]:backdrop-blur-sm",
@@ -55,19 +53,19 @@ export function RecognitionDialog({
           <Carousel images={images} title={title} mediaBase={mediaBase} />
         ) : null}
 
-        {/* Under the carousel rather than above it: the image is what the
-            reader opened this for, and the title reads as its caption.
-            DialogHeader is not used — its sm:text-left would undo the
-            centring, and it exists only to stack a title and description. */}
-        <DialogTitle className="text-center text-base leading-6 text-balance">
-          {title}
-        </DialogTitle>
+        {/* The image and carousel dots stay visually free-standing. Only the
+            caption and outward actions receive a card surface. */}
+        <div className="mt-3 grid gap-3 rounded-[3px] border border-border bg-card p-4">
+          <DialogTitle className="text-center text-base leading-6 text-balance">
+            {title}
+          </DialogTitle>
 
-        <RecognitionActions
-          articleSlug={articleSlug}
-          verificationUrl={verificationUrl}
-          onNavigate={() => onOpenChange(false)}
-        />
+          <RecognitionActions
+            articleSlug={articleSlug}
+            verificationUrl={verificationUrl}
+            onNavigate={() => onOpenChange(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -116,16 +114,17 @@ function Carousel({
         tabIndex={single ? undefined : 0}
         aria-label={single ? undefined : `${images.length} images`}
         className={cn(
-          "flex snap-x snap-mandatory overflow-x-auto rounded-lg",
+          "flex snap-x snap-mandatory overflow-x-auto",
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         )}
       >
         {images.map((image, index) => (
           <li key={image.objectKey} className="w-full shrink-0 snap-center">
-            {/* Every image is stored square at a known size, so the frame is
-                  reserved before anything loads and the dialog never jumps. */}
-            <Image
+            {/* The stored file keeps its original proportions, so let the
+                browser size it naturally instead of forcing a square frame. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={
                 mediaBase
                   ? `${mediaBase}/${image.objectKey}`
@@ -137,16 +136,12 @@ function Carousel({
                 index,
                 total: images.length,
               })}
-              width={RECOGNITION_IMAGE_SIZE}
-              height={RECOGNITION_IMAGE_SIZE}
-              // Recognition uploads are already cropped and compressed to a
-              // 1080px WebP. Serving that file directly avoids an optimizer
-              // request that otherwise starts only after the dialog opens.
-              unoptimized
+              // Serving the prepared WebP directly avoids an optimizer request
+              // that otherwise starts only after the dialog opens.
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : "auto"}
               decoding="async"
-              className="aspect-square w-full bg-muted object-cover"
+              className="max-h-[70vh] w-full bg-muted object-contain"
             />
           </li>
         ))}
@@ -216,7 +211,7 @@ function RecognitionActions({
       {actions.map((action) => {
         const Icon = action.icon;
         const className =
-          "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent focus-visible:bg-accent";
+          "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[3px] border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent focus-visible:bg-accent";
 
         return action.external ? (
           <a

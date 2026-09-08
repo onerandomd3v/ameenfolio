@@ -172,8 +172,8 @@ export const experienceHighlights = pgTable(
 // as post_links: a child table with an explicit order, rewritten wholesale
 // when the parent is saved.
 //
-// Every image is square and stored at a fixed 1080px, so the carousel can size
-// its frame without measuring and nothing shifts as images load.
+// Images keep their original proportions; the client scales oversized sources
+// down for delivery without cropping the artefact.
 export const recognitionImages = pgTable(
   "recognition_images",
   {

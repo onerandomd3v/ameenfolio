@@ -178,7 +178,7 @@ export function ProfileImageField({
         title="Crop profile image"
         pending={pending}
         onCancel={closeCropper}
-        onConfirm={(area) => void saveCrop(area)}
+        onConfirm={(area) => area && void saveCrop(area)}
       />
     </>
   );

@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
 const Cropper = dynamic(() => import("react-easy-crop"), { ssr: false });
 
@@ -33,6 +34,7 @@ export function ImageCropDialog({
   sourceUrl,
   title,
   confirmLabel = "Use image",
+  preserveAspect = false,
   pending,
   onCancel,
   onConfirm,
@@ -40,9 +42,10 @@ export function ImageCropDialog({
   sourceUrl?: string;
   title: string;
   confirmLabel?: string;
+  preserveAspect?: boolean;
   pending?: boolean;
   onCancel: () => void;
-  onConfirm: (area: Area) => void;
+  onConfirm: (area?: Area) => void;
 }) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(MIN_ZOOM);
@@ -77,8 +80,22 @@ export function ImageCropDialog({
           <DialogTitle className="text-[15px] font-medium">{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-black/40">
-          {sourceUrl ? (
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded-lg bg-black/40",
+            preserveAspect ? "max-h-[60vh]" : "aspect-square",
+          )}
+        >
+          {sourceUrl && preserveAspect ? (
+            // Recognition media keeps its original proportions; this preview
+            // intentionally has no crop box or zoom controls.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={sourceUrl}
+              alt=""
+              className="max-h-[60vh] w-full object-contain"
+            />
+          ) : sourceUrl ? (
             <Cropper
               image={sourceUrl}
               crop={crop}
@@ -106,23 +123,25 @@ export function ImageCropDialog({
         {/* Buttons either side of the slider so zoom is reachable with one
             thumb, where dragging the picture needs a deliberate two-finger
             pinch. */}
-        <div className="flex items-center gap-3">
-          <ZoomButton label="Zoom out" onClick={() => nudgeZoom(-STEP)}>
-            <Minus aria-hidden="true" />
-          </ZoomButton>
-          <Slider
-            aria-label="Zoom"
-            thumbLabel="Zoom"
-            min={MIN_ZOOM}
-            max={MAX_ZOOM}
-            step={0.01}
-            value={[zoom]}
-            onValueChange={(values) => setZoom(values[0] ?? MIN_ZOOM)}
-          />
-          <ZoomButton label="Zoom in" onClick={() => nudgeZoom(STEP)}>
-            <Plus aria-hidden="true" />
-          </ZoomButton>
-        </div>
+        {!preserveAspect ? (
+          <div className="flex items-center gap-3">
+            <ZoomButton label="Zoom out" onClick={() => nudgeZoom(-STEP)}>
+              <Minus aria-hidden="true" />
+            </ZoomButton>
+            <Slider
+              aria-label="Zoom"
+              thumbLabel="Zoom"
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
+              step={0.01}
+              value={[zoom]}
+              onValueChange={(values) => setZoom(values[0] ?? MIN_ZOOM)}
+            />
+            <ZoomButton label="Zoom in" onClick={() => nudgeZoom(STEP)}>
+              <Plus aria-hidden="true" />
+            </ZoomButton>
+          </div>
+        ) : null}
 
         <DialogFooter className="gap-2 sm:gap-2">
           {/* Outlined, not ghost: full width on a phone a ghost button reads as
@@ -137,8 +156,10 @@ export function ImageCropDialog({
           </Button>
           <Button
             type="button"
-            disabled={pending || !area}
-            onClick={() => area && onConfirm(area)}
+            disabled={pending || (!preserveAspect && !area)}
+            onClick={() =>
+              preserveAspect ? onConfirm() : area && onConfirm(area)
+            }
             className="max-sm:w-full"
           >
             {pending ? (

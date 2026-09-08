@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Area } from "react-easy-crop";
 import { ArrowDown, ArrowUp, ImagePlus, Trash2 } from "lucide-react";
 import { ImageCropDialog } from "@/components/admin/image-crop-dialog";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { cropIsUpscaled, cropRecognitionImage } from "@/lib/image/crop";
+import { cropRecognitionImage } from "@/lib/image/crop";
 import { cleanupUpload } from "@/lib/storage/cleanup-upload";
 import { uploadFile } from "@/lib/storage/client";
 import { MAX_RECOGNITION_IMAGES } from "@/lib/validation";
@@ -130,13 +129,13 @@ export function RecognitionImagesField({
     onChange(images.map((image, index) => ({ ...image, displayOrder: index })));
   }
 
-  async function saveCrop(area: Area) {
+  async function saveCrop() {
     if (!sourceUrl) return;
     setPending(true);
     setLocalError(undefined);
 
     try {
-      const file = await cropRecognitionImage(sourceUrl, area);
+      const file = await cropRecognitionImage(sourceUrl);
       const uploaded = await uploadFile("recognition", file);
       // /media only serves objects a published row already references, so an
       // image that has just been uploaded — and not yet saved, let alone
@@ -149,11 +148,6 @@ export function RecognitionImagesField({
       commit([...value, { objectKey: uploaded.key, displayOrder: 0 }]);
       // Reported, never blocking: an undersized source is still the image the
       // owner has, and refusing it would leave the recognition with none.
-      if (cropIsUpscaled(area)) {
-        setNotice(
-          "That crop was smaller than 1080px, so it was scaled up and may look soft.",
-        );
-      }
       // On to the next file in the batch, or closed if that was the last.
       advanceQueue(queue.slice(1));
     } catch (uploadError) {
@@ -199,7 +193,7 @@ export function RecognitionImagesField({
         <FieldLabel htmlFor="recognition-image-upload">
           Images
           <span className="ml-2 font-normal text-muted-foreground">
-            {value.length}/{MAX_RECOGNITION_IMAGES} · square, 1080px
+            {value.length}/{MAX_RECOGNITION_IMAGES} · original proportions
           </span>
         </FieldLabel>
 
@@ -306,13 +300,14 @@ export function RecognitionImagesField({
         // like the same dialog reopening for no reason.
         title={
           queue.length > 1
-            ? `Crop image ${value.length + 1} of ${value.length + queue.length}`
-            : "Crop to 1080 × 1080"
+            ? `Preview image ${value.length + 1} of ${value.length + queue.length}`
+            : "Preview image"
         }
         confirmLabel={queue.length > 1 ? "Add and continue" : "Add image"}
         pending={pending}
+        preserveAspect
         onCancel={closeCropper}
-        onConfirm={(area) => void saveCrop(area)}
+        onConfirm={() => void saveCrop()}
       />
     </>
   );
