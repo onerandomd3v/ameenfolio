@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { eq, ne } from "drizzle-orm";
+import { eq, ne, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import {
   refreshPublicContent,
@@ -119,13 +119,48 @@ export async function reorderExperiences(ids: string[]): Promise<ActionResult> {
   if (!ids.length) return { ok: true };
   try {
     const db = getDb();
-    const writes: BatchItem<"pg">[] = ids.map((id, index) =>
-      db
-        .update(experiences)
-        .set({ displayOrder: index, updatedAt: new Date() })
-        .where(eq(experiences.id, id)),
-    );
-    await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+    const requestedIds = sql`ARRAY[${sql.join(
+      ids.map((id) => sql`${id}::uuid`),
+      sql`, `,
+    )}]::uuid[]`;
+    const { rows } = await db.execute(sql`
+      with requested as (
+        select id, position
+        from unnest(${requestedIds}) with ordinality as request(id, position)
+      ),
+      current_set as (
+        select
+          array_agg(${experiences.id} order by ${experiences.id}) as ids,
+          count(*)::int as count
+        from ${experiences}
+      ),
+      requested_set as (
+        select
+          array_agg(id order by id) as ids,
+          count(*)::int as count
+        from requested
+      ),
+      updated as (
+        update ${experiences} as experience
+        set display_order = requested.position - 1,
+            updated_at = now()
+        from requested, current_set, requested_set
+        where experience.id = requested.id
+          and current_set.count = requested_set.count
+          and current_set.ids = requested_set.ids
+        returning experience.id
+      )
+      select
+        (select count(*)::int from updated) = (select count(*) from requested)
+          as applied
+    `);
+    if (!rows[0]?.applied) {
+      return {
+        ok: false,
+        message:
+          "This experience order is stale. Prepare a new reorder proposal.",
+      };
+    }
     refreshPublicContent();
     return { ok: true };
   } catch (error) {

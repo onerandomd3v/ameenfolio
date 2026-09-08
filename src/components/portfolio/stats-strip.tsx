@@ -129,8 +129,8 @@ export function StatsStrip({
           wrapped two-column layout — Tailwind's divide-* utilities instead put
           a rule on the first cell of every wrapped row. overflow-hidden is what
           lets the corner cells be clipped by the radius. */}
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border border-border bg-border sm:grid-cols-4">
-        {cells.map((cell) => {
+      <dl className="grid grid-cols-2 overflow-hidden rounded-[4px] border border-border bg-card sm:grid-cols-4">
+        {cells.map((cell, index) => {
           // Filtered on their own content rather than on the value. Gating
           // them behind the value meant a broken streak hid the record beneath
           // it — the one line still worth reading at that moment.
@@ -139,7 +139,16 @@ export function StatsStrip({
           const stacked = subs.length > 0 || Boolean(valueNote);
 
           return (
-            <div key={cell.label} className="flex flex-col bg-card px-4 py-5">
+            <div
+              key={cell.label}
+              className={cn(
+                "flex flex-col bg-card px-4 py-5",
+                index < 2 && "border-b border-border sm:border-b-0",
+                index % 2 === 0 && "border-r border-border",
+                index === 1 && "sm:border-r sm:border-border",
+                index === 2 && "sm:border-r sm:border-border",
+              )}
+            >
               {/* Tracking is tighter than the other mono-caps headings on the
                   page: the icon costs 16px of a 98.6px cell, and without it
                   "Current streak" wraps to a second line, which drops that one

@@ -121,7 +121,20 @@ async function cleanupRejectedUpload(approval: {
             .object({ iconKey: z.string().nullable().optional() })
             .safeParse(approval.payload).data?.iconKey
         : null;
-  if (key && !(await isReferencedManagedObject(key))) await deleteObject(key);
+  const recognitionKeys =
+    approval.actionType === "update_recognition_images"
+      ? (z
+          .object({ images: recognitionFormSchema.shape.images })
+          .safeParse(approval.payload)
+          .data?.images?.map((image) => image.objectKey) ?? [])
+      : [];
+  const keys = key ? [key] : recognitionKeys;
+  await Promise.all(
+    keys.map(async (objectKey) => {
+      if (!(await isReferencedManagedObject(objectKey)))
+        await deleteObject(objectKey);
+    }),
+  );
 }
 
 export const proposedPostSchema = z.object({
@@ -247,7 +260,7 @@ async function executeApprovalDecision(
               iconName: recognition.iconName,
               verificationUrl: recognition.verificationUrl ?? undefined,
               articlePostId: recognition.articlePostId ?? undefined,
-              images: input.images ?? [],
+              images: input.images,
             }),
             recognition.id,
           ),

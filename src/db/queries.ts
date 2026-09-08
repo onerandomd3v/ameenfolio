@@ -565,34 +565,42 @@ export async function isReferencedPublicMedia(key: string) {
 export async function isReferencedManagedObject(key: string) {
   if (!canQueryDatabase()) return false;
   const db = getDb();
-  const [project, nowLink, settings, post] = await Promise.all([
-    db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(eq(projects.iconKey, key))
-      .limit(1),
-    db
-      .select({ id: nowLinks.id })
-      .from(nowLinks)
-      .where(eq(nowLinks.iconKey, key))
-      .limit(1),
-    db
-      .select({ id: siteSettings.id })
-      .from(siteSettings)
-      .where(
-        or(
-          eq(siteSettings.profileImageKey, key),
-          eq(siteSettings.resumeKey, key),
-        ),
-      )
-      .limit(1),
-    db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(sql`position(${key} in ${posts.bodyMarkdown}) > 0`)
-      .limit(1),
-  ]);
-  return Boolean(project[0] || nowLink[0] || settings[0] || post[0]);
+  const [project, nowLink, settings, post, recognitionImage] =
+    await Promise.all([
+      db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.iconKey, key))
+        .limit(1),
+      db
+        .select({ id: nowLinks.id })
+        .from(nowLinks)
+        .where(eq(nowLinks.iconKey, key))
+        .limit(1),
+      db
+        .select({ id: siteSettings.id })
+        .from(siteSettings)
+        .where(
+          or(
+            eq(siteSettings.profileImageKey, key),
+            eq(siteSettings.resumeKey, key),
+          ),
+        )
+        .limit(1),
+      db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(sql`position(${key} in ${posts.bodyMarkdown}) > 0`)
+        .limit(1),
+      db
+        .select({ id: recognitionImages.id })
+        .from(recognitionImages)
+        .where(eq(recognitionImages.objectKey, key))
+        .limit(1),
+    ]);
+  return Boolean(
+    project[0] || nowLink[0] || settings[0] || post[0] || recognitionImage[0],
+  );
 }
 
 // --- Writing -------------------------------------------------------------

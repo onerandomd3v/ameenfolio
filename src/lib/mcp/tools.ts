@@ -26,6 +26,7 @@ import {
   nowSectionSchema,
   projectSchema,
   recognitionSchema,
+  recognitionFormSchema,
   experienceSchema,
   seoSchema,
   techStackItemSchema,
@@ -139,17 +140,7 @@ const experienceOrderSchema = z.object({
 });
 const recognitionImagesUpdateSchema = z.object({
   id: z.uuid(),
-  images: z
-    .array(
-      z.object({
-        objectKey: z
-          .string()
-          .regex(/^recognitions\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/),
-        alt: z.string().trim().max(160).nullable().optional(),
-        displayOrder: z.number().int().min(0).max(999),
-      }),
-    )
-    .max(6),
+  images: recognitionFormSchema.shape.images.unwrap(),
 });
 
 type McpActor = {
@@ -497,21 +488,29 @@ export function createBippyMcpServer(actor: McpActor) {
     },
     async () => {
       requireScope(actor, "portfolio:read");
-      const base = (process.env.CANONICAL_SITE_URL ?? "").replace(/\/$/, "");
-      return result(
-        {
-          endpoints: [
-            "/robots.txt",
-            "/sitemap.xml",
-            "/llms.txt",
-            "/feed.xml",
-            "/api/public/writing",
-          ].map((path) => `${base}${path}`),
-          structuredData: ["Person JSON-LD", "Article JSON-LD"],
-          canonicalBase: base,
+      const data = await audited(
+        actor,
+        "read_discoverability_status",
+        {},
+        async () => {
+          const base = (process.env.CANONICAL_SITE_URL ?? "").replace(
+            /\/$/,
+            "",
+          );
+          return {
+            endpoints: [
+              "/robots.txt",
+              "/sitemap.xml",
+              "/llms.txt",
+              "/feed.xml",
+              "/api/public/writing",
+            ].map((path) => `${base}${path}`),
+            structuredData: ["Person JSON-LD", "Article JSON-LD"],
+            canonicalBase: base,
+          };
         },
-        "Discoverability status loaded.",
       );
+      return result(data, "Discoverability status loaded.");
     },
   );
 
