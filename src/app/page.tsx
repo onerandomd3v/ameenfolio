@@ -34,10 +34,12 @@ import {
   UserGlyph,
 } from "@/components/icons/glyph-icons";
 import { availabilityLabel } from "@/config/availability";
+import { portfolioIdentity } from "@/config/portfolio";
 import { instrumentSerif } from "@/app/fonts";
 import { initialsOf, resolveIdentity } from "@/lib/identity";
 import { splitEmphasis } from "@/lib/text-emphasis";
 import { splitHomepageProjects } from "@/lib/ordering";
+import { personJsonLd, publicPerson } from "@/lib/seo/person";
 import {
   canFetchGithubStats,
   isSnapshotStale,
@@ -99,6 +101,11 @@ export default async function HomePage() {
       : `/media/${settings.profileImageKey}`
     : undefined;
   const { name: displayName, role, introduction } = resolveIdentity(settings);
+  const person = publicPerson(
+    { name: displayName, role },
+    contactLinks,
+    process.env.CANONICAL_SITE_URL ?? "http://localhost:3000",
+  );
   const initials = initialsOf(displayName);
   const contactItems = [
     {
@@ -145,6 +152,12 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 pb-10 pt-8 sm:px-6 sm:pt-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(personJsonLd(person)).replace(/</g, "\\u003c"),
+        }}
+      />
       <PortfolioNav current="home" />
 
       <section className="mt-10 max-w-xl">
@@ -367,10 +380,12 @@ export default async function HomePage() {
       <footer className="mt-5 flex items-center justify-between gap-4 font-mono text-xs text-muted-foreground">
         <p>
           <span aria-hidden="true">© </span>
-          <span className="font-semibold">@onerandomd3v</span>
+          <span className="font-semibold">{`@${portfolioIdentity.handle}`}</span>
           <span className="sr-only">, Aliameen Kareem</span>
         </p>
         <nav aria-label="Footer social links">
+          {/* Pulled left by the icon box's own padding, so the first glyph
+                lines up with the text above rather than sitting inset. */}
           <ul className="-mr-2.5 flex items-center">
             {footerSocialItems.map((item) => {
               const Icon = item.icon;

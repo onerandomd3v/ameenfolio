@@ -11,6 +11,7 @@ import { formatPostDate, toDateAttribute } from "@/lib/writing/format";
 import { getSocialPreviewVersion } from "@/lib/writing/social-preview";
 import { getServerEnv } from "@/lib/env";
 import { resolveIdentity } from "@/lib/identity";
+import { publicPerson } from "@/lib/seo/person";
 import { articleJsonLd, toPublicArticle } from "@/lib/writing/public-content";
 
 export const dynamic = "force-dynamic";
@@ -81,12 +82,13 @@ export default async function PostPage({ params }: PageProps) {
 
   const { post, links } = found;
   const baseUrl = getServerEnv().CANONICAL_SITE_URL;
-  const identity = resolveIdentity(await getIdentitySettings());
+  const identitySettings = await getIdentitySettings();
+  const identity = resolveIdentity(identitySettings);
   const publicArticle = toPublicArticle(post, links, baseUrl);
-  const jsonLd = articleJsonLd(publicArticle, {
-    name: identity.name,
-    url: baseUrl,
-  });
+  const jsonLd = articleJsonLd(
+    publicArticle,
+    publicPerson(identity, identitySettings.contactLinks, baseUrl),
+  );
   const shareVersion = getSocialPreviewVersion(post.updatedAt);
   // Only the top level: a contents list that mirrors every subheading stops
   // being a summary of the piece.
