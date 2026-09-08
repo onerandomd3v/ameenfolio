@@ -3,6 +3,11 @@ import "server-only";
 import { z } from "zod";
 import { deleteProject, saveProject } from "@/app/admin/actions/projects";
 import {
+  deleteExperience,
+  reorderExperiences,
+  saveExperience,
+} from "@/app/admin/actions/experiences";
+import {
   deleteRecognition,
   saveRecognition,
 } from "@/app/admin/actions/recognitions";
@@ -30,6 +35,8 @@ import {
 import { executeBippyMcpTool } from "@/lib/ai/bippy-mcp";
 import {
   nowSectionSchema,
+  experienceSchema,
+  recognitionFormSchema,
   profileSchema,
   projectSchema,
   recognitionSchema,
@@ -40,6 +47,7 @@ import {
 import { postLinkIconValues } from "@/config/post-link-icons";
 import {
   getAdminProject,
+  getAdminExperience,
   getAdminRecognitions,
   getAdminSettings,
   getTakenSlugs,
@@ -185,6 +193,65 @@ async function executeApprovalDecision(
               ? await deletePost(input.id)
               : await deleteRecognition(input.id);
         actionError(result);
+        break;
+      }
+      case "delete_experience": {
+        const input = z.object({ id: z.uuid() }).parse(approval.payload);
+        actionError(await deleteExperience(input.id));
+        break;
+      }
+      case "reorder_experiences": {
+        const input = z
+          .object({ ids: z.array(z.uuid()).min(1).max(100) })
+          .parse(approval.payload);
+        actionError(await reorderExperiences(input.ids));
+        break;
+      }
+      case "update_experience": {
+        const input = z
+          .object({ id: z.uuid(), values: experienceSchema })
+          .parse(approval.payload);
+        const current = await getAdminExperience(input.id);
+        if (!current) throw new Error("Experience not found.");
+        actionError(
+          await saveExperience(
+            input.values,
+            input.id,
+            current.experience.published,
+          ),
+        );
+        break;
+      }
+      case "create_experience_draft": {
+        actionError(
+          await saveExperience(
+            experienceSchema.parse(approval.payload),
+            undefined,
+            false,
+          ),
+        );
+        break;
+      }
+      case "update_recognition_images": {
+        const input = z
+          .object({ id: z.uuid(), images: recognitionFormSchema.shape.images })
+          .parse(approval.payload);
+        const recognition = (await getAdminRecognitions()).find(
+          (item) => item.id === input.id,
+        );
+        if (!recognition) throw new Error("Recognition not found.");
+        actionError(
+          await saveRecognition(
+            recognitionFormSchema.parse({
+              title: recognition.title,
+              iconName: recognition.iconName,
+              verificationUrl: recognition.verificationUrl ?? undefined,
+              articlePostId: recognition.articlePostId ?? undefined,
+              images: input.images ?? [],
+            }),
+            recognition.id,
+          ),
+        );
         break;
       }
       case "delete_memory": {

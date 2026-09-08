@@ -11,6 +11,8 @@ import {
   getAdminPosts,
   getAdminProject,
   getAdminProjects,
+  getAdminExperience,
+  getAdminExperiences,
   getAdminRecognitions,
   getAdminSettings,
   getAdminTechStack,
@@ -24,6 +26,7 @@ import {
   nowSectionSchema,
   projectSchema,
   recognitionSchema,
+  experienceSchema,
   seoSchema,
   techStackItemSchema,
   techStackOrderSchema,
@@ -124,6 +127,29 @@ const techStackDraftSchema = z.object({
   name: z.string().trim().min(1).max(40),
   groupKey: z.enum(techStackGroupValues),
   displayOrder: z.number().int().min(0).max(999).default(0),
+});
+const experienceMcpSchema = experienceSchema;
+const experienceUpdateSchema = z.object({
+  id: z.uuid(),
+  values: experienceMcpSchema,
+});
+const experienceDeleteSchema = z.object({ id: z.uuid() });
+const experienceOrderSchema = z.object({
+  ids: z.array(z.uuid()).min(1).max(100),
+});
+const recognitionImagesUpdateSchema = z.object({
+  id: z.uuid(),
+  images: z
+    .array(
+      z.object({
+        objectKey: z
+          .string()
+          .regex(/^recognitions\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/),
+        alt: z.string().trim().max(160).nullable().optional(),
+        displayOrder: z.number().int().min(0).max(999),
+      }),
+    )
+    .max(6),
 });
 
 type McpActor = {
@@ -414,6 +440,82 @@ export function createBippyMcpServer(actor: McpActor) {
   );
 
   server.registerTool(
+    "read_profile_settings",
+    {
+      title: "Read profile settings",
+      description:
+        "Read editable profile, contact, location, résumé, and availability settings.",
+      inputSchema: {},
+      ...security("portfolio:read"),
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async () => {
+      requireScope(actor, "portfolio:read");
+      const data = await audited(
+        actor,
+        "read_profile_settings",
+        {},
+        async () => {
+          const settings = await getAdminSettings();
+          return {
+            displayName: settings.displayName,
+            role: settings.role,
+            introduction: settings.introduction,
+            email: settings.email,
+            contactLinks: settings.contactLinks ?? {},
+            location: settings.location,
+            resume: {
+              available: Boolean(settings.resumeKey),
+              filename: settings.resumeFilename,
+            },
+            hackathonWins: settings.hackathonWins,
+            availability: settings.availability,
+          };
+        },
+      );
+      return result(data, "Profile settings loaded.");
+    },
+  );
+
+  server.registerTool(
+    "read_discoverability_status",
+    {
+      title: "Read discoverability status",
+      description:
+        "Read the public SEO and AI-discovery endpoints exposed by the portfolio.",
+      inputSchema: {},
+      ...security("portfolio:read"),
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async () => {
+      requireScope(actor, "portfolio:read");
+      const base = (process.env.CANONICAL_SITE_URL ?? "").replace(/\/$/, "");
+      return result(
+        {
+          endpoints: [
+            "/robots.txt",
+            "/sitemap.xml",
+            "/llms.txt",
+            "/feed.xml",
+            "/api/public/writing",
+          ].map((path) => `${base}${path}`),
+          structuredData: ["Person JSON-LD", "Article JSON-LD"],
+          canonicalBase: base,
+        },
+        "Discoverability status loaded.",
+      );
+    },
+  );
+
+  server.registerTool(
     "approve_mcp_proposal",
     {
       title: "Approve MCP proposal",
@@ -552,6 +654,177 @@ export function createBippyMcpServer(actor: McpActor) {
         getAdminTechStack(),
       );
       return result(items, "Tech Stack loaded.");
+    },
+  );
+
+  server.registerTool(
+    "read_experiences",
+    {
+      title: "Read experiences",
+      description:
+        "Read the editable experience timeline, including highlights, status, dates, and order.",
+      inputSchema: {},
+      ...security("portfolio:read"),
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async () => {
+      requireScope(actor, "portfolio:read");
+      const items = await audited(actor, "read_experiences", {}, () =>
+        getAdminExperiences(),
+      );
+      return result(items, "Experiences loaded.");
+    },
+  );
+
+  server.registerTool(
+    "prepare_experience_draft",
+    {
+      title: "Prepare experience draft",
+      description:
+        "Prepare a private experience timeline entry for owner approval.",
+      inputSchema: experienceMcpSchema.shape,
+      ...security("portfolio:draft"),
+      annotations: {
+        readOnlyHint: false,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async (args) => {
+      requireScope(actor, "portfolio:draft");
+      const values = experienceMcpSchema.parse(args);
+      const pending = await proposal(
+        actor,
+        "prepare_experience_draft",
+        "create_experience_draft",
+        values,
+        {
+          title: `Create experience: ${values.company}`,
+          before: null,
+          after: values,
+        },
+      );
+      return result(
+        pending,
+        "Experience draft proposal created for admin approval.",
+      );
+    },
+  );
+
+  server.registerTool(
+    "prepare_experience_update",
+    {
+      title: "Prepare experience update",
+      description:
+        "Prepare an update to an existing experience entry for owner approval.",
+      inputSchema: experienceUpdateSchema.shape,
+      ...security("portfolio:propose"),
+      annotations: {
+        readOnlyHint: false,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async (args) => {
+      requireScope(actor, "portfolio:propose");
+      const values = experienceUpdateSchema.parse(args);
+      const before = await getAdminExperience(values.id);
+      if (!before) throw new Error("Experience not found.");
+      const pending = await proposal(
+        actor,
+        "prepare_experience_update",
+        "update_experience",
+        values,
+        {
+          title: `Update experience: ${before.experience.company}`,
+          before,
+          after: values.values,
+        },
+      );
+      return result(
+        pending,
+        "Experience update proposal created for admin approval.",
+      );
+    },
+  );
+
+  server.registerTool(
+    "prepare_experience_delete",
+    {
+      title: "Prepare experience deletion",
+      description:
+        "Prepare deletion of an experience entry for owner approval.",
+      inputSchema: experienceDeleteSchema.shape,
+      ...security("portfolio:propose"),
+      annotations: {
+        readOnlyHint: false,
+        openWorldHint: false,
+        destructiveHint: true,
+      },
+    },
+    async (args) => {
+      requireScope(actor, "portfolio:propose");
+      const values = experienceDeleteSchema.parse(args);
+      const before = await getAdminExperience(values.id);
+      if (!before) throw new Error("Experience not found.");
+      const pending = await proposal(
+        actor,
+        "prepare_experience_delete",
+        "delete_experience",
+        values,
+        {
+          title: `Delete experience: ${before.experience.company}`,
+          before,
+          after: null,
+        },
+      );
+      return result(
+        pending,
+        "Experience deletion proposal created for admin approval.",
+      );
+    },
+  );
+
+  server.registerTool(
+    "prepare_experience_reorder",
+    {
+      title: "Prepare experience reorder",
+      description:
+        "Prepare a new experience timeline order for owner approval.",
+      inputSchema: experienceOrderSchema.shape,
+      ...security("portfolio:propose"),
+      annotations: {
+        readOnlyHint: false,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async (args) => {
+      requireScope(actor, "portfolio:propose");
+      const values = experienceOrderSchema.parse(args);
+      const current = await getAdminExperiences();
+      const known = new Set(current.map((item) => item.id));
+      if (values.ids.some((id) => !known.has(id)))
+        throw new Error("Order includes an unknown experience.");
+      const pending = await proposal(
+        actor,
+        "prepare_experience_reorder",
+        "reorder_experiences",
+        values,
+        {
+          title: "Reorder experiences",
+          before: current.map((item) => item.id),
+          after: values.ids,
+        },
+      );
+      return result(
+        pending,
+        "Experience reorder proposal created for admin approval.",
+      );
     },
   );
 
@@ -1055,9 +1328,9 @@ export function createBippyMcpServer(actor: McpActor) {
     {
       title: "Request media upload",
       description:
-        "Create a five-minute signed upload slot for a project icon or PDF résumé. Upload bytes with PUT, then use the returned object key in a prepared change.",
+        "Create a five-minute signed upload slot for a project icon, recognition image, or PDF résumé. Upload bytes with PUT, then use the returned object key in a prepared change.",
       inputSchema: {
-        resourceType: z.enum(["icon", "post", "resume"]),
+        resourceType: z.enum(["icon", "post", "recognition", "resume"]),
         filename: z.string().trim().min(1).max(180),
         contentType: z.enum([
           "image/png",
@@ -1237,6 +1510,45 @@ export function createBippyMcpServer(actor: McpActor) {
       return result(
         pending,
         "Recognition icon change prepared for admin approval.",
+      );
+    },
+  );
+
+  server.registerTool(
+    "prepare_recognition_image_update",
+    {
+      title: "Prepare recognition images update",
+      description:
+        "Prepare the full ordered image list for an existing recognition. Upload images first with request_media_upload.",
+      inputSchema: recognitionImagesUpdateSchema.shape,
+      ...security("portfolio:propose"),
+      annotations: {
+        readOnlyHint: false,
+        openWorldHint: false,
+        destructiveHint: false,
+      },
+    },
+    async (args) => {
+      requireScope(actor, "portfolio:propose");
+      const values = recognitionImagesUpdateSchema.parse(args);
+      const before = (await getAdminRecognitions()).find(
+        (item) => item.id === values.id,
+      );
+      if (!before) throw new Error("Recognition not found.");
+      const pending = await proposal(
+        actor,
+        "prepare_recognition_image_update",
+        "update_recognition_images",
+        values,
+        {
+          title: `Update recognition images: ${before.title}`,
+          before: { recognitionId: before.id },
+          after: values.images,
+        },
+      );
+      return result(
+        pending,
+        "Recognition image update proposal created for admin approval.",
       );
     },
   );
