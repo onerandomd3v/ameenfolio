@@ -138,10 +138,7 @@ export function GithubActivity({
           {months.map((month) => (
             <text
               key={month.index}
-              x={Math.min(
-                month.index * (CELL_SIZE + CELL_GAP),
-                CHART_WIDTH,
-              )}
+              x={Math.min(month.index * (CELL_SIZE + CELL_GAP), CHART_WIDTH)}
               y="10"
               textAnchor={
                 month.index * (CELL_SIZE + CELL_GAP) > CHART_WIDTH - 24

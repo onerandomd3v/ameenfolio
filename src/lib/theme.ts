@@ -42,19 +42,13 @@ export function toggleTheme(origin?: HTMLElement | null) {
     const y = bounds ? bounds.top + bounds.height / 2 : height / 2;
     const xPercent = (x / width) * 100;
     const yPercent = (y / height) * 100;
-    const radius = Math.hypot(
-      Math.max(x, width - x),
-      Math.max(y, height - y),
-    );
+    const radius = Math.hypot(Math.max(x, width - x), Math.max(y, height - y));
     const maxRadius = Math.hypot(width, height) / Math.SQRT2;
     const clipFrom = `circle(0% at ${xPercent}% ${yPercent}%)`;
     const clipTo = `circle(${(radius / maxRadius) * 100}% at ${xPercent}% ${yPercent}%)`;
 
     root.dataset.themeTransition = "active";
-    root.style.setProperty(
-      "--theme-transition-duration",
-      `${TRANSITION_MS}ms`,
-    );
+    root.style.setProperty("--theme-transition-duration", `${TRANSITION_MS}ms`);
     root.style.setProperty("--theme-transition-clip-from", clipFrom);
 
     const transition = transitionDocument.startViewTransition(() => {
@@ -63,15 +57,12 @@ export function toggleTheme(origin?: HTMLElement | null) {
 
     transition.ready
       .then(() => {
-        root.animate(
-          { clipPath: [clipFrom, clipTo] },
-          {
-            duration: TRANSITION_MS,
-            easing: "ease-in-out",
-            fill: "forwards",
-            pseudoElement: "::view-transition-new(root)",
-          } as KeyframeAnimationOptions & { pseudoElement: string },
-        );
+        root.animate({ clipPath: [clipFrom, clipTo] }, {
+          duration: TRANSITION_MS,
+          easing: "ease-in-out",
+          fill: "forwards",
+          pseudoElement: "::view-transition-new(root)",
+        } as KeyframeAnimationOptions & { pseudoElement: string });
       })
       .catch(() => undefined);
     transition.finished
