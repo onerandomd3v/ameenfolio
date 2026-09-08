@@ -89,6 +89,7 @@ export function ImageCropDialog({
           {sourceUrl && preserveAspect ? (
             // Recognition media keeps its original proportions; this preview
             // intentionally has no crop box or zoom controls.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={sourceUrl}
               alt=""

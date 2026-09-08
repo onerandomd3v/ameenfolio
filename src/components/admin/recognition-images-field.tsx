@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Area } from "react-easy-crop";
 import { ArrowDown, ArrowUp, ImagePlus, Trash2 } from "lucide-react";
 import { ImageCropDialog } from "@/components/admin/image-crop-dialog";
 import { Button } from "@/components/ui/button";
@@ -130,7 +129,7 @@ export function RecognitionImagesField({
     onChange(images.map((image, index) => ({ ...image, displayOrder: index })));
   }
 
-  async function saveCrop(_area?: Area) {
+  async function saveCrop() {
     if (!sourceUrl) return;
     setPending(true);
     setLocalError(undefined);
@@ -308,7 +307,7 @@ export function RecognitionImagesField({
         pending={pending}
         preserveAspect
         onCancel={closeCropper}
-        onConfirm={(area) => void saveCrop(area)}
+        onConfirm={() => void saveCrop()}
       />
     </>
   );
