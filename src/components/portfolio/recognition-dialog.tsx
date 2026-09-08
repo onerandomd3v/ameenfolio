@@ -2,10 +2,8 @@
 
 import { useRef, useState } from "react";
 import { ArrowUpRight, Newspaper } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { RECOGNITION_IMAGE_SIZE } from "@/lib/image/crop";
 import { recognitionImageAlt } from "@/lib/recognition";
 import { cn } from "@/lib/utils";
 
@@ -123,9 +121,10 @@ function Carousel({
       >
         {images.map((image, index) => (
           <li key={image.objectKey} className="w-full shrink-0 snap-center">
-            {/* Every image is stored square at a known size, so the frame is
-                  reserved before anything loads and the dialog never jumps. */}
-            <Image
+            {/* The stored file keeps its original proportions, so let the
+                browser size it naturally instead of forcing a square frame. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={
                 mediaBase
                   ? `${mediaBase}/${image.objectKey}`
@@ -137,16 +136,12 @@ function Carousel({
                 index,
                 total: images.length,
               })}
-              width={RECOGNITION_IMAGE_SIZE}
-              height={RECOGNITION_IMAGE_SIZE}
-              // Recognition uploads are already cropped and compressed to a
-              // 1080px WebP. Serving that file directly avoids an optimizer
-              // request that otherwise starts only after the dialog opens.
-              unoptimized
+              // Serving the prepared WebP directly avoids an optimizer request
+              // that otherwise starts only after the dialog opens.
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : "auto"}
               decoding="async"
-              className="aspect-square w-full bg-muted object-cover"
+              className="max-h-[70vh] w-full bg-muted object-contain"
             />
           </li>
         ))}
