@@ -48,6 +48,7 @@ import { postLinkIconValues } from "@/config/post-link-icons";
 import {
   getAdminProject,
   getAdminExperience,
+  getAdminExperiences,
   getAdminRecognitions,
   getAdminSettings,
   getTakenSlugs,
@@ -121,7 +122,20 @@ async function cleanupRejectedUpload(approval: {
             .object({ iconKey: z.string().nullable().optional() })
             .safeParse(approval.payload).data?.iconKey
         : null;
-  if (key && !(await isReferencedManagedObject(key))) await deleteObject(key);
+  const recognitionKeys =
+    approval.actionType === "update_recognition_images"
+      ? (z
+          .object({ images: recognitionFormSchema.shape.images })
+          .safeParse(approval.payload)
+          .data?.images?.map((image) => image.objectKey) ?? [])
+      : [];
+  const keys = key ? [key] : recognitionKeys;
+  await Promise.all(
+    keys.map(async (objectKey) => {
+      if (!(await isReferencedManagedObject(objectKey)))
+        await deleteObject(objectKey);
+    }),
+  );
 }
 
 export const proposedPostSchema = z.object({
@@ -204,6 +218,16 @@ async function executeApprovalDecision(
         const input = z
           .object({ ids: z.array(z.uuid()).min(1).max(100) })
           .parse(approval.payload);
+        const currentIds = (await getAdminExperiences()).map((item) => item.id);
+        if (
+          input.ids.length !== currentIds.length ||
+          new Set(input.ids).size !== currentIds.length ||
+          input.ids.some((id) => !currentIds.includes(id))
+        ) {
+          throw new Error(
+            "This experience order is stale. Prepare a new reorder proposal.",
+          );
+        }
         actionError(await reorderExperiences(input.ids));
         break;
       }
@@ -247,7 +271,7 @@ async function executeApprovalDecision(
               iconName: recognition.iconName,
               verificationUrl: recognition.verificationUrl ?? undefined,
               articlePostId: recognition.articlePostId ?? undefined,
-              images: input.images ?? [],
+              images: input.images,
             }),
             recognition.id,
           ),
