@@ -57,7 +57,7 @@ export function RecognitionDialog({
 
         {/* The image and carousel dots stay visually free-standing. Only the
             caption and outward actions receive a card surface. */}
-        <div className="mt-3 grid gap-3 rounded-lg border border-border bg-card p-4">
+        <div className="mt-3 grid gap-3 rounded-[3px] border border-border bg-card p-4">
           <DialogTitle className="text-center text-base leading-6 text-balance">
             {title}
           </DialogTitle>
@@ -216,7 +216,7 @@ function RecognitionActions({
       {actions.map((action) => {
         const Icon = action.icon;
         const className =
-          "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent focus-visible:bg-accent";
+          "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[3px] border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent focus-visible:bg-accent";
 
         return action.external ? (
           <a
