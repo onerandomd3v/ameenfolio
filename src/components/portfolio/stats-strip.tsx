@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Github } from "lucide-react";
+import { GithubIcon } from "lucide-react";
 import { StarGlyph } from "@/components/icons/glyph-icons";
 import type { StatsSnapshot } from "@/db/schema";
 import { cn } from "@/lib/utils";
@@ -69,13 +69,13 @@ export function StatsStrip({
       // a real measurement — a broken streak or a quiet year — and rendering it
       // as a dash claims the data is missing when it is simply zero.
       label: "Contributions",
-      icon: <Github className="size-3 shrink-0" aria-hidden="true" />,
+      icon: <GithubIcon className="size-3 shrink-0" aria-hidden="true" />,
       value: snapshot ? snapshot.contributions.toLocaleString("en-US") : null,
       subs: [sinceLabel(snapshot?.firstContributionAt ?? null)],
     },
     {
       label: "Current streak",
-      icon: <Github className="size-3 shrink-0" aria-hidden="true" />,
+      icon: <GithubIcon className="size-3 shrink-0" aria-hidden="true" />,
       value: snapshot ? `${snapshot.currentStreak}d` : null,
       valueNote: dateRange(
         snapshot?.currentStreakStart ?? null,
