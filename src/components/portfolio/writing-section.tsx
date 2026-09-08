@@ -13,7 +13,6 @@ export function WritingSection({ posts }: { posts: Post[] }) {
       // than as breathing room.
       className="mt-14"
       aria-labelledby="writing-heading"
-      data-bippy-section="writing"
     >
       <SectionHeading id="writing-heading" title="Writing" />
       {posts.length ? (

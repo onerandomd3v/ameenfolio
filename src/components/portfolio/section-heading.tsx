@@ -8,7 +8,7 @@ export function SectionHeading({ id, title }: SectionHeadingProps) {
     <header className="flex items-center">
       <h2
         id={id}
-        className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground"
+        className="text-[22px] font-medium tracking-[-0.035em] text-foreground"
       >
         {title}
       </h2>

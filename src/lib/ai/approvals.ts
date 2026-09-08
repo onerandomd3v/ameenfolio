@@ -92,6 +92,7 @@ async function currentProfile() {
     introduction: identity.introduction,
     email: settings.email,
     contactLinks: settings.contactLinks ?? {},
+    location: settings.location,
     profileImageKey: settings.profileImageKey ?? undefined,
     resumeKey: settings.resumeKey ?? undefined,
     resumeFilename: settings.resumeFilename ?? undefined,

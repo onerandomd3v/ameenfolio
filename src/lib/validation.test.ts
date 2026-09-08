@@ -89,11 +89,30 @@ describe("portfolio validation", () => {
         linkedin: "https://linkedin.com/in/onerandomdevv",
         whatsapp: "https://wa.me/2348000000000",
       },
+      location: "Lagos, Nigeria",
       hackathonWins: 3,
       availability: "open",
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("accepts a homepage location and rejects a blank value", () => {
+    const profile = {
+      displayName: "Aliameen Kareem",
+      role: "Full-Stack Engineer",
+      introduction: "I am a **Software Engineer**.",
+      email: "ameen@example.com",
+      contactLinks: {},
+      location: "Lagos, Nigeria",
+      hackathonWins: 3,
+      availability: "open",
+    };
+
+    expect(profileSchema.safeParse(profile).success).toBe(true);
+    expect(
+      profileSchema.safeParse({ ...profile, location: "   " }).success,
+    ).toBe(false);
   });
 
   it("accepts only generated profile image keys", () => {
@@ -112,6 +131,7 @@ describe("portfolio validation", () => {
       introduction: "I am a **Software Engineer**.",
       email: "ameen@example.com",
       contactLinks: {},
+      location: "Lagos, Nigeria",
       hackathonWins: 0,
     };
 
@@ -130,6 +150,7 @@ describe("portfolio validation", () => {
     const settings = {
       email: "ameen@example.com",
       contactLinks: {},
+      location: "Lagos, Nigeria",
       availability: "open",
     };
 
@@ -155,6 +176,7 @@ describe("portfolio validation", () => {
         introduction: "I am a **Software Engineer**.",
         email: "ameen@example.com",
         contactLinks: {},
+        location: "Lagos, Nigeria",
         hackathonWins: 0,
         availability: "open",
       }).success,

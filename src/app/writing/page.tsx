@@ -27,6 +27,7 @@ export default async function WritingPage() {
     getPublishedPostSummaries(),
     getPublishedRecognitions(),
   ]);
+  const mediaBase = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl px-5 pb-20 pt-8 sm:px-6 sm:pt-12">
@@ -91,6 +92,7 @@ export default async function WritingPage() {
                   verificationUrl={recognition.verificationUrl}
                   articleSlug={recognition.articleSlug}
                   images={recognition.images}
+                  mediaBase={mediaBase}
                 />
               </li>
             ))}

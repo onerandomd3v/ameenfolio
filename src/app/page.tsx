@@ -12,6 +12,7 @@ import { ProjectRow } from "@/components/portfolio/project-row";
 import { ResumeDownloadButton } from "@/components/portfolio/resume-download-button";
 import { SendMessageDialog } from "@/components/portfolio/send-message-dialog";
 import { ProjectsEmptyState } from "@/components/portfolio/projects-empty-state";
+import { GithubActivity } from "@/components/portfolio/github-activity";
 import { RecognitionRow } from "@/components/portfolio/recognition-row";
 import { RecognitionsEmptyState } from "@/components/portfolio/recognitions-empty-state";
 import { SectionHeading } from "@/components/portfolio/section-heading";
@@ -85,7 +86,10 @@ export default async function HomePage() {
   // Refreshed after the response is flushed rather than before it, so a slow
   // or unreachable GitHub delays nobody's page load. Whoever asks next gets
   // the newer numbers; this visitor still sees the strip immediately.
-  if (canFetchGithubStats() && isSnapshotStale(statsSnapshot)) {
+  if (
+    canFetchGithubStats() &&
+    (isSnapshotStale(statsSnapshot) || !statsSnapshot?.contributionDays.length)
+  ) {
     after(refreshStatsSnapshot);
   }
 
@@ -109,32 +113,18 @@ export default async function HomePage() {
       href: contactLinks.github,
       icon: GitHubIcon,
       external: true,
-      isStatic: false,
     },
     {
-      label: "X",
+      label: "X (Twitter)",
       href: contactLinks.x,
       icon: XIcon,
       external: true,
-      isStatic: false,
     },
     {
-      label: "Mail",
+      label: "Email",
       href: `mailto:${settings.email}`,
       icon: MailGlyph,
       external: false,
-      isStatic: false,
-    },
-    // Hardcoded rather than a setting: where I am is not something that needs
-    // editing from the admin. isStatic marks it as information rather than a
-    // link whose URL happens to be missing, which is what the other items mean
-    // when they have no href — the two render alike but must not sound alike.
-    {
-      label: "Lagos, Nigeria",
-      href: undefined,
-      icon: GlobeIcon,
-      external: false,
-      isStatic: true,
     },
   ];
   const footerSocialItems = [
@@ -172,15 +162,15 @@ export default async function HomePage() {
 
       <section className="mt-10 max-w-xl">
         <div className="flex items-center gap-4 sm:gap-5">
-          <Avatar className="size-24 rounded-[22%] border sm:size-28">
+          <Avatar className="size-24 rounded-[3px] border-2 border-background ring-1 ring-foreground/20 ring-offset-2 ring-offset-background sm:size-28">
             {profileImageSrc ? (
               <AvatarImage
                 src={profileImageSrc}
                 alt={`${displayName} profile photo`}
-                className="rounded-[22%] object-cover"
+                className="rounded-[3px] object-cover"
               />
             ) : null}
-            <AvatarFallback className="rounded-[22%] text-base font-medium">
+            <AvatarFallback className="rounded-[3px] text-base font-medium">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -223,57 +213,62 @@ export default async function HomePage() {
           publishedProjectCount={publishedProjectCount}
         />
 
-        <nav className="mt-6" aria-label="Contact links and location">
-          <ul className="flex flex-wrap gap-x-5 gap-y-3">
-            {contactItems.map((item) => {
-              const Icon = item.icon;
+        <section className="mt-6" aria-label="Contact links">
+          <nav>
+            <ul className="flex flex-wrap gap-1.5 sm:flex-nowrap sm:gap-2">
+              {contactItems.map((item) => {
+                const Icon = item.icon;
 
-              return (
-                <li key={item.label}>
-                  {item.href ? (
-                    <a
-                      className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-primary focus-visible:text-primary"
-                      href={item.href}
-                      target={item.external ? "_blank" : undefined}
-                      rel={item.external ? "noreferrer" : undefined}
-                      data-bippy-reaction={
-                        item.label === "GitHub" ? "working" : "curious"
-                      }
-                      data-bippy-safe-zone
-                    >
-                      <Icon
-                        className="size-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      {item.label}
-                    </a>
-                  ) : (
-                    <span
-                      className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
-                      aria-disabled={item.isStatic ? undefined : true}
-                    >
-                      <Icon
-                        className="size-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      {item.label}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                return (
+                  <li key={item.label} className="shrink-0">
+                    {item.href ? (
+                      <a
+                        className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-1.5 sm:px-3 sm:text-[13px]"
+                        href={item.href}
+                        target={item.external ? "_blank" : undefined}
+                        rel={item.external ? "noreferrer" : undefined}
+                        data-bippy-reaction={
+                          item.label === "GitHub" ? "working" : "curious"
+                        }
+                        data-bippy-safe-zone
+                      >
+                        <Icon className="size-3.5" aria-hidden="true" />
+                        {item.label}
+                      </a>
+                    ) : (
+                      <span className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background sm:gap-1.5 sm:px-3 sm:text-[13px]">
+                        <Icon className="size-3.5" aria-hidden="true" />
+                        {item.label}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+              <li className="shrink-0">
+                <ResumeDownloadButton
+                  hasResume={Boolean(settings.resumeKey)}
+                  filename={settings.resumeFilename}
+                  label="Resume"
+                  className="min-h-8 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background no-underline hover:bg-foreground/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-3 sm:text-[13px]"
+                />
+              </li>
+              <li className="basis-full shrink-0 sm:basis-auto">
+                <span className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background sm:gap-1.5 sm:px-3 sm:text-[13px]">
+                  <GlobeIcon className="size-3.5" aria-hidden="true" />
+                  {settings.location}
+                </span>
+              </li>
+            </ul>
+          </nav>
+        </section>
       </section>
 
       <NowSection section={now} />
 
-      <section
-        className="mt-14"
-        aria-labelledby="projects-heading"
-        data-bippy-section="projects"
-      >
+      <section className="mt-14" aria-labelledby="projects-heading">
         <SectionHeading id="projects-heading" title="Recent Projects" />
+        <GithubActivity snapshot={statsSnapshot} />
+
         {projects.length ? (
           <>
             <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -313,11 +308,7 @@ export default async function HomePage() {
 
       <WritingSection posts={pinnedPosts} />
 
-      <section
-        className="mt-24"
-        aria-labelledby="recognitions-heading"
-        data-bippy-section="recognitions"
-      >
+      <section className="mt-24" aria-labelledby="recognitions-heading">
         <SectionHeading id="recognitions-heading" title="Recognitions" />
         {recognitions.length ? (
           <ul className="mt-5 divide-y divide-solid divide-border">
@@ -329,6 +320,7 @@ export default async function HomePage() {
                   verificationUrl={recognition.verificationUrl}
                   articleSlug={recognition.articleSlug}
                   images={recognition.images}
+                  mediaBase={profileImageBase}
                 />
               </li>
             ))}
@@ -379,9 +371,6 @@ export default async function HomePage() {
         </p>
       </section>
 
-      {/* No rule above it. The closing line already ends the page, and a
-          divider between it and these icons read as the start of something
-          else rather than the end of what came before. */}
       {/* Mounted by the pages that want him rather than the root layout. The
           layout wraps the admin too, and on the admin host the proxy serves
           the admin's projects page at /projects — the same pathname this

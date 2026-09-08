@@ -214,6 +214,7 @@ export const siteSettings = pgTable(
       .$type<ContactLinks>()
       .notNull()
       .default({}),
+    location: text("location").notNull().default("Lagos, Nigeria"),
     // NULL means never edited, so the copy in src/config/portfolio.ts keeps
     // supplying it and the wording lives in one place until then.
     displayName: text("display_name"),
@@ -265,6 +266,12 @@ export const statsSnapshot = pgTable(
     firstContributionAt: timestamp("first_contribution_at", {
       withTimezone: true,
     }),
+    // The recent daily history is the source for the public activity grid;
+    // keeping it with the cached aggregate avoids a GitHub request per visit.
+    contributionDays: jsonb("contribution_days")
+      .$type<{ date: string; count: number }[]>()
+      .notNull()
+      .default([]),
     fetchedAt: timestamp("fetched_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -11,6 +11,7 @@ const stored: SiteSettings = {
   introduction: "I am a **Software Engineer**.",
   email: "ameen@example.com",
   contactLinks: { github: "https://github.com/onerandomdevv" },
+  location: "Lagos, Nigeria",
   profileImageKey: null,
   resumeKey: null,
   resumeFilename: null,

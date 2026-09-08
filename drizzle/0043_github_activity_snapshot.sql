@@ -1,0 +1,1 @@
+ALTER TABLE "stats_snapshot" ADD COLUMN "contribution_days" jsonb DEFAULT '[]'::jsonb NOT NULL;

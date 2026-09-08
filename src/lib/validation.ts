@@ -215,6 +215,7 @@ export const profileSchema = z.object({
     .max(600),
   email: z.email(),
   contactLinks: contactLinksSchema,
+  location: z.string().trim().min(1, "A location is required.").max(120),
   profileImageKey: profileImageObjectKeySchema,
   resumeKey: resumeObjectKeySchema,
   resumeFilename: optionalText(180),
