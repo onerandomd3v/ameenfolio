@@ -673,9 +673,15 @@ export function createBippyMcpServer(actor: McpActor) {
     },
     async () => {
       requireScope(actor, "portfolio:read");
-      const items = await audited(actor, "read_experiences", {}, () =>
-        getAdminExperiences(),
-      );
+      const items = await audited(actor, "read_experiences", {}, async () => {
+        const rows = await getAdminExperiences();
+        return Promise.all(
+          rows.map(async (row) => {
+            const details = await getAdminExperience(row.id);
+            return { ...row, highlights: details?.highlights ?? [] };
+          }),
+        );
+      });
       return result(items, "Experiences loaded.");
     },
   );
