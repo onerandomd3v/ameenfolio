@@ -1,0 +1,2 @@
+ALTER TABLE "experiences" DROP CONSTRAINT "experiences_icon_name_valid";--> statement-breakpoint
+ALTER TABLE "experiences" ADD CONSTRAINT "experiences_icon_name_valid" CHECK ("experiences"."icon_name" in ('briefcase', 'badge-check', 'blocks', 'bot', 'building', 'chart', 'cloud', 'code', 'cpu', 'database', 'factory', 'globe', 'graduation-cap', 'handshake', 'heart-handshake', 'landmark', 'layers', 'lightbulb', 'megaphone', 'microscope', 'palette', 'pen-tool', 'rocket', 'search', 'server', 'shield-check', 'smartphone', 'sparkles', 'terminal', 'users', 'workflow', 'wrench'));

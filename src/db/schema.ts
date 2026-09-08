@@ -140,7 +140,7 @@ export const experiences = pgTable(
       .where(sql`${table.pinned} = true`),
     check(
       "experiences_icon_name_valid",
-      sql`${table.iconName} in ('briefcase', 'building', 'cloud', 'code', 'globe', 'palette', 'search', 'terminal')`,
+      sql`${table.iconName} in ('briefcase', 'badge-check', 'blocks', 'bot', 'building', 'chart', 'cloud', 'code', 'cpu', 'database', 'factory', 'globe', 'graduation-cap', 'handshake', 'heart-handshake', 'landmark', 'layers', 'lightbulb', 'megaphone', 'microscope', 'palette', 'pen-tool', 'rocket', 'search', 'server', 'shield-check', 'smartphone', 'sparkles', 'terminal', 'users', 'workflow', 'wrench')`,
     ),
     check(
       "experiences_date_order_valid",
