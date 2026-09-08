@@ -18,6 +18,7 @@ import { LineInput, LineSelect } from "@/components/admin/line-input";
 import { UploadField } from "@/components/admin/upload-field";
 import { Button } from "@/components/ui/button";
 import { projectIconOptions } from "@/config/project-icons";
+import { IN_PRODUCTION_STATUS_LABEL } from "@/config/portfolio";
 import type { Project } from "@/db/schema";
 import { cleanupUpload } from "@/lib/storage/cleanup-upload";
 import { useAdminBase } from "@/lib/use-admin-base";
@@ -196,7 +197,10 @@ export function ProjectForm({ project }: { project?: Project }) {
             />
           </FieldRow>
           <FieldRow label="Status label" note="optional">
-            <LineInput placeholder="e.g. Live" {...register("statusLabel")} />
+            <LineInput
+              placeholder={`e.g. ${IN_PRODUCTION_STATUS_LABEL}`}
+              {...register("statusLabel")}
+            />
           </FieldRow>
           <FieldRow label="URL" note={errors.url ? "https:// only" : undefined}>
             <LineInput
@@ -249,6 +253,10 @@ export function ProjectForm({ project }: { project?: Project }) {
             </>
           ) : null}
 
+          <FieldNote>
+            Use “{IN_PRODUCTION_STATUS_LABEL}” when this published project is a
+            production product and should count in the portfolio stats.
+          </FieldNote>
           <FieldNote>
             {live
               ? "Pin it from the projects list to show it on the homepage."

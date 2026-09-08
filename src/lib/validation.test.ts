@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   bippyVisibilitySchema,
+  experienceSchema,
   nowLinkSchema,
   nowSectionSchema,
   projectSchema,
@@ -124,25 +125,24 @@ describe("portfolio validation", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts only the two availability states", () => {
-    const settings = {
-      displayName: "Aliameen Kareem",
-      role: "Full-Stack Engineer",
-      introduction: "I am a **Software Engineer**.",
-      email: "ameen@example.com",
-      contactLinks: {},
-      location: "Lagos, Nigeria",
-      hackathonWins: 0,
+  it("accepts only the three experience work modes", () => {
+    const experience = {
+      company: "Example Company",
+      role: "Product engineer",
+      startDate: "2025-01-01",
+      endDate: "",
+      iconName: "briefcase",
+      pinned: false,
+      highlights: [],
     };
 
+    for (const location of ["Remote", "Hybrid", "On-site"]) {
+      expect(
+        experienceSchema.safeParse({ ...experience, location }).success,
+      ).toBe(true);
+    }
     expect(
-      profileSchema.safeParse({ ...settings, availability: "open" }).success,
-    ).toBe(true);
-    expect(
-      profileSchema.safeParse({ ...settings, availability: "booked" }).success,
-    ).toBe(true);
-    expect(
-      profileSchema.safeParse({ ...settings, availability: "maybe" }).success,
+      experienceSchema.safeParse({ ...experience, location: "Office" }).success,
     ).toBe(false);
   });
 

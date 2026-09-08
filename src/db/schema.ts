@@ -15,6 +15,7 @@ import type { Availability } from "@/config/availability";
 import type { PostLinkIconName } from "@/config/post-link-icons";
 import type { ProjectIconName } from "@/config/project-icons";
 import type { RecognitionIconName } from "@/config/recognition-icons";
+import type { ExperienceIconName } from "@/config/experience-icons";
 import type { TechStackGroupValue } from "@/config/tech-stack";
 
 export type ContactLinks = {
@@ -105,6 +106,64 @@ export const recognitions = pgTable(
     check(
       "recognitions_icon_name_valid",
       sql`${table.iconName} in ('trophy', 'award', 'medal', 'star', 'badge-check', 'crown', 'sparkles', 'github', 'x', 'instagram', 'tiktok', 'linkedin', 'whatsapp', 'youtube', 'globe')`,
+    ),
+  ],
+);
+
+export const experiences = pgTable(
+  "experiences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    company: text("company").notNull(),
+    role: text("role").notNull(),
+    startDate: timestamp("start_date", { withTimezone: true }).notNull(),
+    endDate: timestamp("end_date", { withTimezone: true }),
+    location: text("location"),
+    iconName: text("icon_name")
+      .$type<ExperienceIconName>()
+      .notNull()
+      .default("briefcase"),
+    pinned: boolean("pinned").notNull().default(false),
+    published: boolean("published").notNull().default(false),
+    displayOrder: integer("display_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("experiences_public_order_idx").on(
+      table.published,
+      table.pinned,
+      table.displayOrder,
+      table.startDate,
+    ),
+    uniqueIndex("experiences_single_pinned_idx")
+      .on(table.pinned)
+      .where(sql`${table.pinned} = true`),
+    check(
+      "experiences_icon_name_valid",
+      sql`${table.iconName} in ('briefcase', 'building', 'cloud', 'code', 'globe', 'palette', 'search', 'terminal')`,
+    ),
+    check(
+      "experiences_date_order_valid",
+      sql`${table.endDate} is null or ${table.endDate} >= ${table.startDate}`,
+    ),
+  ],
+);
+
+export const experienceHighlights = pgTable(
+  "experience_highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    experienceId: uuid("experience_id")
+      .notNull()
+      .references(() => experiences.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("experience_highlights_order_idx").on(
+      table.experienceId,
+      table.displayOrder,
     ),
   ],
 );
@@ -694,6 +753,8 @@ export const mcpOAuthTokens = pgTable(
 
 export type Project = typeof projects.$inferSelect;
 export type Recognition = typeof recognitions.$inferSelect;
+export type Experience = typeof experiences.$inferSelect;
+export type ExperienceHighlight = typeof experienceHighlights.$inferSelect;
 export type RecognitionImage = typeof recognitionImages.$inferSelect;
 export type NowSection = typeof nowSection.$inferSelect;
 export type NowLink = typeof nowLinks.$inferSelect;

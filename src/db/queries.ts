@@ -12,12 +12,15 @@ import {
   sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/client";
+import { IN_PRODUCTION_STATUS_LABEL } from "@/config/portfolio";
 import {
   nowLinks,
   nowSection,
   postLinks,
   posts,
   projects,
+  experiences,
+  experienceHighlights,
   recognitionImages,
   recognitions,
   siteSettings,
@@ -27,6 +30,8 @@ import {
   type Recognition,
   type SiteSettings,
   type TechStackItem,
+  type Experience,
+  type ExperienceHighlight,
 } from "@/db/schema";
 import { defaultAvailability } from "@/config/availability";
 import { toPublicNow } from "@/lib/now";
@@ -81,9 +86,10 @@ export async function getPublicPortfolio() {
       settings: defaultSiteSettings,
       now: null,
       projects: [],
+      experiences: [],
       recognitions: [],
       techStack: [] as TechStackItem[],
-      publishedProjectCount: 0,
+      inProductionProjectCount: 0,
       statsSnapshot: null,
     };
   }
@@ -94,6 +100,7 @@ export async function getPublicPortfolio() {
     nowSectionRows,
     nowLinkRows,
     projectRows,
+    experienceRows,
     recognitionRows,
     techStackRows,
     publishedProjectRows,
@@ -116,6 +123,15 @@ export async function getPublicPortfolio() {
       .limit(MAX_PINNED_PROJECTS),
     db
       .select()
+      .from(experiences)
+      .where(eq(experiences.published, true))
+      .orderBy(
+        desc(experiences.pinned),
+        asc(experiences.displayOrder),
+        desc(experiences.startDate),
+      ),
+    db
+      .select()
       .from(recognitions)
       .where(
         and(eq(recognitions.published, true), isNotNull(recognitions.pinnedAt)),
@@ -129,11 +145,18 @@ export async function getPublicPortfolio() {
       .from(techStackItems)
       .where(eq(techStackItems.visible, true))
       .orderBy(asc(techStackItems.displayOrder), asc(techStackItems.createdAt)),
-    // Every project row counts, not just the twelve the homepage shows.
+    // Only an explicit "In Prod" status counts here. A project can be
+    // published without being a production product (for example, an
+    // experiment or an archived build).
     db
       .select({ value: count() })
       .from(projects)
-      .where(eq(projects.published, true)),
+      .where(
+        and(
+          eq(projects.published, true),
+          sql`lower(trim(${projects.statusLabel})) = ${IN_PRODUCTION_STATUS_LABEL.toLowerCase()}`,
+        ),
+      ),
     // Tolerated rather than awaited plainly: if the build ships before the
     // migration runs, this table does not exist yet, and a rejected query in
     // this Promise.all would take the entire homepage down with it. The strip
@@ -155,11 +178,68 @@ export async function getPublicPortfolio() {
     settings: settingsRows[0] ?? defaultSiteSettings,
     now: toPublicNow(nowSectionRows[0], nowLinkRows),
     projects: projectRows,
+    experiences: await withExperienceDetails(experienceRows),
     recognitions: await withRecognitionDetails(recognitionRows),
     techStack: techStackRows,
-    publishedProjectCount: publishedProjectRows[0]?.value ?? 0,
+    inProductionProjectCount: publishedProjectRows[0]?.value ?? 0,
     statsSnapshot: snapshotRows[0] ?? null,
   };
+}
+
+export type PublicExperience = Experience & {
+  highlights: ExperienceHighlight[];
+};
+
+async function withExperienceDetails(
+  rows: Experience[],
+): Promise<PublicExperience[]> {
+  if (!rows.length) return [];
+  const highlights = await getDb()
+    .select()
+    .from(experienceHighlights)
+    .where(
+      inArray(
+        experienceHighlights.experienceId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(
+      asc(experienceHighlights.displayOrder),
+      asc(experienceHighlights.createdAt),
+    );
+  const byExperience = new Map<string, ExperienceHighlight[]>();
+  for (const highlight of highlights) {
+    const list = byExperience.get(highlight.experienceId) ?? [];
+    list.push(highlight);
+    byExperience.set(highlight.experienceId, list);
+  }
+  return rows.map((row) => ({
+    ...row,
+    highlights: byExperience.get(row.id) ?? [],
+  }));
+}
+
+export async function getAdminExperiences() {
+  return getDb()
+    .select()
+    .from(experiences)
+    .orderBy(
+      desc(experiences.pinned),
+      asc(experiences.displayOrder),
+      desc(experiences.startDate),
+    );
+}
+
+export async function getAdminExperience(id: string) {
+  const [experience, highlights] = await Promise.all([
+    getDb().select().from(experiences).where(eq(experiences.id, id)),
+    getDb()
+      .select()
+      .from(experienceHighlights)
+      .where(eq(experienceHighlights.experienceId, id))
+      .orderBy(asc(experienceHighlights.displayOrder)),
+  ]);
+  return experience[0] ? { experience: experience[0], highlights } : null;
 }
 
 // Deliberately uncached. /projects is force-dynamic, so the unstable_cache
