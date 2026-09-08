@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export type PortfolioMcpScope =
-  "portfolio:read" | "portfolio:draft" | "portfolio:propose";
+  | "portfolio:read"
+  | "portfolio:draft"
+  | "portfolio:propose";
 
 export const articleImageInputSchema = z.object({
   file: z.object({
