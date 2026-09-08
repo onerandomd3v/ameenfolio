@@ -48,7 +48,6 @@ import { postLinkIconValues } from "@/config/post-link-icons";
 import {
   getAdminProject,
   getAdminExperience,
-  getAdminExperiences,
   getAdminRecognitions,
   getAdminSettings,
   getTakenSlugs,
@@ -218,16 +217,6 @@ async function executeApprovalDecision(
         const input = z
           .object({ ids: z.array(z.uuid()).min(1).max(100) })
           .parse(approval.payload);
-        const currentIds = (await getAdminExperiences()).map((item) => item.id);
-        if (
-          input.ids.length !== currentIds.length ||
-          new Set(input.ids).size !== currentIds.length ||
-          input.ids.some((id) => !currentIds.includes(id))
-        ) {
-          throw new Error(
-            "This experience order is stale. Prepare a new reorder proposal.",
-          );
-        }
         actionError(await reorderExperiences(input.ids));
         break;
       }
