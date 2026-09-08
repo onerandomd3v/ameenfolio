@@ -108,7 +108,7 @@ export function GithubActivity({
         className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <svg
-          dir="ltr"
+          style={{ direction: "ltr" }}
           viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
           width={CHART_WIDTH}
           height={CHART_HEIGHT}
@@ -122,7 +122,7 @@ export function GithubActivity({
               key={month.index}
               x={month.index * (CELL_SIZE + CELL_GAP)}
               y="10"
-              className="fill-muted-foreground font-mono text-[9px]"
+              className="fill-foreground font-mono text-[9px]"
             >
               {month.label}
             </text>

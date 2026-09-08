@@ -3,10 +3,10 @@ import "client-only";
 // The same key the inline script in layout.tsx reads before first paint.
 const STORAGE_KEY = "theme";
 
-// Matches the duration in globals.css. Cleared on a timer rather than
+// Slightly outlasts the colour transition in globals.css. Cleared on a timer rather than
 // transitionend, which fires once per property per element — thousands of times
 // on a full page.
-const TRANSITION_MS = 320;
+const TRANSITION_MS = 240;
 let clearTransition: number | undefined;
 
 /**
