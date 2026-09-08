@@ -111,9 +111,7 @@ export function BippyWorkspaceSidebar({
         },
       );
       const result = (await response.json().catch(() => null)) as
-        | AssistantThreadSummary
-        | { error?: string }
-        | null;
+        AssistantThreadSummary | { error?: string } | null;
       if (!response.ok || !result || !("id" in result)) {
         throw new Error(
           result && "error" in result
