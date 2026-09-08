@@ -129,7 +129,7 @@ export function StatsStrip({
           wrapped two-column layout — Tailwind's divide-* utilities instead put
           a rule on the first cell of every wrapped row. overflow-hidden is what
           lets the corner cells be clipped by the radius. */}
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border border-border bg-border sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border border-border bg-foreground/20 sm:grid-cols-4">
         {cells.map((cell) => {
           // Filtered on their own content rather than on the value. Gating
           // them behind the value meant a broken streak hid the record beneath
