@@ -1,5 +1,5 @@
 import type { StatsSnapshot } from "@/db/schema";
-type ActivityDay = { date: string; count: number };
+type ActivityDay = { date: string; count: number | null };
 
 const WEEK_COUNT = 53;
 const DAY_COUNT = 7;
@@ -70,7 +70,11 @@ function buildWeeks(days: ActivityDay[]) {
     Array.from({ length: DAY_COUNT }, (_, dayIndex) => {
       const date = addDays(start, weekIndex * DAY_COUNT + dayIndex);
       const key = dateKey(date);
-      return { date, key, count: counts.get(key) ?? 0 };
+      return {
+        date,
+        key,
+        count: !latest || key <= latest ? (counts.get(key) ?? 0) : null,
+      };
     }),
   );
 }
@@ -136,9 +140,15 @@ export function GithubActivity({
                 width={CELL_SIZE}
                 height={CELL_SIZE}
                 rx="2"
-                className={contributionLevel(day.count, maximum)}
+                className={
+                  day.count === null
+                    ? activityLevels[0]
+                    : contributionLevel(day.count, maximum)
+                }
               >
-                <title>{`${day.key}: ${day.count} ${day.count === 1 ? "contribution" : "contributions"}`}</title>
+                {day.count === null ? null : (
+                  <title>{`${day.key}: ${day.count} ${day.count === 1 ? "contribution" : "contributions"}`}</title>
+                )}
               </rect>
             )),
           )}
