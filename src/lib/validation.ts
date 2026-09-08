@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { availabilityValues } from "@/config/availability";
 import { nowLinkIconValues } from "@/config/now-link-icons";
 import { postLinkIconValues } from "@/config/post-link-icons";
 import { projectIconValues } from "@/config/project-icons";
 import { recognitionIconNames } from "@/config/recognition-icons";
 import { techStackGroupValues } from "@/config/tech-stack";
+import { experienceIconValues } from "@/config/experience-icons";
 import { cardWordLimitMessage, withinCardWordLimit } from "@/lib/word-count";
 
 // A prefix check alone accepts the bare string "https://", which passes
@@ -126,6 +126,33 @@ export const techStackItemSchema = z.object({
   visible: z.boolean(),
 });
 
+export const experienceHighlightSchema = z.object({
+  body: z.string().trim().min(1).max(500),
+  displayOrder: z.number().int().min(0).max(999),
+});
+
+export const experienceSchema = z
+  .object({
+    company: z.string().trim().min(2).max(120),
+    role: z.string().trim().max(120),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    endDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
+    location: z
+      .union([z.enum(["Remote", "Hybrid", "On-site"]), z.literal("")])
+      .optional(),
+    iconName: z.enum(experienceIconValues),
+    pinned: z.boolean(),
+    highlights: z.array(experienceHighlightSchema).max(12),
+  })
+  .refine((value) => value.pinned || value.role.length >= 2, {
+    path: ["role"],
+    message: "Role is required for work-history entries.",
+  })
+  .refine((value) => !value.endDate || value.endDate >= value.startDate, {
+    path: ["endDate"],
+    message: "End date must be on or after start date.",
+  });
+
 export const postLinkSchema = z.object({
   label: z.string().trim().min(1).max(80),
   url: z.url().startsWith("https://"),
@@ -222,7 +249,6 @@ export const profileSchema = z.object({
   // Not derivable from anything the site stores, so the owner types it. Capped
   // at two digits because the strip gives the value one short line.
   hackathonWins: z.number().int().min(0).max(99),
-  availability: z.enum(availabilityValues),
 });
 
 // What search engines and link previews show. All that is left on Settings.
@@ -255,6 +281,7 @@ export const uploadRequestSchema = z.object({
 });
 
 export type ProjectInput = z.infer<typeof projectSchema>;
+export type ExperienceInput = z.infer<typeof experienceSchema>;
 export type RecognitionInput = z.infer<typeof recognitionSchema>;
 export type RecognitionFormInput = z.infer<typeof recognitionFormSchema>;
 export type RecognitionImageInput = z.infer<typeof recognitionImageSchema>;

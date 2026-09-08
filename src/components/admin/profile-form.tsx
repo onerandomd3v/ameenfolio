@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -11,7 +11,6 @@ import {
   FieldRow,
   SectionHeading,
 } from "@/components/admin/admin-primitives";
-import { AvailabilityPicker } from "@/components/admin/availability-picker";
 import { LineInput } from "@/components/admin/line-input";
 import { ProfileImageField } from "@/components/admin/profile-image-field";
 import { ResumeField } from "@/components/admin/resume-field";
@@ -52,7 +51,6 @@ export function ProfileForm({ settings }: { settings: SiteSettings }) {
       resumeKey: settings.resumeKey ?? undefined,
       resumeFilename: settings.resumeFilename ?? undefined,
       hackathonWins: settings.hackathonWins,
-      availability: settings.availability,
     },
   });
 
@@ -162,19 +160,6 @@ export function ProfileForm({ settings }: { settings: SiteSettings }) {
               {...register("hackathonWins", { valueAsNumber: true })}
             />
           </FieldRow>
-          <FieldRow label="Availability" note="shown under your name">
-            <Controller
-              control={control}
-              name="availability"
-              render={({ field }) => (
-                <AvailabilityPicker
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </FieldRow>
-
           <SectionHeading className="mt-8">Contact links</SectionHeading>
           <FieldRow label="Email">
             <LineInput

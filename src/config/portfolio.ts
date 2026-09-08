@@ -11,3 +11,9 @@ export const portfolioIdentity = {
   introduction:
     "I am a **Software Engineer** and **Founder** building products. From idea to design, engineering, deployment, and leading the team behind it.\nI build, ship, and share the journey.",
 } as const;
+
+// A project only contributes to the production total when this exact status
+// label is selected in the admin project form. Publishing alone is not a
+// production claim: drafts and published experiments can both exist without
+// being live products.
+export const IN_PRODUCTION_STATUS_LABEL = "In Prod";

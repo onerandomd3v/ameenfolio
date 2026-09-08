@@ -13,6 +13,7 @@ import { ResumeDownloadButton } from "@/components/portfolio/resume-download-but
 import { SendMessageDialog } from "@/components/portfolio/send-message-dialog";
 import { ProjectsEmptyState } from "@/components/portfolio/projects-empty-state";
 import { GithubActivity } from "@/components/portfolio/github-activity";
+import { ExperienceSection } from "@/components/portfolio/experience-section";
 import { RecognitionRow } from "@/components/portfolio/recognition-row";
 import { RecognitionsEmptyState } from "@/components/portfolio/recognitions-empty-state";
 import { SectionHeading } from "@/components/portfolio/section-heading";
@@ -28,12 +29,7 @@ import {
   XIcon,
   YouTubeIcon,
 } from "@/components/icons/brand-icons";
-import {
-  BriefcaseGlyph,
-  MailGlyph,
-  UserGlyph,
-} from "@/components/icons/glyph-icons";
-import { availabilityLabel } from "@/config/availability";
+import { MailGlyph, UserGlyph } from "@/components/icons/glyph-icons";
 import { portfolioIdentity } from "@/config/portfolio";
 import { instrumentSerif } from "@/app/fonts";
 import { initialsOf, resolveIdentity } from "@/lib/identity";
@@ -72,9 +68,10 @@ export default async function HomePage() {
     settings,
     now,
     projects,
+    experiences,
     recognitions,
     techStack,
-    publishedProjectCount,
+    inProductionProjectCount,
     statsSnapshot,
   } = await getPublicPortfolio();
 
@@ -184,10 +181,6 @@ export default async function HomePage() {
               <UserGlyph className="size-3.5 shrink-0" aria-hidden="true" />
               {role}
             </p>
-            <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-              <BriefcaseGlyph className="size-3.5" aria-hidden="true" />
-              {availabilityLabel(settings.availability)}
-            </p>
           </div>
         </div>
         <p className="mt-8 max-w-xl whitespace-pre-line text-pretty text-base leading-7 text-foreground/90">
@@ -210,7 +203,7 @@ export default async function HomePage() {
         <StatsStrip
           snapshot={statsSnapshot}
           hackathonWins={settings.hackathonWins}
-          publishedProjectCount={publishedProjectCount}
+          inProductionProjectCount={inProductionProjectCount}
         />
 
         <section className="mt-6" aria-label="Contact links">
@@ -307,6 +300,8 @@ export default async function HomePage() {
       </section>
 
       <WritingSection posts={pinnedPosts} />
+
+      <ExperienceSection items={experiences} />
 
       <section className="mt-24" aria-labelledby="recognitions-heading">
         <SectionHeading id="recognitions-heading" title="Recognitions" />

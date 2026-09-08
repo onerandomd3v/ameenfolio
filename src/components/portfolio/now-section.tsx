@@ -9,13 +9,14 @@ import type { PublicNow } from "@/lib/now";
 
 export function NowSection({ section }: { section: PublicNow | null }) {
   return (
-    <section className="mt-8 max-w-xl" aria-labelledby="now-heading">
+    <section
+      className={`${nowFont.className} mt-8 max-w-xl`}
+      aria-labelledby="now-heading"
+    >
       <SectionHeading id="now-heading" title="Now" />
       {section ? (
         <>
-          <p
-            className={`${nowFont.className} mt-5 text-pretty text-[17px] font-semibold leading-8 text-foreground`}
-          >
+          <p className="mt-5 text-pretty text-[17px] font-medium leading-8 text-foreground">
             {section.description}
           </p>
 
@@ -26,7 +27,7 @@ export function NowSection({ section }: { section: PublicNow | null }) {
                   <Badge
                     asChild
                     variant="secondary"
-                    className="min-h-9 gap-2 rounded-[4px] px-3 text-sm font-semibold hover:text-primary"
+                    className="min-h-9 gap-2 rounded-[4px] px-3 text-sm font-bold hover:text-primary"
                   >
                     <a
                       href={item.url}
