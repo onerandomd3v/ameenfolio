@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { LoaderCircle, Plus, Trash2 } from "lucide-react";
+import {
+  Building2,
+  LoaderCircle,
+  MapPin,
+  Plus,
+  Trash2,
+  Wifi,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -15,7 +22,18 @@ import {
   FieldRow,
   SectionHeading,
 } from "@/components/admin/admin-primitives";
-import { LineInput, LineSelect } from "@/components/admin/line-input";
+import { OptionPicker } from "@/components/admin/option-picker";
+import { LineInput } from "@/components/admin/line-input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { experienceIconOptions } from "@/config/experience-icons";
@@ -34,6 +52,12 @@ const empty: ExperienceInput = {
   highlights: [],
 };
 
+const workModeOptions = [
+  { value: "Remote", label: "Remote", icon: Wifi },
+  { value: "Hybrid", label: "Hybrid", icon: Building2 },
+  { value: "On-site", label: "On-site", icon: MapPin },
+] as const;
+
 function dateValue(date: Date | null) {
   return date ? new Date(date).toISOString().slice(0, 10) : "";
 }
@@ -48,6 +72,7 @@ export function ExperienceForm({
   const router = useRouter();
   const base = useAdminBase();
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const form = useForm<ExperienceInput>({
     resolver: zodResolver(experienceSchema),
     defaultValues: experience
@@ -104,7 +129,8 @@ export function ExperienceForm({
   }
 
   async function removeExperience() {
-    if (!experience || !window.confirm(`Delete ${experience.company}?`)) return;
+    if (!experience) return;
+    setDeleteOpen(false);
     setBusy(true);
     try {
       const result = await deleteExperience(experience.id);
@@ -189,12 +215,14 @@ export function ExperienceForm({
             control={control}
             name="location"
             render={({ field }) => (
-              <LineSelect value={field.value ?? ""} onChange={field.onChange}>
-                <option value="">Not specified</option>
-                <option value="Remote">Remote</option>
-                <option value="Hybrid">Hybrid</option>
-                <option value="On-site">On-site</option>
-              </LineSelect>
+              <OptionPicker
+                title="Work mode"
+                value={field.value ?? ""}
+                options={workModeOptions}
+                clearable
+                clearLabel="Not specified"
+                onChange={field.onChange}
+              />
             )}
           />
         </FieldRow>
@@ -203,13 +231,12 @@ export function ExperienceForm({
             control={control}
             name="iconName"
             render={({ field }) => (
-              <LineSelect value={field.value} onChange={field.onChange}>
-                {experienceIconOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </LineSelect>
+              <OptionPicker
+                title="Experience icon"
+                value={field.value}
+                options={experienceIconOptions}
+                onChange={field.onChange}
+              />
             )}
           />
         </FieldRow>
@@ -262,7 +289,7 @@ export function ExperienceForm({
             type="button"
             variant="ghost"
             disabled={!experience || busy}
-            onClick={removeExperience}
+            onClick={() => setDeleteOpen(true)}
           >
             Delete
           </Button>
@@ -276,6 +303,30 @@ export function ExperienceForm({
           </Button>
         </div>
       </form>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent size="sm" className="admin-theme">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this experience?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {experience
+                ? `“${experience.company}” and its highlights will be permanently removed.`
+                : "This experience and its highlights will be permanently removed."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>
+              Keep experience
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void removeExperience()}
+            >
+              Delete experience
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminPage>
   );
 }
