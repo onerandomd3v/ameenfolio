@@ -44,7 +44,7 @@ export function RecognitionDialog({
           onto a plain background and needs nothing. */}
       <DialogContent
         className={cn(
-          "sm:max-w-md",
+          "border-0 bg-transparent p-0 shadow-none sm:max-w-md",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
           "[&_[data-slot=dialog-close]]:bg-background/70 [&_[data-slot=dialog-close]]:p-1",
           "[&_[data-slot=dialog-close]]:opacity-90 [&_[data-slot=dialog-close]]:backdrop-blur-sm",
@@ -55,19 +55,19 @@ export function RecognitionDialog({
           <Carousel images={images} title={title} mediaBase={mediaBase} />
         ) : null}
 
-        {/* Under the carousel rather than above it: the image is what the
-            reader opened this for, and the title reads as its caption.
-            DialogHeader is not used — its sm:text-left would undo the
-            centring, and it exists only to stack a title and description. */}
-        <DialogTitle className="text-center text-base leading-6 text-balance">
-          {title}
-        </DialogTitle>
+        {/* The image and carousel dots stay visually free-standing. Only the
+            caption and outward actions receive a card surface. */}
+        <div className="mt-3 grid gap-3 rounded-lg border border-border bg-card p-4">
+          <DialogTitle className="text-center text-base leading-6 text-balance">
+            {title}
+          </DialogTitle>
 
-        <RecognitionActions
-          articleSlug={articleSlug}
-          verificationUrl={verificationUrl}
-          onNavigate={() => onOpenChange(false)}
-        />
+          <RecognitionActions
+            articleSlug={articleSlug}
+            verificationUrl={verificationUrl}
+            onNavigate={() => onOpenChange(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -116,7 +116,7 @@ function Carousel({
         tabIndex={single ? undefined : 0}
         aria-label={single ? undefined : `${images.length} images`}
         className={cn(
-          "flex snap-x snap-mandatory overflow-x-auto rounded-lg",
+          "flex snap-x snap-mandatory overflow-x-auto",
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         )}
