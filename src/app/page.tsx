@@ -208,7 +208,7 @@ export default async function HomePage() {
 
         <section className="mt-6" aria-label="Contact links">
           <nav>
-            <ul className="flex flex-wrap gap-1.5 sm:flex-nowrap sm:gap-2">
+            <ul className="flex flex-nowrap gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2">
               {contactItems.map((item) => {
                 const Icon = item.icon;
 
@@ -245,7 +245,7 @@ export default async function HomePage() {
                   className="min-h-8 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background no-underline hover:bg-foreground/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-3 sm:text-[13px]"
                 />
               </li>
-              <li className="basis-full shrink-0 sm:basis-auto">
+              <li className="shrink-0">
                 <span className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background sm:gap-1.5 sm:px-3 sm:text-[13px]">
                   <GlobeIcon className="size-3.5" aria-hidden="true" />
                   {settings.location}
