@@ -302,6 +302,13 @@
       "when": 1788842156259,
       "tag": "0042_profile_location",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1788844835835,
+      "tag": "0043_github_activity_snapshot",
+      "breakpoints": true
     }
   ]
 }

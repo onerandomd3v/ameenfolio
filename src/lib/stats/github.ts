@@ -3,6 +3,7 @@ import "server-only";
 import {
   contributionWindows,
   mergeContributionDays,
+  recentContributionDays,
   summarizeContributions,
   type ContributionCalendar,
 } from "@/lib/stats/contributions";
@@ -19,6 +20,7 @@ export type GithubStats = {
   longestStreakStart: Date | null;
   longestStreakEnd: Date | null;
   firstContributionAt: Date | null;
+  contributionDays: { date: string; count: number }[];
 };
 
 async function graphql<T>(
@@ -98,7 +100,10 @@ export async function fetchGithubStats(
     token,
   );
 
-  return summarizeContributions(
-    mergeContributionDays(Object.values(calendars.user)),
-  );
+  const days = mergeContributionDays(Object.values(calendars.user));
+
+  return {
+    ...summarizeContributions(days),
+    contributionDays: recentContributionDays(days),
+  };
 }

@@ -266,6 +266,12 @@ export const statsSnapshot = pgTable(
     firstContributionAt: timestamp("first_contribution_at", {
       withTimezone: true,
     }),
+    // The recent daily history is the source for the public activity grid;
+    // keeping it with the cached aggregate avoids a GitHub request per visit.
+    contributionDays: jsonb("contribution_days")
+      .$type<{ date: string; count: number }[]>()
+      .notNull()
+      .default([]),
     fetchedAt: timestamp("fetched_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

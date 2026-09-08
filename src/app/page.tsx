@@ -12,6 +12,7 @@ import { ProjectRow } from "@/components/portfolio/project-row";
 import { ResumeDownloadButton } from "@/components/portfolio/resume-download-button";
 import { SendMessageDialog } from "@/components/portfolio/send-message-dialog";
 import { ProjectsEmptyState } from "@/components/portfolio/projects-empty-state";
+import { GithubActivity } from "@/components/portfolio/github-activity";
 import { RecognitionRow } from "@/components/portfolio/recognition-row";
 import { RecognitionsEmptyState } from "@/components/portfolio/recognitions-empty-state";
 import { SectionHeading } from "@/components/portfolio/section-heading";
@@ -83,7 +84,10 @@ export default async function HomePage() {
   // Refreshed after the response is flushed rather than before it, so a slow
   // or unreachable GitHub delays nobody's page load. Whoever asks next gets
   // the newer numbers; this visitor still sees the strip immediately.
-  if (canFetchGithubStats() && isSnapshotStale(statsSnapshot)) {
+  if (
+    canFetchGithubStats() &&
+    (isSnapshotStale(statsSnapshot) || !statsSnapshot?.contributionDays.length)
+  ) {
     after(refreshStatsSnapshot);
   }
 
@@ -250,6 +254,8 @@ export default async function HomePage() {
 
       <section className="mt-14" aria-labelledby="projects-heading">
         <SectionHeading id="projects-heading" title="Recent Projects" />
+        <GithubActivity snapshot={statsSnapshot} />
+
         {projects.length ? (
           <>
             <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
