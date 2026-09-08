@@ -20,11 +20,7 @@ export function TechStackSection({ items }: { items: TechStackItem[] }) {
   if (!groups.length) return null;
 
   return (
-    <section
-      className="mt-14"
-      aria-labelledby="stack-heading"
-      data-bippy-section="stack"
-    >
+    <section className="mt-14" aria-labelledby="stack-heading">
       <SectionHeading id="stack-heading" title="Tech Stack" />
       <TechStackGroups groups={groups} />
     </section>

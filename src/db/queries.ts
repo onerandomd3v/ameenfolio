@@ -45,6 +45,7 @@ const defaultSiteSettings: SiteSettings = {
   introduction: null,
   email: "hello@example.com",
   contactLinks: {},
+  location: "Lagos, Nigeria",
   profileImageKey: null,
   resumeKey: null,
   resumeFilename: null,

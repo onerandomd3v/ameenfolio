@@ -14,6 +14,7 @@ await db.batch([
       id: 1,
       email: "hello@example.com",
       contactLinks: {},
+      location: "Lagos, Nigeria",
       seoTitle: "Aliameen Kareem — Full-Stack Engineer",
       seoDescription:
         "Selected projects, recognition, and the technologies behind Aliameen Kareem's work.",

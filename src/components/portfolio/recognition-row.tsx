@@ -18,6 +18,7 @@ type RecognitionRowProps = {
   verificationUrl: string | null;
   articleSlug?: string | null;
   images?: RecognitionDialogImage[];
+  mediaBase?: string;
 };
 
 const rowClassName =
@@ -52,6 +53,7 @@ export function RecognitionRow({
   verificationUrl,
   articleSlug = null,
   images = [],
+  mediaBase,
 }: RecognitionRowProps) {
   const [open, setOpen] = useState(false);
 
@@ -131,6 +133,7 @@ export function RecognitionRow({
         onOpenChange={setOpen}
         title={title}
         images={images}
+        mediaBase={mediaBase}
         articleSlug={articleSlug}
         verificationUrl={verificationUrl}
       />

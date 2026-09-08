@@ -22,6 +22,7 @@ type RecognitionDialogProps = {
   images: RecognitionDialogImage[];
   articleSlug: string | null;
   verificationUrl: string | null;
+  mediaBase?: string;
 };
 
 export function RecognitionDialog({
@@ -31,6 +32,7 @@ export function RecognitionDialog({
   images,
   articleSlug,
   verificationUrl,
+  mediaBase,
 }: RecognitionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,7 +51,9 @@ export function RecognitionDialog({
           "[&_[data-slot=dialog-close]]:hover:opacity-100",
         )}
       >
-        {images.length ? <Carousel images={images} title={title} /> : null}
+        {images.length ? (
+          <Carousel images={images} title={title} mediaBase={mediaBase} />
+        ) : null}
 
         {/* Under the carousel rather than above it: the image is what the
             reader opened this for, and the title reads as its caption.
@@ -84,9 +88,11 @@ export function RecognitionDialog({
 function Carousel({
   images,
   title,
+  mediaBase,
 }: {
   images: RecognitionDialogImage[];
   title: string;
+  mediaBase?: string;
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const [index, setIndex] = useState(0);
@@ -120,7 +126,11 @@ function Carousel({
             {/* Every image is stored square at a known size, so the frame is
                   reserved before anything loads and the dialog never jumps. */}
             <Image
-              src={`/media/${image.objectKey}`}
+              src={
+                mediaBase
+                  ? `${mediaBase}/${image.objectKey}`
+                  : `/media/${image.objectKey}`
+              }
               alt={recognitionImageAlt({
                 alt: image.alt,
                 title,
@@ -129,7 +139,13 @@ function Carousel({
               })}
               width={RECOGNITION_IMAGE_SIZE}
               height={RECOGNITION_IMAGE_SIZE}
-              sizes="(min-width: 640px) 28rem, 100vw"
+              // Recognition uploads are already cropped and compressed to a
+              // 1080px WebP. Serving that file directly avoids an optimizer
+              // request that otherwise starts only after the dialog opens.
+              unoptimized
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "auto"}
+              decoding="async"
               className="aspect-square w-full bg-muted object-cover"
             />
           </li>

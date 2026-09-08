@@ -9,11 +9,7 @@ import type { PublicNow } from "@/lib/now";
 
 export function NowSection({ section }: { section: PublicNow | null }) {
   return (
-    <section
-      className="mt-8 max-w-xl"
-      aria-labelledby="now-heading"
-      data-bippy-section="now"
-    >
+    <section className="mt-8 max-w-xl" aria-labelledby="now-heading">
       <SectionHeading id="now-heading" title="Now" />
       {section ? (
         <>

@@ -154,7 +154,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
   const movingRef = useRef(false);
   const suppressActivationRef = useRef(false);
   const hasCustomPositionRef = useRef(false);
-  const seenSectionsRef = useRef(new Set<string>());
   const previousPathRef = useRef(pathname);
   const messageTimeoutRef = useRef<number | null>(null);
   const dialogueDelayRef = useRef<number | null>(null);
@@ -713,63 +712,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
       document.removeEventListener("click", click);
     };
   }, [send, showDialogue, stopMovement]);
-
-  useEffect(() => {
-    if (pathname !== "/") return;
-    seenSectionsRef.current.clear();
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting || entry.intersectionRatio < 0.25) continue;
-          const section = (entry.target as HTMLElement).dataset.bippySection;
-          if (!section || seenSectionsRef.current.has(section)) continue;
-
-          seenSectionsRef.current.add(section);
-          if (isBippyDialogueKey(section)) showDialogue(section);
-          lastActivityRef.current = Date.now();
-          stopMovement();
-          if (section === "recognitions") {
-            send({ type: "ACTIVATE" });
-          } else if (section === "stack") {
-            send({ type: "START_WORK" });
-          } else {
-            send({ type: "NOTICE" });
-          }
-        }
-      },
-      { threshold: [0.25], rootMargin: "-10% 0px" },
-    );
-
-    const observedSections = new Set<HTMLElement>();
-    const observeSections = () => {
-      document
-        .querySelectorAll<HTMLElement>("[data-bippy-section]")
-        .forEach((section) => {
-          if (observedSections.has(section)) return;
-          observedSections.add(section);
-          observer.observe(section);
-        });
-    };
-
-    let scanFrame = 0;
-    const scheduleScan = () => {
-      if (scanFrame) return;
-      scanFrame = window.requestAnimationFrame(() => {
-        scanFrame = 0;
-        observeSections();
-      });
-    };
-
-    observeSections();
-    const mutations = new MutationObserver(scheduleScan);
-    mutations.observe(document.body, { childList: true, subtree: true });
-    return () => {
-      window.cancelAnimationFrame(scanFrame);
-      mutations.disconnect();
-      observer.disconnect();
-    };
-  }, [pathname, send, showDialogue, stopMovement]);
 
   useEffect(() => {
     const routeChanged = previousPathRef.current !== pathname;

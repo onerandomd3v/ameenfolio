@@ -214,6 +214,7 @@ export const siteSettings = pgTable(
       .$type<ContactLinks>()
       .notNull()
       .default({}),
+    location: text("location").notNull().default("Lagos, Nigeria"),
     // NULL means never edited, so the copy in src/config/portfolio.ts keeps
     // supplying it and the wording lives in one place until then.
     displayName: text("display_name"),

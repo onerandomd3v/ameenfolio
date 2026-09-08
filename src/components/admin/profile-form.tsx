@@ -47,6 +47,7 @@ export function ProfileForm({ settings }: { settings: SiteSettings }) {
       introduction: identity.introduction,
       email: settings.email,
       contactLinks: settings.contactLinks ?? {},
+      location: settings.location,
       profileImageKey: settings.profileImageKey ?? undefined,
       resumeKey: settings.resumeKey ?? undefined,
       resumeFilename: settings.resumeFilename ?? undefined,
@@ -180,6 +181,13 @@ export function ProfileForm({ settings }: { settings: SiteSettings }) {
               mono
               invalid={Boolean(errors.email)}
               {...register("email")}
+            />
+          </FieldRow>
+          <FieldRow label="Location" note="shown on your homepage">
+            <LineInput
+              placeholder="e.g. Lagos, Nigeria"
+              invalid={Boolean(errors.location)}
+              {...register("location")}
             />
           </FieldRow>
           {contactFields.map((field) => (
