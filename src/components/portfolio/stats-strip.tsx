@@ -144,7 +144,7 @@ export function StatsStrip({
               className={cn(
                 "flex flex-col bg-card px-4 py-5",
                 index < 2 && "border-b border-border sm:border-b-0",
-                index % 2 === 0 && index !== 2 && "border-r border-border",
+                index % 2 === 0 && "border-r border-border",
                 index === 1 && "sm:border-r sm:border-border",
                 index === 2 && "sm:border-r sm:border-border",
               )}
