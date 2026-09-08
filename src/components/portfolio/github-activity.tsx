@@ -8,6 +8,20 @@ const CELL_SIZE = 10;
 const CELL_GAP = 3;
 const CHART_WIDTH = WEEK_COUNT * (CELL_SIZE + CELL_GAP) - CELL_GAP;
 const CHART_HEIGHT = 108;
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
 const activityLevels = [
   "fill-[#ebedf0] dark:fill-[#161b22]",
   "fill-[#9be9a8] dark:fill-[#0e4429]",
@@ -29,10 +43,7 @@ function addDays(value: Date, amount: number) {
 }
 
 function formatMonth(value: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    timeZone: "UTC",
-  }).format(value);
+  return MONTH_LABELS[value.getUTCMonth()];
 }
 
 function activityPeriod(days: ActivityDay[]) {
@@ -127,8 +138,16 @@ export function GithubActivity({
           {months.map((month) => (
             <text
               key={month.index}
-              x={month.index * (CELL_SIZE + CELL_GAP)}
+              x={Math.min(
+                month.index * (CELL_SIZE + CELL_GAP),
+                CHART_WIDTH,
+              )}
               y="10"
+              textAnchor={
+                month.index * (CELL_SIZE + CELL_GAP) > CHART_WIDTH - 24
+                  ? "end"
+                  : "start"
+              }
               className="fill-foreground font-mono text-[9px]"
             >
               {month.label}
