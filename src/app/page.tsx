@@ -361,11 +361,6 @@ export default async function HomePage() {
           <SendMessageDialog
             email={settings.email}
             whatsappUrl={contactLinks.whatsapp}
-          />{" "}
-          or{" "}
-          <ResumeDownloadButton
-            hasResume={Boolean(settings.resumeKey)}
-            filename={settings.resumeFilename}
           />
           .
         </p>
