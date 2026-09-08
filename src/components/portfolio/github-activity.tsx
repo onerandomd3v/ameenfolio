@@ -109,6 +109,9 @@ export function GithubActivity({
     <div className="mt-5">
       <div
         dir="rtl"
+        tabIndex={0}
+        role="region"
+        aria-label="GitHub contribution activity"
         className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <svg
