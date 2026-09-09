@@ -42,7 +42,7 @@ export function RecognitionDialog({
           onto a plain background and needs nothing. */}
       <DialogContent
         className={cn(
-          "w-auto max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:max-w-[min(90vw,900px)]",
+          "w-[calc(100vw-2rem)] max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:w-auto sm:max-w-[min(90vw,900px)]",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
           "[&_[data-slot=dialog-close]]:bg-background/70 [&_[data-slot=dialog-close]]:p-1",
           "[&_[data-slot=dialog-close]]:opacity-90 [&_[data-slot=dialog-close]]:backdrop-blur-sm",
@@ -144,7 +144,7 @@ function Carousel({
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : "auto"}
               decoding="async"
-              className="h-auto max-h-[70vh] max-w-full w-auto object-contain"
+              className="h-auto max-h-[75vh] max-w-full w-auto object-contain sm:max-h-[70vh]"
             />
           </li>
         ))}
