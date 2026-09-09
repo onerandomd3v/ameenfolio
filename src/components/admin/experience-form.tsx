@@ -240,7 +240,10 @@ export function ExperienceForm({
             )}
           />
         </FieldRow>
-        <FieldRow label="Pinned status" note="one status can be pinned">
+        <FieldRow
+          label="Pinned status"
+          note="this is the always-visible current status"
+        >
           <Controller
             control={control}
             name="pinned"
@@ -288,7 +291,7 @@ export function ExperienceForm({
           <Button
             type="button"
             variant="ghost"
-            disabled={!experience || busy}
+            disabled={!experience || busy || experience.pinned}
             onClick={() => setDeleteOpen(true)}
           >
             Delete

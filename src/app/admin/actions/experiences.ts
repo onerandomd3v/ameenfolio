@@ -43,11 +43,18 @@ export async function saveExperience(
     };
     if (id) {
       const [existing] = await db
-        .select({ id: experiences.id })
+        .select({ id: experiences.id, pinned: experiences.pinned })
         .from(experiences)
         .where(eq(experiences.id, id))
         .limit(1);
       if (!existing) return { ok: false, message: "Experience not found." };
+      if (existing.pinned && !value.pinned) {
+        return {
+          ok: false,
+          message:
+            "The current status must stay pinned. Edit it or pin another entry first.",
+        };
+      }
     }
 
     const experienceId = id ?? randomUUID();
@@ -98,6 +105,17 @@ export async function saveExperience(
 export async function deleteExperience(id: string): Promise<ActionResult> {
   await requireAdmin();
   try {
+    const [existing] = await getDb()
+      .select({ pinned: experiences.pinned })
+      .from(experiences)
+      .where(eq(experiences.id, id))
+      .limit(1);
+    if (existing?.pinned) {
+      return {
+        ok: false,
+        message: "The current status cannot be deleted. Unpin it first.",
+      };
+    }
     const [row] = await getDb()
       .delete(experiences)
       .where(eq(experiences.id, id))
