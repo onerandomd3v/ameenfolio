@@ -59,7 +59,10 @@ export function TechStackGroups({ groups }: { groups: TechStackGroup[] }) {
         open={Boolean(active)}
         onOpenChange={(next) => !next && setOpen(null)}
       >
-        <DialogContent className="gap-0 p-5 sm:max-w-[420px]">
+        <DialogContent
+          showCloseButton={false}
+          className="gap-0 p-5 sm:max-w-[420px]"
+        >
           <DialogHeader>
             {/* Named for screen readers only. The chips are the whole content,
                 and a visible heading would repeat the row just tapped. */}
