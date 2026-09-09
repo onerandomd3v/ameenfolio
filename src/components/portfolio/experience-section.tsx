@@ -16,6 +16,10 @@ function dateRange(item: PublicExperience) {
   return `${month.format(item.startDate)} – ${item.endDate ? month.format(item.endDate) : "Now"}`;
 }
 
+function displayDate(item: PublicExperience) {
+  return item.pinned ? "Now" : dateRange(item);
+}
+
 function ExperienceMark({ item }: { item: PublicExperience }) {
   const Icon = getExperienceIcon(item.iconName);
 
@@ -133,7 +137,7 @@ export function ExperienceSection({ items }: { items: PublicExperience[] }) {
                         </span>
                       </span>
                       <span className="flex shrink-0 items-start gap-1 whitespace-nowrap pt-0.5 text-[13px] text-muted-foreground">
-                        <span>{dateRange(item)}</span>
+                        <span>{displayDate(item)}</span>
                         <ChevronDown
                           className={cn(
                             "-mr-1 size-3.5 shrink-0 transition-transform duration-[225ms] motion-reduce:transition-none",
