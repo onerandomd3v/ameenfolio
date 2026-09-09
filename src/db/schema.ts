@@ -43,12 +43,12 @@ export const projects = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     shortDescription: text("short_description").notNull(),
-    contribution: text("contribution"),
     statusLabel: text("status_label"),
     // One destination per project: clicking the card follows this. The
     // physical column keeps its old name so the rename costs no migration,
     // the same trade already made for contactLinks/social_links below.
     url: text("live_url").notNull(),
+    githubUrl: text("github_url"),
     iconKey: text("icon_key"),
     iconAlt: text("icon_alt"),
     iconName: text("icon_name")

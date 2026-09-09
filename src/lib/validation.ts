@@ -50,9 +50,11 @@ export const projectSchema = z
       .min(10)
       .max(500)
       .refine(withinCardWordLimit, cardWordLimitMessage),
-    contribution: optionalText(500),
     statusLabel: optionalText(60),
     url: z.url().startsWith("https://"),
+    githubUrl: z
+      .union([z.url().startsWith("https://"), z.literal("")])
+      .optional(),
     ...iconFields,
     iconName: z.enum(projectIconValues),
   })

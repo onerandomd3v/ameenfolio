@@ -45,9 +45,9 @@ export function ProjectForm({ project }: { project?: Project }) {
       ? {
           title: project.title,
           shortDescription: project.shortDescription,
-          contribution: project.contribution ?? undefined,
           statusLabel: project.statusLabel ?? undefined,
           url: project.url,
+          githubUrl: project.githubUrl ?? undefined,
           iconKey: project.iconKey ?? undefined,
           iconAlt: project.iconAlt ?? undefined,
           iconName: project.iconName,
@@ -190,12 +190,6 @@ export function ProjectForm({ project }: { project?: Project }) {
               {...register("shortDescription")}
             />
           </FieldRow>
-          <FieldRow label="Contribution" note="optional">
-            <LineInput
-              placeholder="e.g. Founding Engineer"
-              {...register("contribution")}
-            />
-          </FieldRow>
           <FieldRow label="Status label" note="optional">
             <LineInput
               placeholder={`e.g. ${IN_PRODUCTION_STATUS_LABEL}`}
@@ -211,8 +205,19 @@ export function ProjectForm({ project }: { project?: Project }) {
             />
           </FieldRow>
           <FieldNote>
-            One destination — clicking the card on the site follows this.
+            This is the live project URL. GitHub can be added separately below.
           </FieldNote>
+          <FieldRow
+            label="GitHub URL"
+            note={errors.githubUrl ? "https:// only" : "optional"}
+          >
+            <LineInput
+              mono
+              placeholder="https://github.com/..."
+              invalid={Boolean(errors.githubUrl)}
+              {...register("githubUrl")}
+            />
+          </FieldRow>
 
           <SectionHeading className="mt-8">Icon</SectionHeading>
           <FieldRow label="Source" note="for a project with no logo">

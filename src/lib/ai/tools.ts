@@ -146,9 +146,9 @@ const postLinkSchema = z.object({
 const agentProjectSchema = z.object({
   title: z.string().trim().min(2).max(120),
   shortDescription: z.string().trim().min(10).max(500),
-  contribution: z.string().trim().max(500).nullable(),
   statusLabel: z.string().trim().max(60).nullable(),
   url: z.url().startsWith("https://"),
+  githubUrl: z.url().startsWith("https://").nullable(),
   iconKey: z
     .string()
     .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
@@ -166,8 +166,8 @@ const agentRecognitionSchema = z.object({
 function projectInput(args: z.infer<typeof agentProjectSchema>) {
   return projectSchema.parse({
     ...args,
-    contribution: args.contribution ?? undefined,
     statusLabel: args.statusLabel ?? undefined,
+    githubUrl: args.githubUrl ?? undefined,
     iconKey: args.iconKey ?? undefined,
     iconAlt: args.iconAlt ?? undefined,
   });

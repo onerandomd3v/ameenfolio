@@ -340,9 +340,9 @@ async function executeApprovalDecision(
             projectSchema.parse({
               title: project.title,
               shortDescription: project.shortDescription,
-              contribution: project.contribution ?? undefined,
               statusLabel: project.statusLabel ?? undefined,
               url: project.url,
+              githubUrl: project.githubUrl ?? undefined,
               iconName: values.iconName,
               iconKey: values.iconKey ?? undefined,
               iconAlt: values.iconAlt ?? undefined,

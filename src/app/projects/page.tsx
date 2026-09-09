@@ -5,7 +5,7 @@ import {
 } from "@/db/queries";
 import { BippyCompanion } from "@/components/bippy/bippy-companion";
 import { PortfolioNav } from "@/components/portfolio/portfolio-nav";
-import { ProjectCard } from "@/components/portfolio/project-card";
+import { ProjectsList } from "@/components/portfolio/projects-list";
 import { ProjectsEmptyState } from "@/components/portfolio/projects-empty-state";
 import { WakaTimeActivityStrip } from "@/components/portfolio/wakatime-activity-strip";
 import { SendMessageDialog } from "@/components/portfolio/send-message-dialog";
@@ -35,15 +35,11 @@ export default async function ProjectsPage() {
       <WakaTimeActivityStrip />
       <header className="mt-7">
         <p className="mx-auto max-w-xl text-center text-sm font-semibold leading-6 text-foreground">
-          Record of products I have built and made contributions to.
+          Record of products I have built.
         </p>
       </header>
       {projects.length ? (
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        <ProjectsList projects={projects} />
       ) : (
         <ProjectsEmptyState description="The complete project archive will appear here as work is published." />
       )}

@@ -337,6 +337,13 @@
       "when": 1788990441710,
       "tag": "0047_closed_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1788991404773,
+      "tag": "0048_closed_rick_jones",
+      "breakpoints": true
     }
   ]
 }
