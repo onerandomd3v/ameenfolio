@@ -121,7 +121,7 @@ export function ExperienceSection({ items }: { items: PublicExperience[] }) {
                     <span className="block w-fit shrink-0 self-center">
                       <ExperienceMark item={item} />
                     </span>
-                    <div className="col-start-2 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <div className="col-start-2 flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-2">
                       <span className="min-w-0 shrink-0">
                         <span className="flex w-fit items-center gap-1 select-none">
                           <span className="block w-fit text-sm text-foreground">
@@ -132,11 +132,8 @@ export function ExperienceSection({ items }: { items: PublicExperience[] }) {
                           {item.role}
                         </span>
                       </span>
-                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] text-muted-foreground">
-                        <span>
-                          {dateRange(item)}
-                          {item.location ? ` · ${item.location}` : ""}
-                        </span>
+                      <span className="flex shrink-0 items-start gap-1 whitespace-nowrap pt-0.5 text-[13px] text-muted-foreground">
+                        <span>{dateRange(item)}</span>
                         <ChevronDown
                           className={cn(
                             "-mr-1 size-3.5 shrink-0 transition-transform duration-[225ms] motion-reduce:transition-none",
