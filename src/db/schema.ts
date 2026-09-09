@@ -218,7 +218,7 @@ export const techStackItems = pgTable(
     ),
     check(
       "tech_stack_group_key_valid",
-      sql`${table.groupKey} in ('core', 'tools')`,
+      sql`${table.groupKey} in ('core', 'tools', 'workflow', 'design')`,
     ),
   ],
 );

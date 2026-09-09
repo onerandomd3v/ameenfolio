@@ -17,7 +17,7 @@ export type TechStackGroup = {
 };
 
 /**
- * Two rows rather than two open lists.
+ * Group rows rather than open lists.
  *
  * The stack had grown to the point where it was the tallest thing on the page,
  * which put the closing invitation below a wall of chips. As rows it reads like
