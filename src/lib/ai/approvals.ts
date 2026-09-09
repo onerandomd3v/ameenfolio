@@ -327,7 +327,7 @@ async function executeApprovalDecision(
             iconName: z.enum(projectIconValues),
             iconKey: z
               .string()
-              .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
+              .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/)
               .nullable()
               .optional(),
             iconAlt: z.string().trim().max(180).nullable().optional(),
@@ -340,7 +340,6 @@ async function executeApprovalDecision(
             projectSchema.parse({
               title: project.title,
               shortDescription: project.shortDescription,
-              statusLabel: project.statusLabel ?? undefined,
               url: project.url,
               githubUrl: project.githubUrl ?? undefined,
               iconName: values.iconName,

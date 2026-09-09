@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import {
   refreshPublicContent,
@@ -7,7 +8,7 @@ import {
   type ActionResult,
 } from "@/app/admin/actions/shared";
 import { getDb } from "@/db/client";
-import { projects } from "@/db/schema";
+import { projectHighlights, projects } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/server";
 import { logServer } from "@/lib/logger";
 import { assertStoredUpload, deleteObject } from "@/lib/storage/server";
@@ -25,7 +26,6 @@ export async function saveProject(
   // saving a draft leaves it alone, which is what `publish` carries.
   const values = {
     ...parsed.data,
-    statusLabel: parsed.data.statusLabel || null,
     githubUrl: parsed.data.githubUrl || null,
     iconKey: parsed.data.iconKey ?? null,
     iconAlt: parsed.data.iconAlt || null,
@@ -46,6 +46,18 @@ export async function saveProject(
         .where(eq(projects.id, id))
         .returning({ id: projects.id });
       if (!row) return { ok: false, message: "Project not found." };
+      await getDb()
+        .delete(projectHighlights)
+        .where(eq(projectHighlights.projectId, id));
+      if (parsed.data.highlights?.length) {
+        await getDb().insert(projectHighlights).values(
+          parsed.data.highlights.map((highlight, index) => ({
+            projectId: id,
+            body: highlight.body,
+            displayOrder: index,
+          })),
+        );
+      }
       refreshPublicContent();
       if (previous[0]?.iconKey !== values.iconKey) {
         await deleteObject(previous[0]?.iconKey);
@@ -53,10 +65,20 @@ export async function saveProject(
       return { ok: true, id: row.id };
     }
 
+    const projectId = randomUUID();
     const [row] = await getDb()
       .insert(projects)
-      .values(values)
+      .values({ ...values, id: projectId })
       .returning({ id: projects.id });
+    if (parsed.data.highlights?.length) {
+      await getDb().insert(projectHighlights).values(
+        parsed.data.highlights.map((highlight, index) => ({
+          projectId: row.id,
+          body: highlight.body,
+          displayOrder: index,
+        })),
+      );
+    }
     refreshPublicContent();
     return { ok: true, id: row.id };
   } catch (error) {

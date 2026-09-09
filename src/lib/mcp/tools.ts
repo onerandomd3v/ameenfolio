@@ -109,7 +109,7 @@ const projectIconUpdateSchema = z
     iconName: z.enum(projectIconValues),
     iconKey: z
       .string()
-      .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
+      .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/)
       .nullable()
       .optional(),
     iconAlt: z.string().trim().max(180).nullable().optional(),
@@ -1341,6 +1341,7 @@ export function createBippyMcpServer(actor: McpActor) {
           "image/png",
           "image/jpeg",
           "image/webp",
+          "image/svg+xml",
           "image/gif",
           "application/pdf",
         ]),

@@ -1,9 +1,9 @@
 import { createElement } from "react";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import type { Project } from "@/db/schema";
 import { AssetIcon } from "@/components/portfolio/asset-icon";
 import { getProjectIcon } from "@/config/project-icons";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardAction,
@@ -17,6 +17,16 @@ import {
 // web mark reads like the brand icons elsewhere on the page instead of like a
 // picture someone uploaded.
 function ProjectIconMark({ project }: { project: Project }) {
+  if (project.iconKey) {
+    return (
+      <AssetIcon
+        objectKey={project.iconKey}
+        alt={project.iconAlt ?? ""}
+        size="project"
+        fallbackLabel="P"
+      />
+    );
+  }
   const stockIcon = getProjectIcon(project.iconName);
 
   // createElement rather than <StockIcon />: a capitalised render-scoped
@@ -33,7 +43,7 @@ function ProjectIconMark({ project }: { project: Project }) {
     <AssetIcon
       objectKey={project.iconKey}
       alt={project.iconAlt ?? ""}
-      size="xs"
+      size="project"
       fallbackLabel="P"
     />
   );
@@ -41,10 +51,7 @@ function ProjectIconMark({ project }: { project: Project }) {
 
 export function ProjectCard({ project }: { project: Project }) {
   return (
-    <a
-      href={project.url}
-      target="_blank"
-      rel="noreferrer"
+    <div
       data-bippy-reaction="curious"
       data-bippy-project
       data-bippy-safe-zone
@@ -63,25 +70,31 @@ export function ProjectCard({ project }: { project: Project }) {
             <CardTitle>
               <h3 className="text-sm font-semibold">{project.title}</h3>
             </CardTitle>
-            {project.statusLabel ? (
-              <Badge
-                variant="default"
-                className="rounded-[4px] px-1.5 py-0 font-mono text-[10px] uppercase tracking-[0.08em]"
-              >
-                {project.statusLabel}
-              </Badge>
-            ) : null}
           </div>
           <CardAction className="text-muted-foreground transition-colors group-hover:text-signal group-focus-visible:text-signal">
-            <ArrowUpRight className="size-4" aria-hidden="true" />
+            <a
+              href={project.url}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Open ${project.title}`}
+              className="inline-flex rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <ArrowUpRight className="size-4" aria-hidden="true" />
+            </a>
           </CardAction>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col px-4 pt-2">
-          <p className="text-[13px] leading-6 text-muted-foreground">
+          <p className="line-clamp-2 text-[13px] leading-6 text-muted-foreground">
             {project.shortDescription}
           </p>
+          <Link
+            href="/projects"
+            className="mt-auto self-end pt-4 text-[12px] font-medium text-muted-foreground underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            Learn more
+          </Link>
         </CardContent>
       </Card>
-    </a>
+    </div>
   );
 }

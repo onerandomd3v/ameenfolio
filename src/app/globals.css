@@ -23,6 +23,10 @@
      list this short is what stops it becoming general decoration. */
   --color-accent-lime: #7fff00;
 
+  /* Bippy's coding glow follows the active theme: blue on light surfaces,
+     the portfolio's lime accent on dark surfaces. */
+  --bippy-coding-rgb: 59 130 246;
+
   /* Theme-aware, unlike the lime above: see --signal. */
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
@@ -125,6 +129,7 @@
   --ring: rgba(255, 255, 255, 0.45);
   --signal: #7fff00;
   --signal-foreground: #000000;
+  --bippy-coding-rgb: 127 255 0;
   --sidebar: #09090b;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #fafafa;

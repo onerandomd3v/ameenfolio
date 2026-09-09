@@ -3,7 +3,7 @@ import path from "node:path";
 
 export const UPLOAD_RULES = {
   icon: {
-    contentTypes: ["image/png", "image/jpeg", "image/webp"],
+    contentTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
     maxBytes: 2 * 1024 * 1024,
     prefix: "icons",
   },
@@ -41,6 +41,7 @@ const extensions: Record<string, string> = {
   "image/png": ".png",
   "image/jpeg": ".jpg",
   "image/webp": ".webp",
+  "image/svg+xml": ".svg",
   "application/pdf": ".pdf",
 };
 
@@ -75,7 +76,7 @@ export function isPublicIconKey(key: string) {
   return (
     normalized === key &&
     !normalized.includes("..") &&
-    /^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/.test(normalized) &&
+    /^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/.test(normalized) &&
     path.posix.normalize(normalized) === normalized
   );
 }

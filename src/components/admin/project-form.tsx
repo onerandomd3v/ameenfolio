@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm, useWatch } from "react-hook-form";
-import { LoaderCircle } from "lucide-react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteProject, saveProject } from "@/app/admin/actions/projects";
@@ -18,8 +18,7 @@ import { LineInput, LineSelect } from "@/components/admin/line-input";
 import { UploadField } from "@/components/admin/upload-field";
 import { Button } from "@/components/ui/button";
 import { projectIconOptions } from "@/config/project-icons";
-import { IN_PRODUCTION_STATUS_LABEL } from "@/config/portfolio";
-import type { Project } from "@/db/schema";
+import type { Project, ProjectHighlight } from "@/db/schema";
 import { cleanupUpload } from "@/lib/storage/cleanup-upload";
 import { useAdminBase } from "@/lib/use-admin-base";
 import { projectSchema, type ProjectInput } from "@/lib/validation";
@@ -30,9 +29,16 @@ const emptyProject: ProjectInput = {
   shortDescription: "",
   url: "https://",
   iconName: "custom",
+  highlights: [],
 };
 
-export function ProjectForm({ project }: { project?: Project }) {
+export function ProjectForm({
+  project,
+  highlights = [],
+}: {
+  project?: Project;
+  highlights?: ProjectHighlight[];
+}) {
   const router = useRouter();
   const base = useAdminBase();
   const [leaving, setLeaving] = useState(false);
@@ -45,12 +51,15 @@ export function ProjectForm({ project }: { project?: Project }) {
       ? {
           title: project.title,
           shortDescription: project.shortDescription,
-          statusLabel: project.statusLabel ?? undefined,
           url: project.url,
           githubUrl: project.githubUrl ?? undefined,
           iconKey: project.iconKey ?? undefined,
           iconAlt: project.iconAlt ?? undefined,
           iconName: project.iconName,
+          highlights: highlights.map((item, index) => ({
+            body: item.body,
+            displayOrder: index,
+          })),
         }
       : emptyProject,
   });
@@ -68,6 +77,10 @@ export function ProjectForm({ project }: { project?: Project }) {
   const iconKey = useWatch({ control, name: "iconKey" });
   const description = useWatch({ control, name: "shortDescription" }) ?? "";
   const title = useWatch({ control, name: "title" }) ?? "";
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "highlights",
+  });
 
   // What "unsaved work" means: anything typed. An untouched form has nothing
   // worth keeping, so leaving it needs no decision.
@@ -190,12 +203,39 @@ export function ProjectForm({ project }: { project?: Project }) {
               {...register("shortDescription")}
             />
           </FieldRow>
-          <FieldRow label="Status label" note="optional">
-            <LineInput
-              placeholder={`e.g. ${IN_PRODUCTION_STATUS_LABEL}`}
-              {...register("statusLabel")}
-            />
-          </FieldRow>
+          <SectionHeading className="mt-8">Highlights</SectionHeading>
+          <FieldNote>
+            Optional details shown when a project is expanded.
+          </FieldNote>
+          {fields.map((field, index) => (
+            <FieldRow key={field.id} label={`Point ${index + 1}`} align="start">
+              <div className="flex gap-2">
+                <LineInput
+                  as="textarea"
+                  rows={2}
+                  placeholder="What you built"
+                  {...register(`highlights.${index}.body`)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remove point"
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </FieldRow>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({ body: "", displayOrder: fields.length })}
+          >
+            <Plus data-icon="inline-start" className="size-4" /> Add point
+          </Button>
           <FieldRow label="URL" note={errors.url ? "https:// only" : undefined}>
             <LineInput
               mono
@@ -258,10 +298,6 @@ export function ProjectForm({ project }: { project?: Project }) {
             </>
           ) : null}
 
-          <FieldNote>
-            Use “{IN_PRODUCTION_STATUS_LABEL}” when this published project is a
-            production product and should count in the portfolio stats.
-          </FieldNote>
           <FieldNote>
             {live
               ? "Pin it from the projects list to show it on the homepage."

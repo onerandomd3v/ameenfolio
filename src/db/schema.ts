@@ -25,6 +25,8 @@ export type ContactLinks = {
   tiktok?: string;
   youtube?: string;
   linkedin?: string;
+  discord?: string;
+  telegram?: string;
   whatsapp?: string;
 };
 
@@ -43,7 +45,6 @@ export const projects = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     shortDescription: text("short_description").notNull(),
-    statusLabel: text("status_label"),
     // One destination per project: clicking the card follows this. The
     // physical column keeps its old name so the rename costs no migration,
     // the same trade already made for contactLinks/social_links below.
@@ -72,6 +73,25 @@ export const projects = pgTable(
     check(
       "projects_icon_alt_required",
       sql`${table.iconKey} is null or length(trim(${table.iconAlt})) > 0`,
+    ),
+  ],
+);
+
+export const projectHighlights = pgTable(
+  "project_highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("project_highlights_order_idx").on(
+      table.projectId,
+      table.displayOrder,
     ),
   ],
 );
@@ -752,6 +772,7 @@ export const mcpOAuthTokens = pgTable(
 );
 
 export type Project = typeof projects.$inferSelect;
+export type ProjectHighlight = typeof projectHighlights.$inferSelect;
 export type Recognition = typeof recognitions.$inferSelect;
 export type Experience = typeof experiences.$inferSelect;
 export type ExperienceHighlight = typeof experienceHighlights.$inferSelect;

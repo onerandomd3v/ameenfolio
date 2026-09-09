@@ -12,13 +12,13 @@ import {
   sql,
 } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { IN_PRODUCTION_STATUS_LABEL } from "@/config/portfolio";
 import {
   nowLinks,
   nowSection,
   postLinks,
   posts,
   projects,
+  projectHighlights,
   experiences,
   experienceHighlights,
   recognitionImages,
@@ -32,6 +32,8 @@ import {
   type TechStackItem,
   type Experience,
   type ExperienceHighlight,
+  type ProjectHighlight,
+  type Project,
 } from "@/db/schema";
 import { defaultAvailability } from "@/config/availability";
 import { toPublicNow } from "@/lib/now";
@@ -89,7 +91,7 @@ export async function getPublicPortfolio() {
       experiences: [],
       recognitions: [],
       techStack: [] as TechStackItem[],
-      inProductionProjectCount: 0,
+      projectCount: 0,
       statsSnapshot: null,
     };
   }
@@ -145,18 +147,12 @@ export async function getPublicPortfolio() {
       .from(techStackItems)
       .where(eq(techStackItems.visible, true))
       .orderBy(asc(techStackItems.displayOrder), asc(techStackItems.createdAt)),
-    // Only an explicit "In Prod" status counts here. A project can be
-    // published without being a production product (for example, an
-    // experiment or an archived build).
+    // The strip reports every published project, not a manually maintained
+    // production label.
     db
       .select({ value: count() })
       .from(projects)
-      .where(
-        and(
-          eq(projects.published, true),
-          sql`lower(trim(${projects.statusLabel})) = ${IN_PRODUCTION_STATUS_LABEL.toLowerCase()}`,
-        ),
-      ),
+      .where(eq(projects.published, true)),
     // Tolerated rather than awaited plainly: if the build ships before the
     // migration runs, this table does not exist yet, and a rejected query in
     // this Promise.all would take the entire homepage down with it. The strip
@@ -181,7 +177,7 @@ export async function getPublicPortfolio() {
     experiences: await withExperienceDetails(experienceRows),
     recognitions: await withRecognitionDetails(recognitionRows),
     techStack: techStackRows,
-    inProductionProjectCount: publishedProjectRows[0]?.value ?? 0,
+    projectCount: publishedProjectRows[0]?.value ?? 0,
     statsSnapshot: snapshotRows[0] ?? null,
   };
 }
@@ -248,14 +244,13 @@ export async function getAdminExperience(id: string) {
 // same query returned the row.
 export async function getAllPublishedProjects() {
   if (!canQueryDatabase()) return [];
-  return (
-    getDb()
-      .select()
-      .from(projects)
-      .where(eq(projects.published, true))
-      // No pin order here: the archive is everything, newest first.
-      .orderBy(desc(projects.createdAt))
-  );
+  const rows = await getDb()
+    .select()
+    .from(projects)
+    .where(eq(projects.published, true))
+    // No pin order here: the archive is everything, newest first.
+    .orderBy(desc(projects.createdAt));
+  return withProjectDetails(rows);
 }
 
 export async function getAdminProjects() {
@@ -263,8 +258,44 @@ export async function getAdminProjects() {
 }
 
 export async function getAdminProject(id: string) {
-  const rows = await getDb().select().from(projects).where(eq(projects.id, id));
-  return rows[0] ?? null;
+  const [rows, highlights] = await Promise.all([
+    getDb().select().from(projects).where(eq(projects.id, id)),
+    getDb()
+      .select()
+      .from(projectHighlights)
+      .where(eq(projectHighlights.projectId, id))
+      .orderBy(asc(projectHighlights.displayOrder)),
+  ]);
+  return rows[0] ? { ...rows[0], highlights } : null;
+}
+
+export type PublicProject = Project & { highlights: ProjectHighlight[] };
+
+async function withProjectDetails(rows: Project[]): Promise<PublicProject[]> {
+  if (!rows.length) return [];
+  const highlights = await getDb()
+    .select()
+    .from(projectHighlights)
+    .where(
+      inArray(
+        projectHighlights.projectId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(
+      asc(projectHighlights.displayOrder),
+      asc(projectHighlights.createdAt),
+    );
+  const byProject = new Map<string, ProjectHighlight[]>();
+  for (const highlight of highlights) {
+    const list = byProject.get(highlight.projectId) ?? [];
+    list.push(highlight);
+    byProject.set(highlight.projectId, list);
+  }
+  return rows.map((row) => ({
+    ...row,
+    highlights: byProject.get(row.id) ?? [],
+  }));
 }
 
 export type PublicRecognition = Recognition & {

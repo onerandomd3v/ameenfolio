@@ -28,7 +28,7 @@ const optionalText = (max: number) => z.string().trim().max(max).optional();
 
 export const iconObjectKeySchema = z
   .string()
-  .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
+  .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/)
   .optional();
 
 export const profileImageObjectKeySchema = z
@@ -41,6 +41,11 @@ const iconFields = {
   iconAlt: optionalText(180),
 };
 
+export const projectHighlightSchema = z.object({
+  body: z.string().trim().min(1).max(500),
+  displayOrder: z.number().int().min(0).max(999),
+});
+
 export const projectSchema = z
   .object({
     title: z.string().trim().min(2).max(120),
@@ -50,11 +55,11 @@ export const projectSchema = z
       .min(10)
       .max(500)
       .refine(withinCardWordLimit, cardWordLimitMessage),
-    statusLabel: optionalText(60),
     url: z.url().startsWith("https://"),
     githubUrl: z
       .union([z.url().startsWith("https://"), z.literal("")])
       .optional(),
+    highlights: z.array(projectHighlightSchema).max(12).optional(),
     ...iconFields,
     iconName: z.enum(projectIconValues),
   })
@@ -230,6 +235,8 @@ export const contactLinksSchema = z.object({
   tiktok: optionalHttpsUrl,
   youtube: optionalHttpsUrl,
   linkedin: optionalHttpsUrl,
+  discord: optionalHttpsUrl,
+  telegram: optionalHttpsUrl,
   whatsapp: optionalHttpsUrl,
 });
 

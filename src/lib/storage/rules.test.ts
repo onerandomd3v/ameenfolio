@@ -16,6 +16,13 @@ describe("R2 asset safety", () => {
     expect(isPublicIconKey(key)).toBe(true);
   });
 
+  it("accepts SVG project icons", () => {
+    const key = createObjectKey("icon", "image/svg+xml", new Date("2026-08-07"));
+    expect(key).toMatch(/^icons\/2026\/[a-f0-9]{48}\.svg$/);
+    expect(isPublicIconKey(key)).toBe(true);
+    expect(validateUpload("icon", "image/svg+xml", 100)).toBe(true);
+  });
+
   it("generates isolated profile image keys", () => {
     const key = createObjectKey(
       "profile",
@@ -46,10 +53,10 @@ describe("R2 asset safety", () => {
     );
   });
 
-  it("rejects traversal and executable media", () => {
+  it("rejects traversal and executable media outside project icons", () => {
     expect(isPublicIconKey("icons/2026/../../secret.pdf")).toBe(false);
     expect(isManagedObjectKey("resumes/2026/../../secret.pdf")).toBe(false);
-    expect(validateUpload("icon", "image/svg+xml", 100)).toBe(false);
+    expect(validateUpload("icon", "image/svg+xml", 2 * 1024 * 1024)).toBe(true);
     expect(validateUpload("resume", "text/html", 100)).toBe(false);
   });
 

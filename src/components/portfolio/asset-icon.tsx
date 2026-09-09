@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 type AssetIconProps = {
   objectKey: string | null;
   alt: string;
-  size?: "xxs" | "xs" | "sm" | "default";
+  size?: "xxs" | "xs" | "sm" | "default" | "project";
   // Rendered as a lettered tile when no icon has been uploaded. Callers that
   // want a real placeholder pass one; the rest keep the generic mark.
   fallbackLabel?: string;
@@ -36,7 +36,9 @@ export function AssetIcon({
         ? "size-5 rounded-[3px]"
         : size === "sm"
           ? "size-8 rounded-xl border bg-background p-2"
-          : "size-11 rounded-xl border bg-background p-2",
+          : size === "project"
+            ? "h-auto max-h-8 w-auto max-w-8 rounded-[5px]"
+            : "size-11 rounded-xl border bg-background p-2",
   );
 
   if (!objectKey) {
@@ -53,7 +55,9 @@ export function AssetIcon({
               ? "text-[9px]"
               : size === "xs"
                 ? "text-[10px]"
-                : "text-sm",
+                : size === "project"
+                  ? "text-sm"
+                  : "text-sm",
           )}
           aria-hidden="true"
         >
@@ -87,9 +91,27 @@ export function AssetIcon({
     <Image
       src={src}
       unoptimized
-      width={size === "xxs" ? 16 : size === "xs" ? 20 : size === "sm" ? 32 : 44}
+      width={
+        size === "xxs"
+          ? 16
+          : size === "xs"
+            ? 20
+            : size === "sm"
+              ? 32
+              : size === "project"
+                ? 28
+                : 44
+      }
       height={
-        size === "xxs" ? 16 : size === "xs" ? 20 : size === "sm" ? 32 : 44
+        size === "xxs"
+          ? 16
+          : size === "xs"
+            ? 20
+            : size === "sm"
+              ? 32
+              : size === "project"
+                ? 28
+                : 44
       }
       alt={alt}
       className={classes}

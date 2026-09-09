@@ -5,10 +5,22 @@ import type { ReactNode } from "react";
 import { ChevronDown, Github, Globe2 } from "lucide-react";
 import { AssetIcon } from "@/components/portfolio/asset-icon";
 import { getProjectIcon } from "@/config/project-icons";
-import type { Project } from "@/db/schema";
+import type { Project, ProjectHighlight } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
-function ProjectMark({ project }: { project: Project }) {
+type PublicProject = Project & { highlights: ProjectHighlight[] };
+
+function ProjectMark({ project }: { project: PublicProject }) {
+  if (project.iconKey) {
+    return (
+      <AssetIcon
+        objectKey={project.iconKey}
+        alt={project.iconAlt ?? ""}
+        size="project"
+        fallbackLabel="P"
+      />
+    );
+  }
   const Icon = getProjectIcon(project.iconName);
   if (Icon) {
     return createElement(Icon, {
@@ -16,14 +28,7 @@ function ProjectMark({ project }: { project: Project }) {
       "aria-hidden": true,
     });
   }
-  return (
-    <AssetIcon
-      objectKey={project.iconKey}
-      alt={project.iconAlt ?? ""}
-      size="xs"
-      fallbackLabel="P"
-    />
-  );
+  return <AssetIcon objectKey={null} alt="" size="project" fallbackLabel="P" />;
 }
 
 function isGithubUrl(url: string) {
@@ -70,7 +75,7 @@ function ActionLink({
   );
 }
 
-export function ProjectsList({ projects }: { projects: Project[] }) {
+export function ProjectsList({ projects }: { projects: PublicProject[] }) {
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
 
   function toggle(id: string) {
@@ -90,6 +95,7 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
           project.githubUrl || (isGithubUrl(project.url) ? project.url : null);
         const liveUrl = isGithubUrl(project.url) ? null : project.url;
         const detailsId = `project-details-${project.id}`;
+        const hasHighlights = project.highlights.length > 0;
 
         return (
           <li
@@ -98,14 +104,21 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
           >
             <div>
               <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-[10px]">
-                <span className="grid size-8 shrink-0 place-items-center self-center rounded-[9px] border border-border bg-accent">
+                <span
+                  className={cn(
+                    "grid size-8 shrink-0 place-items-center self-center",
+                    project.iconKey
+                      ? "rounded-[5px]"
+                      : "rounded-[9px] border border-border bg-accent",
+                  )}
+                >
                   <ProjectMark project={project} />
                 </span>
                 <div className="col-start-2 flex min-w-0 items-start justify-between gap-3">
-                  <span className="min-w-0 pt-0.5 text-sm font-semibold text-foreground">
+                  <span className="min-w-0 self-center text-[15px] font-semibold text-foreground">
                     {project.title}
                   </span>
-                  <span className="flex shrink-0 items-center gap-0.5">
+                  <span className="flex shrink-0 items-center gap-1.5">
                     <ActionLink href={githubUrl} label="GitHub">
                       <Github className="size-4" aria-hidden="true" />
                     </ActionLink>
@@ -114,14 +127,18 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                     </ActionLink>
                     <ChevronDown
                       className={cn(
-                        "ml-0.5 size-3.5 text-muted-foreground transition-transform duration-[225ms] motion-reduce:transition-none",
+                        "ml-1 size-3.5 text-muted-foreground transition-transform duration-[225ms] motion-reduce:transition-none",
                         open && "rotate-180",
+                        !hasHighlights && "invisible",
                       )}
                       aria-hidden="true"
                     />
                   </span>
                 </div>
               </div>
+              <p className="mt-2 line-clamp-2 text-[13px] leading-6 text-muted-foreground">
+                {project.shortDescription}
+              </p>
               <div
                 id={detailsId}
                 aria-hidden={!open}
@@ -130,21 +147,29 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
                   open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                 )}
               >
-                <div className="min-h-0 overflow-hidden">
-                  <p className="grid grid-cols-[32px_minmax(0,1fr)] gap-x-[10px] pt-2 text-[13px] leading-6 text-muted-foreground">
+                <div className="min-h-0 overflow-hidden border-t border-border/70 pt-2">
+                  <div className="grid grid-cols-[32px_minmax(0,1fr)] gap-x-[10px] pt-2 text-[13px] leading-6 text-muted-foreground">
                     <span aria-hidden="true" />
-                    <span>{project.shortDescription}</span>
-                  </p>
+                    {project.highlights.length ? (
+                      <ul className="list-disc space-y-1 pl-4">
+                        {project.highlights.map((highlight) => (
+                          <li key={highlight.id}>{highlight.body}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-              <button
-                type="button"
-                aria-controls={detailsId}
-                aria-expanded={open}
-                aria-label={`${open ? "Collapse" : "Expand"} details for ${project.title}`}
-                className="absolute -inset-x-3 -inset-y-2 z-10 cursor-pointer rounded-xl border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                onClick={() => toggle(project.id)}
-              />
+              {hasHighlights ? (
+                <button
+                  type="button"
+                  aria-controls={detailsId}
+                  aria-expanded={open}
+                  aria-label={`${open ? "Collapse" : "Expand"} details for ${project.title}`}
+                  className="absolute -inset-x-3 -inset-y-2 z-10 cursor-pointer rounded-xl border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  onClick={() => toggle(project.id)}
+                />
+              ) : null}
             </div>
           </li>
         );

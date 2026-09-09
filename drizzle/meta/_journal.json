@@ -344,6 +344,20 @@
       "when": 1788991404773,
       "tag": "0048_closed_rick_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1788991880689,
+      "tag": "0049_tense_whizzer",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1788994960170,
+      "tag": "0050_legal_lockjaw",
+      "breakpoints": true
     }
   ]
 }
