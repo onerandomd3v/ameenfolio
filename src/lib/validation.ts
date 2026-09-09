@@ -135,7 +135,10 @@ export const experienceSchema = z
   .object({
     company: z.string().trim().min(2).max(120),
     role: z.string().trim().max(120),
-    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    startDate: z.union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      z.literal(""),
+    ]),
     endDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
     location: z
       .union([z.enum(["Remote", "Hybrid", "On-site"]), z.literal("")])
@@ -143,6 +146,10 @@ export const experienceSchema = z
     iconName: z.enum(experienceIconValues),
     pinned: z.boolean(),
     highlights: z.array(experienceHighlightSchema).max(12),
+  })
+  .refine((value) => value.pinned || value.startDate.length > 0, {
+    path: ["startDate"],
+    message: "Start date is required for work-history entries.",
   })
   .refine((value) => value.pinned || value.role.length >= 2, {
     path: ["role"],

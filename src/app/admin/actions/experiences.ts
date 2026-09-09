@@ -26,16 +26,20 @@ export async function saveExperience(
   const db = getDb();
   try {
     const dates = {
-      startDate: new Date(`${value.startDate}T00:00:00.000Z`),
-      endDate: value.endDate
-        ? new Date(`${value.endDate}T00:00:00.000Z`)
-        : null,
+      startDate: new Date(
+        `${value.startDate || new Date().toISOString().slice(0, 10)}T00:00:00.000Z`,
+      ),
+      endDate: value.pinned
+        ? null
+        : value.endDate
+          ? new Date(`${value.endDate}T00:00:00.000Z`)
+          : null,
     };
     const data = {
       company: value.company,
       role: value.role,
       ...dates,
-      location: value.location || null,
+      location: value.pinned ? null : value.location || null,
       iconName: value.iconName,
       pinned: value.pinned,
       published: publish,
