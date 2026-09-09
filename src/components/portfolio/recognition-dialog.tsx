@@ -41,6 +41,7 @@ export function RecognitionDialog({
           changed in the shared component, where every other dialog still opens
           onto a plain background and needs nothing. */}
       <DialogContent
+        showCloseButton={false}
         className={cn(
           "w-[calc(100vw-2rem)] max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:w-auto sm:max-w-[min(90vw,900px)]",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
