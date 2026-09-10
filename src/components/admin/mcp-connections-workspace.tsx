@@ -344,7 +344,6 @@ function ConnectionsContent({
   }
 
   const visibleTools = mcpToolCatalog.filter((tool) => {
-    if (toolFilter === "write") return tool.directWrite;
     if (toolFilter === "read") return tool.scope === "portfolio:read";
     if (toolFilter === "draft") return tool.scope === "portfolio:draft";
     if (toolFilter === "propose") return tool.scope === "portfolio:propose";
@@ -356,7 +355,6 @@ function ConnectionsContent({
       read: "Read",
       draft: "Draft",
       propose: "Propose",
-      write: "Write",
     }[toolFilter] ?? "All tools";
 
   return (
@@ -474,6 +472,9 @@ function ConnectionsContent({
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger className="inline-flex h-8 items-center gap-1 text-[12px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                  <span className="font-mono tabular-nums">
+                    {visibleTools.length}
+                  </span>
                   {toolFilterLabel}
                   <ChevronDown className="size-3.5" aria-hidden="true" />
                 </DropdownMenuTrigger>
@@ -483,7 +484,6 @@ function ConnectionsContent({
                     ["read", "Read"],
                     ["draft", "Draft"],
                     ["propose", "Propose"],
-                    ["write", "Write"],
                   ].map(([value, label]) => (
                     <DropdownMenuItem
                       key={value}
@@ -520,14 +520,6 @@ function ConnectionsContent({
                         >
                           {tool.scope.replace("portfolio:", "")}
                         </Badge>
-                        {tool.directWrite ? (
-                          <Badge
-                            variant="outline"
-                            className="rounded-sm font-mono text-[9px]"
-                          >
-                            write
-                          </Badge>
-                        ) : null}
                       </div>
                       <p className="mt-1 text-[12px] text-muted-foreground">
                         {tool.description}

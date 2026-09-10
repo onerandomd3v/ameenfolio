@@ -6,7 +6,6 @@ export type McpToolCatalogItem = {
   title: string;
   description: string;
   scope: McpToolScope;
-  directWrite?: boolean;
 };
 
 // This is deliberately client-safe. It documents the tools registered in
@@ -97,7 +96,6 @@ export const mcpToolCatalog: readonly McpToolCatalogItem[] = [
     description:
       "Store an article image privately and return managed Markdown.",
     scope: "portfolio:draft",
-    directWrite: true,
   },
   {
     name: "approve_mcp_proposal",
@@ -105,7 +103,6 @@ export const mcpToolCatalog: readonly McpToolCatalogItem[] = [
     description:
       "Approve or reject a proposal after the owner has reviewed it.",
     scope: "portfolio:propose",
-    directWrite: true,
   },
   {
     name: "list_mcp_pending_proposals",
@@ -195,7 +192,6 @@ export const mcpToolCatalog: readonly McpToolCatalogItem[] = [
     description:
       "Create a short-lived upload slot for managed media or a resume.",
     scope: "portfolio:propose",
-    directWrite: true,
   },
   {
     name: "prepare_contact_update",
