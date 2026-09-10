@@ -3,13 +3,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import {
-  Building2,
-  LoaderCircle,
-  MapPin,
-  Trash2,
-  Wifi,
-} from "lucide-react";
+import { Building2, LoaderCircle, MapPin, Trash2, Wifi } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -278,7 +272,10 @@ export function ExperienceForm({
         </SectionHeading>
         <div className="divide-y divide-border/60">
           {fields.map((field, index) => (
-            <div key={field.id} className="flex min-w-0 items-center gap-2 py-2.5">
+            <div
+              key={field.id}
+              className="flex min-w-0 items-center gap-2 py-2.5"
+            >
               <LineInput
                 aria-label={`Highlight ${index + 1}`}
                 className="min-w-0 flex-1"

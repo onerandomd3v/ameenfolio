@@ -210,7 +210,9 @@ export function ProjectForm({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => append({ body: "", displayOrder: fields.length })}
+                onClick={() =>
+                  append({ body: "", displayOrder: fields.length })
+                }
               >
                 Add
               </Button>
@@ -223,7 +225,10 @@ export function ProjectForm({
           </FieldNote>
           <div className="divide-y divide-border/60">
             {fields.map((field, index) => (
-              <div key={field.id} className="flex min-w-0 items-center gap-2 py-2.5">
+              <div
+                key={field.id}
+                className="flex min-w-0 items-center gap-2 py-2.5"
+              >
                 <LineInput
                   aria-label={`Highlight ${index + 1}`}
                   className="min-w-0 flex-1"
