@@ -6,6 +6,7 @@ import {
   desc,
   eq,
   gt,
+  inArray,
   isNotNull,
   isNull,
   lt,
@@ -20,6 +21,7 @@ import {
   mcpOAuthCodes,
   mcpOAuthTokens,
 } from "@/db/schema";
+import { isLocalCodexClient } from "@/lib/mcp/client-kind";
 
 export type McpExternalActivitySummary = {
   id: string;
@@ -40,7 +42,8 @@ export type McpConnectionSummary = {
   connectedAt: string;
   lastUsedAt: string | null;
   active: boolean;
-  status: "connected" | "inactive" | "pending";
+  status: "authorized" | "inactive" | "pending";
+  isLocalCodex: boolean;
 };
 
 export async function listMcpConnections(): Promise<McpConnectionSummary[]> {
@@ -60,7 +63,7 @@ export async function listMcpConnections(): Promise<McpConnectionSummary[]> {
         (token) => !token.revokedAt && token.refreshExpiresAt.getTime() > now,
       );
       const status: McpConnectionSummary["status"] = activeTokens.length
-        ? "connected"
+        ? "authorized"
         : clientTokens.length
           ? "inactive"
           : "pending";
@@ -75,6 +78,7 @@ export async function listMcpConnections(): Promise<McpConnectionSummary[]> {
         lastUsedAt: client.lastUsedAt?.toISOString() ?? null,
         active: activeTokens.length > 0,
         status,
+        isLocalCodex: isLocalCodexClient(client),
       };
     })
     .sort(
@@ -82,6 +86,49 @@ export async function listMcpConnections(): Promise<McpConnectionSummary[]> {
         new Date(b.lastUsedAt ?? b.connectedAt).getTime() -
         new Date(a.lastUsedAt ?? a.connectedAt).getTime(),
     );
+}
+
+export async function revokeOtherLocalCodexConnections(clientId: string) {
+  const db = getDb();
+  const clients = await db.select().from(mcpOAuthClients);
+  const current = clients.find((client) => client.clientId === clientId);
+  if (!current || !isLocalCodexClient(current)) return 0;
+
+  const supersededIds = clients
+    .filter(
+      (client) => client.clientId !== clientId && isLocalCodexClient(client),
+    )
+    .map((client) => client.clientId);
+  if (!supersededIds.length) return 0;
+
+  const now = new Date();
+  const [revoked] = await db
+    .update(mcpOAuthTokens)
+    .set({ revokedAt: now, updatedAt: now })
+    .where(
+      and(
+        inArray(mcpOAuthTokens.clientId, supersededIds),
+        isNull(mcpOAuthTokens.revokedAt),
+      ),
+    )
+    .returning({ id: mcpOAuthTokens.id });
+  await db
+    .delete(mcpOAuthCodes)
+    .where(inArray(mcpOAuthCodes.clientId, supersededIds));
+  return revoked ? supersededIds.length : 0;
+}
+
+export async function keepNewestLocalCodexConnection() {
+  const connections = (await listMcpConnections())
+    .filter((connection) => connection.active && connection.isLocalCodex)
+    .sort(
+      (a, b) =>
+        new Date(b.lastUsedAt ?? b.connectedAt).getTime() -
+        new Date(a.lastUsedAt ?? a.connectedAt).getTime(),
+    );
+  const newest = connections[0];
+  if (!newest) return 0;
+  return revokeOtherLocalCodexConnections(newest.clientId);
 }
 
 export const MCP_ACTIVITY_PAGE_SIZE = 50;
