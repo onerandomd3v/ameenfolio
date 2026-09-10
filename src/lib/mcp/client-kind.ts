@@ -3,7 +3,7 @@ export type McpClientIdentity = {
   redirectUris: string[];
 };
 
-const localHosts = new Set(["127.0.0.1", "::1", "localhost"]);
+const localHosts = new Set(["127.0.0.1", "[::1]", "localhost"]);
 
 function isLoopbackCallback(value: string) {
   try {

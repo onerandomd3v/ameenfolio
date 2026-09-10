@@ -9,6 +9,12 @@ describe("isLocalCodexClient", () => {
         redirectUris: ["http://127.0.0.1:64772/callback/example"],
       }),
     ).toBe(true);
+    expect(
+      isLocalCodexClient({
+        clientName: "Codex",
+        redirectUris: ["http://[::1]:64772/callback/example"],
+      }),
+    ).toBe(true);
   });
 
   it("does not group remote or similarly named clients with local Codex", () => {

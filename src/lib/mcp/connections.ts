@@ -89,6 +89,9 @@ export async function listMcpConnections(): Promise<McpConnectionSummary[]> {
 }
 
 export async function revokeOtherLocalCodexConnections(clientId: string) {
+  // Dynamic client metadata is not an identity proof. This function is only
+  // called through the owner-confirmed admin cleanup action, never as a side
+  // effect of an external client completing OAuth.
   const db = getDb();
   const clients = await db.select().from(mcpOAuthClients);
   const current = clients.find((client) => client.clientId === clientId);

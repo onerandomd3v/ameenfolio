@@ -12,10 +12,7 @@ import {
 } from "@/db/schema";
 import { getServerEnv } from "@/lib/env";
 import { getMcpConfig } from "@/lib/mcp/config";
-import {
-  revokeOtherLocalCodexConnections,
-  touchMcpClient,
-} from "@/lib/mcp/connections";
+import { touchMcpClient } from "@/lib/mcp/connections";
 import {
   authorizationRequestSchema,
   clientRegistrationSchema,
@@ -174,7 +171,6 @@ async function createTokenSet(input: {
       accessExpiresAt: new Date(now + ACCESS_TOKEN_SECONDS * 1000),
       refreshExpiresAt: new Date(now + REFRESH_TOKEN_SECONDS * 1000),
     });
-  await revokeOtherLocalCodexConnections(input.clientId);
   return {
     access_token: accessToken,
     refresh_token: refreshToken,
