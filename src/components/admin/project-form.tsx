@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteProject, saveProject } from "@/app/admin/actions/projects";
@@ -203,21 +203,30 @@ export function ProjectForm({
               {...register("shortDescription")}
             />
           </FieldRow>
-          <SectionHeading className="mt-8">Highlights</SectionHeading>
+          <SectionHeading
+            className="mt-8"
+            action={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => append({ body: "", displayOrder: fields.length })}
+              >
+                Add
+              </Button>
+            }
+          >
+            Highlights
+          </SectionHeading>
           <FieldNote>
             Optional details shown when a project is expanded.
           </FieldNote>
-          {fields.map((field, index) => (
-            <FieldRow
-              key={field.id}
-              label={`Point ${index + 1}`}
-              align="start"
-              note={errors.highlights?.[index]?.body ? "required" : undefined}
-            >
-              <div className="flex gap-2">
+          <div className="divide-y divide-border/60">
+            {fields.map((field, index) => (
+              <div key={field.id} className="flex min-w-0 items-center gap-2 py-2.5">
                 <LineInput
-                  as="textarea"
-                  rows={2}
+                  aria-label={`Highlight ${index + 1}`}
+                  className="min-w-0 flex-1"
                   placeholder="What you built"
                   invalid={Boolean(errors.highlights?.[index]?.body)}
                   {...register(`highlights.${index}.body`)}
@@ -226,22 +235,15 @@ export function ProjectForm({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label="Remove point"
+                  className="shrink-0"
+                  aria-label="Remove highlight"
                   onClick={() => remove(index)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
               </div>
-            </FieldRow>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => append({ body: "", displayOrder: fields.length })}
-          >
-            <Plus data-icon="inline-start" className="size-4" /> Add point
-          </Button>
+            ))}
+          </div>
           <FieldRow label="URL" note={errors.url ? "https:// only" : undefined}>
             <LineInput
               mono

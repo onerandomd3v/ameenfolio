@@ -2,15 +2,30 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Activity, Cable, Check, RefreshCw, Unplug, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Activity,
+  Cable,
+  Check,
+  ChevronDown,
+  RefreshCw,
+  Unplug,
+  X,
+} from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   cleanMcpCredentials,
   disconnectMcpConnection,
+  keepNewestLocalCodexConnection,
 } from "@/app/admin/actions/mcp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,8 +73,8 @@ function ConnectionRow({ connection }: { connection: McpConnectionSummary }) {
               variant={connection.active ? "outline" : "secondary"}
               className="rounded-sm font-mono text-[9px]"
             >
-              {connection.status === "connected"
-                ? "Connected"
+              {connection.status === "authorized"
+                ? "Authorized"
                 : connection.status === "pending"
                   ? "Pending authorization"
                   : "Inactive"}
@@ -83,7 +98,7 @@ function ConnectionRow({ connection }: { connection: McpConnectionSummary }) {
             ))}
           </div>
           <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-            Last activity: {dateTime(connection.lastUsedAt)} · Registered:{" "}
+            Last MCP request: {dateTime(connection.lastUsedAt)} · Registered:{" "}
             {dateTime(connection.connectedAt)}
           </p>
         </div>
@@ -266,7 +281,21 @@ function ConnectionsContent({
   connections: McpConnectionSummary[];
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const showingHistory = params.get("view") === "history";
+  const visibleConnections = showingHistory
+    ? connections
+    : connections.filter((connection) => connection.active);
+  const activeLocalCodex = connections
+    .filter((connection) => connection.active && connection.isLocalCodex)
+    .sort(
+      (a, b) =>
+        new Date(b.lastUsedAt ?? b.connectedAt).getTime() -
+        new Date(a.lastUsedAt ?? a.connectedAt).getTime(),
+    );
+  const newestLocalCodex = activeLocalCodex[0];
 
   function clean() {
     startTransition(async () => {
@@ -284,34 +313,113 @@ function ConnectionsContent({
     });
   }
 
+  function keepNewestCodex() {
+    if (!newestLocalCodex) return;
+    startTransition(async () => {
+      const result = await keepNewestLocalCodexConnection();
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  function selectView(next: "now" | "history") {
+    const query = new URLSearchParams(params);
+    if (next === "history") query.set("view", "history");
+    else query.delete("view");
+    const search = query.toString();
+    router.replace(search ? `${pathname}?${search}` : pathname);
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <h1 className="text-[15px] font-semibold">MCP</h1>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
-            Registered clients and their access to the portfolio tools.
+            Registered clients and their portfolio-tool authorizations. An
+            authorization is not a live app session.
           </p>
         </div>
-        <Button
-          className="ml-auto"
-          variant="outline"
-          size="sm"
-          onClick={clean}
-          disabled={pending}
-          title="Remove expired credentials and abandoned inactive clients"
-        >
-          <RefreshCw
-            className={pending ? "animate-spin" : undefined}
-            aria-hidden="true"
-          />
-          Clean expired
-        </Button>
+        {activeLocalCodex.length > 1 && newestLocalCodex ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={pending}>
+                Keep newest Codex
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Keep only the newest local Codex?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This revokes the {activeLocalCodex.length - 1} older local
+                  Codex authorization{activeLocalCodex.length === 2 ? "" : "s"}.
+                  The registration with the most recent MCP request remains
+                  authorized.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={keepNewestCodex}
+                >
+                  Keep newest
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : null}
+        <div className="ml-auto flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={`Showing ${showingHistory ? "history" : "current authorizations"}. Change view`}
+              className="inline-flex h-8 items-center gap-1 text-[12px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {showingHistory ? "History" : "Now"}
+              <ChevronDown className="size-3.5" aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="admin-theme w-44">
+              <DropdownMenuItem
+                className={showingHistory ? "" : "bg-accent text-foreground"}
+                onSelect={() => selectView("now")}
+              >
+                Now
+                <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {connections.filter((connection) => connection.active).length}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={showingHistory ? "bg-accent text-foreground" : ""}
+                onSelect={() => selectView("history")}
+              >
+                History
+                <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {connections.length}
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clean}
+            disabled={pending}
+            title="Remove expired credentials and abandoned inactive clients"
+          >
+            <RefreshCw
+              className={pending ? "animate-spin" : undefined}
+              aria-hidden="true"
+            />
+            Clean expired
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5">
-        {connections.length ? (
-          connections.map((connection) => (
+        {visibleConnections.length ? (
+          visibleConnections.map((connection) => (
             <ConnectionRow key={connection.clientId} connection={connection} />
           ))
         ) : (
@@ -322,10 +430,10 @@ function ConnectionsContent({
                 aria-hidden="true"
               />
               <p className="mt-3 text-[13.5px] font-medium">
-                No MCP connections
+                No current authorizations
               </p>
               <p className="mt-1 text-[12px] text-muted-foreground">
-                Authorized ChatGPT, Codex, or Claude clients will appear here.
+                Switch to History to review inactive or pending registrations.
               </p>
             </div>
           </div>

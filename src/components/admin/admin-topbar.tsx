@@ -37,7 +37,7 @@ export function AdminTopbar({
 
   return (
     <header className="sticky top-0 z-30 flex h-[54px] items-center gap-2 border-b border-border bg-background px-3 lg:hidden">
-      <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-md bg-accent font-mono text-[10px] text-muted-foreground">
+      <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-sm bg-accent font-mono text-[10px] text-muted-foreground">
         {profileImageKey ? (
           <Image
             src={mediaUrl(profileImageKey)}

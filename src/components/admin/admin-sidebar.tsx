@@ -33,9 +33,9 @@ export function AdminSidebar({
       <div className="flex h-[62px] shrink-0 items-center gap-2.5 px-4">
         {/* The photo is the identity here, so it carries the mark rather than
             a wordmark repeating the site's name. */}
-        {/* Softened corners, not a circle — the same shape the photo has in
-            the top bar and in settings, so it reads as one face throughout. */}
-        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-md bg-accent font-mono text-[11px] text-muted-foreground">
+        {/* Barely softened corners, not a circle — the same shape the photo
+            has in the top bar, so it reads as one face throughout. */}
+        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-sm bg-accent font-mono text-[11px] text-muted-foreground">
           {profileImageKey ? (
             <Image
               src={mediaUrl(profileImageKey)}
