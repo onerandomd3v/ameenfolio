@@ -17,7 +17,7 @@ export type TechStackGroup = {
 };
 
 /**
- * Two rows rather than two open lists.
+ * Group rows rather than open lists.
  *
  * The stack had grown to the point where it was the tallest thing on the page,
  * which put the closing invitation below a wall of chips. As rows it reads like
@@ -59,7 +59,10 @@ export function TechStackGroups({ groups }: { groups: TechStackGroup[] }) {
         open={Boolean(active)}
         onOpenChange={(next) => !next && setOpen(null)}
       >
-        <DialogContent className="gap-0 p-5 sm:max-w-[420px]">
+        <DialogContent
+          showCloseButton={false}
+          className="gap-0 p-5 sm:max-w-[420px]"
+        >
           <DialogHeader>
             {/* Named for screen readers only. The chips are the whole content,
                 and a visible heading would repeat the row just tapped. */}

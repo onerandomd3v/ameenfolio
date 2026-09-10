@@ -78,6 +78,8 @@ const contactPatchSchema = z.object({
   tiktok: z.url().startsWith("https://").nullable().optional(),
   youtube: z.url().startsWith("https://").nullable().optional(),
   linkedin: z.url().startsWith("https://").nullable().optional(),
+  discord: z.url().startsWith("https://").nullable().optional(),
+  telegram: z.url().startsWith("https://").nullable().optional(),
   whatsapp: z.url().startsWith("https://").nullable().optional(),
 });
 
@@ -340,9 +342,8 @@ async function executeApprovalDecision(
             projectSchema.parse({
               title: project.title,
               shortDescription: project.shortDescription,
-              contribution: project.contribution ?? undefined,
-              statusLabel: project.statusLabel ?? undefined,
               url: project.url,
+              githubUrl: project.githubUrl ?? undefined,
               iconName: values.iconName,
               iconKey: values.iconKey ?? undefined,
               iconAlt: values.iconAlt ?? undefined,

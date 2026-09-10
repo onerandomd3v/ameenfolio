@@ -84,6 +84,8 @@ const contactLinkPatchSchema = z
     tiktok: z.url().startsWith("https://").nullable().optional(),
     youtube: z.url().startsWith("https://").nullable().optional(),
     linkedin: z.url().startsWith("https://").nullable().optional(),
+    discord: z.url().startsWith("https://").nullable().optional(),
+    telegram: z.url().startsWith("https://").nullable().optional(),
     whatsapp: z.url().startsWith("https://").nullable().optional(),
   })
   .refine((value) => Object.values(value).some((item) => item !== undefined), {

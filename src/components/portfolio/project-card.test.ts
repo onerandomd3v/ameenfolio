@@ -8,9 +8,8 @@ const project = {
   id: "f03acb77-c9e3-4e6c-b911-74421ad99d50",
   title: "Focused product",
   shortDescription: "A concise description of the product and its purpose.",
-  contribution: "Designed and built the product end to end.",
-  statusLabel: "Live",
   url: "https://example.com",
+  githubUrl: null,
   iconKey: null,
   iconAlt: null,
   iconName: "custom" as const,
@@ -21,13 +20,14 @@ const project = {
 } satisfies Project;
 
 describe("ProjectCard", () => {
-  it("uses the whole card as the single link to the live project", () => {
+  it("keeps the project URL on the arrow and archive link separate", () => {
     const html = renderToStaticMarkup(createElement(ProjectCard, { project }));
 
     expect(html).toContain(
       '<a href="https://example.com" target="_blank" rel="noreferrer"',
     );
-    expect(html.match(/<a\b/g)).toHaveLength(1);
+    expect(html.match(/<a\b/g)).toHaveLength(2);
+    expect(html).toContain('href="/projects"');
     expect(html).not.toContain("View live");
     expect(html).not.toContain("Source");
   });
@@ -63,7 +63,9 @@ describe("ProjectCard icons", () => {
       iconAlt: "Product logo",
     });
 
-    expect(html).toContain("Product logo");
+    // The adjacent project title labels the image, so the uploaded mark is
+    // intentionally decorative to avoid repeating the same accessible name.
+    expect(html).toContain('alt=""');
     expect(html).not.toContain(">P<");
   });
 });

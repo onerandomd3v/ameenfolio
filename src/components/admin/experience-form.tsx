@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import {
   Building2,
   LoaderCircle,
@@ -103,6 +103,7 @@ export function ExperienceForm({
     formState: { errors, isSubmitting },
     setError,
   } = form;
+  const pinned = useWatch({ control, name: "pinned" });
   const { fields, append, remove } = useFieldArray({
     control,
     name: "highlights",
@@ -193,39 +194,43 @@ export function ExperienceForm({
             {...register("role")}
           />
         </FieldRow>
-        <FieldRow
-          label="Start date"
-          note={errors.startDate ? "required" : undefined}
-        >
-          <LineInput
-            type="date"
-            invalid={Boolean(errors.startDate)}
-            {...register("startDate")}
-          />
-        </FieldRow>
-        <FieldRow label="End date" note="leave blank for current">
-          <LineInput
-            type="date"
-            invalid={Boolean(errors.endDate)}
-            {...register("endDate")}
-          />
-        </FieldRow>
-        <FieldRow label="Work mode" note="optional">
-          <Controller
-            control={control}
-            name="location"
-            render={({ field }) => (
-              <OptionPicker
-                title="Work mode"
-                value={field.value ?? ""}
-                options={workModeOptions}
-                clearable
-                clearLabel="Not specified"
-                onChange={field.onChange}
+        {!pinned ? (
+          <>
+            <FieldRow
+              label="Start date"
+              note={errors.startDate ? "required" : undefined}
+            >
+              <LineInput
+                type="date"
+                invalid={Boolean(errors.startDate)}
+                {...register("startDate")}
               />
-            )}
-          />
-        </FieldRow>
+            </FieldRow>
+            <FieldRow label="End date" note="leave blank for current">
+              <LineInput
+                type="date"
+                invalid={Boolean(errors.endDate)}
+                {...register("endDate")}
+              />
+            </FieldRow>
+            <FieldRow label="Work mode" note="optional">
+              <Controller
+                control={control}
+                name="location"
+                render={({ field }) => (
+                  <OptionPicker
+                    title="Work mode"
+                    value={field.value ?? ""}
+                    options={workModeOptions}
+                    clearable
+                    clearLabel="Not specified"
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </FieldRow>
+          </>
+        ) : null}
         <FieldRow label="Icon">
           <Controller
             control={control}
@@ -240,7 +245,10 @@ export function ExperienceForm({
             )}
           />
         </FieldRow>
-        <FieldRow label="Pinned status" note="one status can be pinned">
+        <FieldRow
+          label="Pinned status"
+          note="this is the always-visible current status"
+        >
           <Controller
             control={control}
             name="pinned"
@@ -288,7 +296,7 @@ export function ExperienceForm({
           <Button
             type="button"
             variant="ghost"
-            disabled={!experience || busy}
+            disabled={!experience || busy || experience.pinned}
             onClick={() => setDeleteOpen(true)}
           >
             Delete

@@ -9,6 +9,16 @@ import { getProjectIcon } from "@/config/project-icons";
 // than shrunk: the row exists to fit more projects in less height, and keeping
 // a trimmed-down card would defeat that.
 function ProjectRowMark({ project }: { project: Project }) {
+  if (project.iconKey) {
+    return (
+      <AssetIcon
+        objectKey={project.iconKey}
+        alt={project.iconAlt ?? ""}
+        size="project"
+        fallbackLabel="P"
+      />
+    );
+  }
   const stockIcon = getProjectIcon(project.iconName);
 
   // createElement for the same reason as ProjectCard: a capitalised
@@ -24,7 +34,7 @@ function ProjectRowMark({ project }: { project: Project }) {
     <AssetIcon
       objectKey={project.iconKey}
       alt={project.iconAlt ?? ""}
-      size="xxs"
+      size="project"
       fallbackLabel="P"
     />
   );

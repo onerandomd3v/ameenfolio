@@ -19,12 +19,15 @@ import { RecognitionsEmptyState } from "@/components/portfolio/recognitions-empt
 import { SectionHeading } from "@/components/portfolio/section-heading";
 import { TechStackSection } from "@/components/portfolio/tech-stack-section";
 import { WritingSection } from "@/components/portfolio/writing-section";
+import { SocialScrollIndicator } from "@/components/portfolio/social-scroll-indicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   GitHubIcon,
   GlobeIcon,
+  DiscordIcon,
   InstagramIcon,
   LinkedInIcon,
+  TelegramIcon,
   TikTokIcon,
   XIcon,
   YouTubeIcon,
@@ -71,7 +74,7 @@ export default async function HomePage() {
     experiences,
     recognitions,
     techStack,
-    inProductionProjectCount,
+    projectCount,
     statsSnapshot,
   } = await getPublicPortfolio();
 
@@ -129,11 +132,6 @@ export default async function HomePage() {
       label: "Instagram",
       href: contactLinks.instagram,
       icon: InstagramIcon,
-    },
-    {
-      label: "LinkedIn",
-      href: contactLinks.linkedin,
-      icon: LinkedInIcon,
     },
     {
       label: "YouTube",
@@ -203,12 +201,15 @@ export default async function HomePage() {
         <StatsStrip
           snapshot={statsSnapshot}
           hackathonWins={settings.hackathonWins}
-          inProductionProjectCount={inProductionProjectCount}
+          projectCount={projectCount}
         />
 
         <section className="mt-6" aria-label="Contact links">
           <nav>
-            <ul className="flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2">
+            <ul
+              id="social-actions-scroll"
+              className="flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2"
+            >
               {contactItems.map((item) => {
                 const Icon = item.icon;
 
@@ -251,8 +252,65 @@ export default async function HomePage() {
                   {settings.location}
                 </span>
               </li>
+              <li className="shrink-0">
+                {contactLinks.linkedin ? (
+                  <a
+                    className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-1.5 sm:px-3 sm:text-[13px]"
+                    href={contactLinks.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-bippy-reaction="curious"
+                    data-bippy-safe-zone
+                  >
+                    <LinkedInIcon className="size-3.5" aria-hidden="true" />
+                    LinkedIn
+                  </a>
+                ) : (
+                  <span className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background sm:gap-1.5 sm:px-3 sm:text-[13px]">
+                    <LinkedInIcon className="size-3.5" aria-hidden="true" />
+                    LinkedIn
+                  </span>
+                )}
+              </li>
+              {[
+                {
+                  label: "Discord",
+                  href: contactLinks.discord,
+                  icon: DiscordIcon,
+                },
+                {
+                  label: "Telegram",
+                  href: contactLinks.telegram,
+                  icon: TelegramIcon,
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.label} className="shrink-0">
+                    {item.href ? (
+                      <a
+                        className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-1.5 sm:px-3 sm:text-[13px]"
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        data-bippy-reaction="curious"
+                        data-bippy-safe-zone
+                      >
+                        <Icon className="size-3.5" aria-hidden="true" />
+                        {item.label}
+                      </a>
+                    ) : (
+                      <span className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-[3px] bg-foreground px-2 text-xs font-medium text-background sm:gap-1.5 sm:px-3 sm:text-[13px]">
+                        <Icon className="size-3.5" aria-hidden="true" />
+                        {item.label}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </nav>
+          <SocialScrollIndicator containerId="social-actions-scroll" />
         </section>
       </section>
 
@@ -351,14 +409,15 @@ export default async function HomePage() {
           stranded between the stack and the footer instead of belonging to
           the end of the page. */}
       <section id="contact" className="mt-14" aria-label="Get in touch">
-        <p className="text-sm leading-7 text-muted-foreground">
-          Open to a nice conversation,{" "}
+        <p className="text-center text-sm leading-7 text-muted-foreground">
+          Open to a nice conversation, send a message.
+        </p>
+        <div className="mt-2 flex justify-center">
           <SendMessageDialog
             email={settings.email}
             whatsappUrl={contactLinks.whatsapp}
           />
-          .
-        </p>
+        </div>
       </section>
 
       {/* Mounted by the pages that want him rather than the root layout. The

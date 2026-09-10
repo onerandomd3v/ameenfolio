@@ -9,7 +9,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpRight, RotateCcw, X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import {
   bippyDialogues,
   isBippyDialogueKey,
@@ -824,19 +824,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
     send({ type: "ACTIVATE" });
   }
 
-  function resetPosition() {
-    try {
-      window.localStorage.removeItem(POSITION_STORAGE_KEY);
-    } catch {
-      // A blocked storage API must not prevent the visible reset.
-    }
-    hasCustomPositionRef.current = false;
-    lastActivityRef.current = Date.now();
-    stopMovement();
-    placeAtDefault();
-    send({ type: "RESET" });
-  }
-
   return (
     <div
       ref={actorRef}
@@ -849,8 +836,8 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
       // Double-click flips the theme. Undocumented on purpose: it is a thing
       // to find, and the button in the nav is the discoverable way to do it.
       //
-      // Scoped to his body. This element also wraps the speech bubble's link,
-      // its dismiss button and the reset control, and a double-click on any of
+      // Scoped to his body. This element also wraps the speech bubble's link
+      // and its dismiss button, and a double-click on any of
       // those would otherwise bubble up here and change the theme.
       onDoubleClick={(event) => {
         const target = event.target as HTMLElement;
@@ -920,24 +907,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
           ) : null}
         </div>
       ) : null}
-      <div
-        className={styles.companionControls}
-        role="group"
-        aria-label="Bippy controls"
-        data-testid="bippy-companion-controls"
-      >
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-xs"
-          className="bg-background/90"
-          aria-label="Reset Bippy position"
-          title="Reset Bippy position"
-          onClick={resetPosition}
-        >
-          <RotateCcw aria-hidden="true" />
-        </Button>
-      </div>
     </div>
   );
 }

@@ -1,9 +1,11 @@
-// The two groups are fixed; their contents are not. Items live in the database
-// and are managed from the admin, so adding a technology is content editing
-// rather than a deploy.
+// The groups are fixed; their contents are not. Items live in the database and
+// are managed from the admin, so adding a technology is content editing rather
+// than a deploy.
 export const techStackGroups = [
   { value: "core", label: "Core Stack" },
   { value: "tools", label: "Tools & Infrastructure" },
+  { value: "workflow", label: "Workflow" },
+  { value: "design", label: "Design" },
 ] as const;
 
 export type TechStackGroupValue = (typeof techStackGroups)[number]["value"];

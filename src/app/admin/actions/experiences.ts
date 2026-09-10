@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { eq, ne, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import {
   refreshPublicContent,
@@ -26,16 +26,20 @@ export async function saveExperience(
   const db = getDb();
   try {
     const dates = {
-      startDate: new Date(`${value.startDate}T00:00:00.000Z`),
-      endDate: value.endDate
-        ? new Date(`${value.endDate}T00:00:00.000Z`)
-        : null,
+      startDate: new Date(
+        `${value.startDate || new Date().toISOString().slice(0, 10)}T00:00:00.000Z`,
+      ),
+      endDate: value.pinned
+        ? null
+        : value.endDate
+          ? new Date(`${value.endDate}T00:00:00.000Z`)
+          : null,
     };
     const data = {
       company: value.company,
       role: value.role,
       ...dates,
-      location: value.location || null,
+      location: value.pinned ? null : value.location || null,
       iconName: value.iconName,
       pinned: value.pinned,
       published: publish,
@@ -43,16 +47,31 @@ export async function saveExperience(
     };
     if (id) {
       const [existing] = await db
-        .select({ id: experiences.id })
+        .select({ id: experiences.id, pinned: experiences.pinned })
         .from(experiences)
         .where(eq(experiences.id, id))
         .limit(1);
       if (!existing) return { ok: false, message: "Experience not found." };
+      if (existing.pinned && !value.pinned) {
+        return {
+          ok: false,
+          message:
+            "The current status must stay pinned. Edit it or pin another entry first.",
+        };
+      }
     }
 
     const experienceId = id ?? randomUUID();
     const experienceMutation = id
-      ? db.update(experiences).set(data).where(eq(experiences.id, id))
+      ? db
+          .update(experiences)
+          .set(data)
+          .where(
+            value.pinned
+              ? eq(experiences.id, id)
+              : and(eq(experiences.id, id), eq(experiences.pinned, false)),
+          )
+          .returning({ id: experiences.id })
       : db
           .insert(experiences)
           .values({ id: experienceId, ...data, displayOrder: 0 });
@@ -86,7 +105,19 @@ export async function saveExperience(
     // neon-http has no callback transaction API. Its batch endpoint executes
     // the statements atomically, matching the established writing and
     // recognition save paths in this repository.
-    await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+    const results = await db.batch(
+      writes as [BatchItem<"pg">, ...BatchItem<"pg">[]],
+    );
+    if (
+      id &&
+      results.some((result) => Array.isArray(result) && result.length === 0)
+    ) {
+      return {
+        ok: false,
+        message:
+          "The current status changed while saving. Reload the experience and try again.",
+      };
+    }
     refreshPublicContent();
     return { ok: true, id: experienceId };
   } catch (error) {
@@ -98,11 +129,34 @@ export async function saveExperience(
 export async function deleteExperience(id: string): Promise<ActionResult> {
   await requireAdmin();
   try {
+    const [existing] = await getDb()
+      .select({ pinned: experiences.pinned })
+      .from(experiences)
+      .where(eq(experiences.id, id))
+      .limit(1);
+    if (existing?.pinned) {
+      return {
+        ok: false,
+        message: "The current status cannot be deleted. Unpin it first.",
+      };
+    }
     const [row] = await getDb()
       .delete(experiences)
-      .where(eq(experiences.id, id))
+      .where(and(eq(experiences.id, id), eq(experiences.pinned, false)))
       .returning({ id: experiences.id });
-    if (!row) return { ok: false, message: "Experience not found." };
+    if (!row) {
+      const [current] = await getDb()
+        .select({ pinned: experiences.pinned })
+        .from(experiences)
+        .where(eq(experiences.id, id))
+        .limit(1);
+      return current?.pinned
+        ? {
+            ok: false,
+            message: "The current status cannot be deleted. Unpin it first.",
+          }
+        : { ok: false, message: "Experience not found." };
+    }
     refreshPublicContent();
     return { ok: true };
   } catch (error) {

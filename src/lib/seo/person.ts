@@ -8,6 +8,8 @@ const publicProfileKeys = [
   "linkedin",
   "youtube",
   "tiktok",
+  "discord",
+  "telegram",
 ] as const satisfies ReadonlyArray<keyof ContactLinks>;
 
 export type PublicPerson = {

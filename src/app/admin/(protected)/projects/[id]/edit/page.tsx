@@ -11,5 +11,5 @@ export default async function EditProjectPage({
   const project = await getAdminProject(id);
   if (!project) notFound();
 
-  return <ProjectForm project={project} />;
+  return <ProjectForm project={project} highlights={project.highlights} />;
 }

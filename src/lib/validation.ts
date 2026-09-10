@@ -26,6 +26,18 @@ const optionalHttpsUrl = z
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 
+export const githubUrlSchema = z.url().refine((value) => {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "github.com" || url.hostname.endsWith(".github.com"))
+    );
+  } catch {
+    return false;
+  }
+}, "Enter a GitHub HTTPS URL.");
+
 export const iconObjectKeySchema = z
   .string()
   .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
@@ -41,6 +53,11 @@ const iconFields = {
   iconAlt: optionalText(180),
 };
 
+export const projectHighlightSchema = z.object({
+  body: z.string().trim().min(1).max(500),
+  displayOrder: z.number().int().min(0).max(999),
+});
+
 export const projectSchema = z
   .object({
     title: z.string().trim().min(2).max(120),
@@ -50,9 +67,9 @@ export const projectSchema = z
       .min(10)
       .max(500)
       .refine(withinCardWordLimit, cardWordLimitMessage),
-    contribution: optionalText(500),
-    statusLabel: optionalText(60),
     url: z.url().startsWith("https://"),
+    githubUrl: z.union([githubUrlSchema, z.literal("")]).optional(),
+    highlights: z.array(projectHighlightSchema).max(12).optional(),
     ...iconFields,
     iconName: z.enum(projectIconValues),
   })
@@ -135,7 +152,10 @@ export const experienceSchema = z
   .object({
     company: z.string().trim().min(2).max(120),
     role: z.string().trim().max(120),
-    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    startDate: z.union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      z.literal(""),
+    ]),
     endDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
     location: z
       .union([z.enum(["Remote", "Hybrid", "On-site"]), z.literal("")])
@@ -143,6 +163,10 @@ export const experienceSchema = z
     iconName: z.enum(experienceIconValues),
     pinned: z.boolean(),
     highlights: z.array(experienceHighlightSchema).max(12),
+  })
+  .refine((value) => value.pinned || value.startDate.length > 0, {
+    path: ["startDate"],
+    message: "Start date is required for work-history entries.",
   })
   .refine((value) => value.pinned || value.role.length >= 2, {
     path: ["role"],
@@ -221,6 +245,8 @@ export const contactLinksSchema = z.object({
   tiktok: optionalHttpsUrl,
   youtube: optionalHttpsUrl,
   linkedin: optionalHttpsUrl,
+  discord: optionalHttpsUrl,
+  telegram: optionalHttpsUrl,
   whatsapp: optionalHttpsUrl,
 });
 

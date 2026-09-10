@@ -41,8 +41,9 @@ export function RecognitionDialog({
           changed in the shared component, where every other dialog still opens
           onto a plain background and needs nothing. */}
       <DialogContent
+        showCloseButton={false}
         className={cn(
-          "border-0 bg-transparent p-0 shadow-none sm:max-w-md",
+          "w-[calc(100vw-2rem)] max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:w-auto sm:max-w-[min(90vw,900px)]",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
           "[&_[data-slot=dialog-close]]:bg-background/70 [&_[data-slot=dialog-close]]:p-1",
           "[&_[data-slot=dialog-close]]:opacity-90 [&_[data-slot=dialog-close]]:backdrop-blur-sm",
@@ -120,7 +121,10 @@ function Carousel({
         )}
       >
         {images.map((image, index) => (
-          <li key={image.objectKey} className="w-full shrink-0 snap-center">
+          <li
+            key={image.objectKey}
+            className="flex w-full shrink-0 justify-center snap-center"
+          >
             {/* The stored file keeps its original proportions, so let the
                 browser size it naturally instead of forcing a square frame. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -141,7 +145,7 @@ function Carousel({
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : "auto"}
               decoding="async"
-              className="max-h-[70vh] w-full bg-muted object-contain"
+              className="h-auto max-h-[75vh] max-w-full w-auto object-contain sm:max-h-[70vh]"
             />
           </li>
         ))}

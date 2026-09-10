@@ -22,7 +22,7 @@ type StatsStripProps = {
   // fall back to a dash while the other two keep showing real numbers.
   snapshot: StatsSnapshot | null;
   hackathonWins: number;
-  inProductionProjectCount: number;
+  projectCount: number;
 };
 
 const utc = (options: Intl.DateTimeFormatOptions) =>
@@ -61,7 +61,7 @@ function sinceLabel(date: Date | null) {
 export function StatsStrip({
   snapshot,
   hackathonWins,
-  inProductionProjectCount,
+  projectCount,
 }: StatsStripProps) {
   const cells: StatCell[] = [
     {
@@ -113,8 +113,8 @@ export function StatsStrip({
       value: hackathonWins ? `${hackathonWins}×` : null,
     },
     {
-      label: "Projects (in prod)",
-      value: inProductionProjectCount.toLocaleString("en-US"),
+      label: "Projects",
+      value: projectCount.toLocaleString("en-US"),
     },
   ];
 
