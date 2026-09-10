@@ -78,9 +78,9 @@ export async function getAdminSessions(): Promise<AdminSessionsResult> {
   try {
     const auth = getAuth();
     const [currentResult, sessionsResult] = await Promise.all([
-      // Do not let the five-minute signed session-data cookie hide a newly
-      // refreshed session while the settings page is being reloaded.
-      auth.getSession({ query: { disableCookieCache: "true" } }),
+      // This loader runs during Server Component rendering. Keep it on the
+      // read path so Neon Auth cannot attempt cookies().set() in the render.
+      auth.getSession(),
       auth.listSessions(),
     ]);
 
