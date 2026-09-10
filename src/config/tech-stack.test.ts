@@ -10,14 +10,18 @@ import { techStackItemSchema } from "@/lib/validation";
 // content now, so what is worth pinning is the group contract the schema, the
 // database check constraint and the public grouping all share.
 describe("techStackGroups", () => {
-  it("exposes exactly the two supported groups", () => {
+  it("exposes the supported groups", () => {
     expect(techStackGroups.map((group) => group.value)).toEqual([
       "core",
       "tools",
+      "workflow",
+      "design",
     ]);
     expect(techStackGroups.map((group) => group.label)).toEqual([
       "Core Stack",
       "Tools & Infrastructure",
+      "Workflow",
+      "Design",
     ]);
   });
 
@@ -41,11 +45,13 @@ describe("techStackItemSchema", () => {
     visible: true,
   };
 
-  it("accepts a technology in either group", () => {
+  it("accepts a technology in any supported group", () => {
     expect(techStackItemSchema.safeParse(item).success).toBe(true);
-    expect(
-      techStackItemSchema.safeParse({ ...item, groupKey: "tools" }).success,
-    ).toBe(true);
+    for (const groupKey of ["tools", "workflow", "design"] as const) {
+      expect(techStackItemSchema.safeParse({ ...item, groupKey }).success).toBe(
+        true,
+      );
+    }
   });
 
   it("rejects a group the database constraint would refuse", () => {
