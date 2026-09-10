@@ -5,20 +5,20 @@ describe("admin authorization", () => {
   it("accepts only the configured GitHub provider account", () => {
     expect(
       isAllowedAdminAccount(
-        [{ providerId: "github", accountId: "231661599" }],
-        "231661599",
+        [{ providerId: "github", accountId: "424242" }],
+        "424242",
       ),
     ).toBe(true);
     expect(
       isAllowedAdminAccount(
         [{ providerId: "github", accountId: "999" }],
-        "231661599",
+        "424242",
       ),
     ).toBe(false);
     expect(
       isAllowedAdminAccount(
-        [{ providerId: "google", accountId: "231661599" }],
-        "231661599",
+        [{ providerId: "google", accountId: "424242" }],
+        "424242",
       ),
     ).toBe(false);
   });
