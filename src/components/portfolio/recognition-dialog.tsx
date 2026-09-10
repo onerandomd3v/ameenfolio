@@ -99,6 +99,9 @@ function Carousel({
   const [loadedImages, setLoadedImages] = useState<Set<string>>(
     () => new Set(),
   );
+  const [failedImages, setFailedImages] = useState<Set<string>>(
+    () => new Set(),
+  );
   const single = images.length === 1;
 
   // Derived from the scroll offset rather than tracked separately, so the dots
@@ -129,10 +132,21 @@ function Carousel({
             key={image.objectKey}
             className="relative flex min-h-48 min-w-0 flex-[0_0_100%] snap-center items-center justify-center overflow-hidden sm:min-h-64"
           >
-            {!loadedImages.has(image.objectKey) ? (
+            {!loadedImages.has(image.objectKey) &&
+            !failedImages.has(image.objectKey) ? (
               <GenerativeImageLoader
                 label={`Loading image ${imageIndex + 1}`}
               />
+            ) : null}
+            {failedImages.has(image.objectKey) ? (
+              <p className="px-5 text-center text-sm text-muted-foreground">
+                {recognitionImageAlt({
+                  alt: image.alt,
+                  title,
+                  index: imageIndex,
+                  total: images.length,
+                })}
+              </p>
             ) : null}
             {/* The stored file keeps its original proportions, so let the
                 browser size it naturally instead of forcing a square frame. */}
@@ -161,9 +175,19 @@ function Carousel({
                   return next;
                 })
               }
+              onError={() =>
+                setFailedImages((current) => {
+                  const next = new Set(current);
+                  next.add(image.objectKey);
+                  return next;
+                })
+              }
               className={cn(
-                "h-auto max-h-[75vh] max-w-full w-auto object-contain transition-opacity duration-200 sm:max-h-[70vh]",
-                loadedImages.has(image.objectKey) ? "opacity-100" : "opacity-0",
+                "recognition-dialog-image h-auto max-h-[75vh] max-w-full w-auto object-contain transition-opacity duration-200 sm:max-h-[70vh]",
+                loadedImages.has(image.objectKey) &&
+                  !failedImages.has(image.objectKey)
+                  ? "opacity-100"
+                  : "opacity-0",
               )}
             />
           </li>

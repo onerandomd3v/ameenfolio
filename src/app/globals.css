@@ -498,7 +498,7 @@ button {
   width: 0.28em;
   height: 0.28em;
   border-radius: 999px;
-  background: currentColor;
+  background: currentcolor;
   opacity: 0.35;
   animation: generative-loader-pulse 1s ease-in-out infinite;
 }
@@ -571,6 +571,10 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .recognition-dialog-image {
+    transition: none;
+  }
+
   .generative-inline-loader > span {
     animation: none;
     opacity: 0.75;
