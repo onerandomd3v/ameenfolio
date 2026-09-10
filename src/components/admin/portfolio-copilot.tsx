@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GenerativeTextLoader } from "@/components/ui/generative-loader";
 import { BippyWorkspaceSidebar } from "@/components/admin/bippy-workspace-sidebar";
 import { BippyMobileWorkspaceSidebar } from "@/components/admin/bippy-mobile-workspace-sidebar";
 import { BippyIcon } from "@/components/bippy/bippy-icon";
@@ -632,12 +633,8 @@ export function PortfolioCopilot({
             <MessageScrollerViewport>
               <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-0 px-3 py-5 sm:px-4">
                 {loadingThread ? (
-                  <MessageScrollerItem className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
-                    <LoaderCircle
-                      className="size-3.5 animate-spin"
-                      aria-hidden="true"
-                    />
-                    Loading conversation
+                  <MessageScrollerItem className="text-[12.5px] text-muted-foreground">
+                    <GenerativeTextLoader label="Loading conversation" />
                   </MessageScrollerItem>
                 ) : detail?.messages.length ? (
                   <>

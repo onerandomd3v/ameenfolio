@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/portfolio/theme-toggle";
 import { ArticleShareButton } from "@/components/writing/article-share-button";
+import { ArticleBody } from "@/components/writing/article-body";
 import { getIdentitySettings, getPublishedPost } from "@/db/queries";
 import { getPostLinkIcon } from "@/config/post-link-icons";
 import { formatPostDate, toDateAttribute } from "@/lib/writing/format";
@@ -161,10 +162,7 @@ export default async function PostPage({ params }: PageProps) {
 
         {/* Sanitised when the post was saved, not when it is read — see
             lib/writing/markdown.ts. */}
-        <article
-          className="post-body mt-8"
-          dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
-        />
+        <ArticleBody html={post.bodyHtml} />
 
         {links.length ? (
           <footer className="mt-12 border-t border-border pt-5">
