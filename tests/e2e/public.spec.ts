@@ -166,12 +166,14 @@ test("resume is not presented as a standalone homepage section", async ({
   await expect(page.getByRole("link", { name: /view resume/i })).toHaveCount(0);
 });
 
-test("projects archive has no internal detail links", async ({ page }) => {
+test("projects archive remains a single dedicated page", async ({ page }) => {
   await page.goto("/projects");
   await expect(page.getByRole("link", { name: "Projects" })).toHaveAttribute(
     "aria-current",
     "page",
   );
-  const internalDetailLinks = page.locator('a[href^="/projects/"]');
-  await expect(internalDetailLinks).toHaveCount(0);
+  await expect(
+    page.getByText("Record of products I have built."),
+  ).toBeVisible();
+  await expect(page.locator('a[href^="/projects/"]')).toHaveCount(0);
 });

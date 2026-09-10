@@ -25,7 +25,11 @@
 
   /* Bippy's coding glow follows the active theme: blue on light surfaces,
      the portfolio's lime accent on dark surfaces. */
-  --bippy-coding-rgb: 59 130 246;
+  --bippy-coding-color: rgb(59 130 246);
+  --bippy-coding-color-18: rgb(59 130 246 / 18%);
+  --bippy-coding-color-32: rgb(59 130 246 / 32%);
+  --bippy-coding-color-55: rgb(59 130 246 / 55%);
+  --bippy-coding-color-30: rgb(59 130 246 / 30%);
 
   /* Theme-aware, unlike the lime above: see --signal. */
   --color-signal: var(--signal);
@@ -129,7 +133,11 @@
   --ring: rgba(255, 255, 255, 0.45);
   --signal: #7fff00;
   --signal-foreground: #000000;
-  --bippy-coding-rgb: 127 255 0;
+  --bippy-coding-color: rgb(127 255 0);
+  --bippy-coding-color-18: rgb(127 255 0 / 18%);
+  --bippy-coding-color-32: rgb(127 255 0 / 32%);
+  --bippy-coding-color-55: rgb(127 255 0 / 55%);
+  --bippy-coding-color-30: rgb(127 255 0 / 30%);
   --sidebar: #09090b;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #fafafa;

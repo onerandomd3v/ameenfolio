@@ -32,7 +32,7 @@ export function UploadField({
   const [localError, setLocalError] = useState<string>();
   const accept =
     resourceType === "icon"
-      ? "image/png,image/jpeg,image/webp,image/svg+xml"
+      ? "image/png,image/jpeg,image/webp"
       : "application/pdf";
   const invalid = Boolean(error || localError);
 

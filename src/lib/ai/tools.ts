@@ -29,6 +29,7 @@ import type {
 import { slugifyTitle, uniqueSlug } from "@/lib/writing/slug";
 import {
   nowSectionSchema,
+  githubUrlSchema,
   projectSchema,
   recognitionSchema,
   seoSchema,
@@ -147,10 +148,10 @@ const agentProjectSchema = z.object({
   title: z.string().trim().min(2).max(120),
   shortDescription: z.string().trim().min(10).max(500),
   url: z.url().startsWith("https://"),
-  githubUrl: z.url().startsWith("https://").nullable(),
+  githubUrl: githubUrlSchema.nullable(),
   iconKey: z
     .string()
-    .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/)
+    .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
     .nullable(),
   iconAlt: z.string().trim().max(180).nullable(),
   iconName: z.enum(projectIconValues),

@@ -84,6 +84,8 @@ const contactLinkPatchSchema = z
     tiktok: z.url().startsWith("https://").nullable().optional(),
     youtube: z.url().startsWith("https://").nullable().optional(),
     linkedin: z.url().startsWith("https://").nullable().optional(),
+    discord: z.url().startsWith("https://").nullable().optional(),
+    telegram: z.url().startsWith("https://").nullable().optional(),
     whatsapp: z.url().startsWith("https://").nullable().optional(),
   })
   .refine((value) => Object.values(value).some((item) => item !== undefined), {
@@ -109,7 +111,7 @@ const projectIconUpdateSchema = z
     iconName: z.enum(projectIconValues),
     iconKey: z
       .string()
-      .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/)
+      .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
       .nullable()
       .optional(),
     iconAlt: z.string().trim().max(180).nullable().optional(),
@@ -1341,7 +1343,6 @@ export function createBippyMcpServer(actor: McpActor) {
           "image/png",
           "image/jpeg",
           "image/webp",
-          "image/svg+xml",
           "image/gif",
           "application/pdf",
         ]),

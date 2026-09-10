@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import {
   refreshPublicContent,
   validationFailure,
@@ -46,16 +47,22 @@ export async function saveProject(
         .where(eq(projects.id, id))
         .returning({ id: projects.id });
       if (!row) return { ok: false, message: "Project not found." };
-      await getDb()
-        .delete(projectHighlights)
-        .where(eq(projectHighlights.projectId, id));
-      if (parsed.data.highlights?.length) {
-        await getDb().insert(projectHighlights).values(
-          parsed.data.highlights.map((highlight, index) => ({
-            projectId: id,
-            body: highlight.body,
-            displayOrder: index,
-          })),
+      if (parsed.data.highlights !== undefined) {
+        const rows = parsed.data.highlights.map((highlight, index) => ({
+          projectId: id,
+          body: highlight.body,
+          displayOrder: index,
+        }));
+        const highlightWrites: BatchItem<"pg">[] = [
+          getDb()
+            .delete(projectHighlights)
+            .where(eq(projectHighlights.projectId, id)),
+        ];
+        if (rows.length) {
+          highlightWrites.push(getDb().insert(projectHighlights).values(rows));
+        }
+        await getDb().batch(
+          highlightWrites as [BatchItem<"pg">, ...BatchItem<"pg">[]],
         );
       }
       refreshPublicContent();
@@ -66,21 +73,27 @@ export async function saveProject(
     }
 
     const projectId = randomUUID();
-    const [row] = await getDb()
-      .insert(projects)
-      .values({ ...values, id: projectId })
-      .returning({ id: projects.id });
+    const writes: BatchItem<"pg">[] = [
+      getDb()
+        .insert(projects)
+        .values({ ...values, id: projectId }),
+    ];
     if (parsed.data.highlights?.length) {
-      await getDb().insert(projectHighlights).values(
-        parsed.data.highlights.map((highlight, index) => ({
-          projectId: row.id,
-          body: highlight.body,
-          displayOrder: index,
-        })),
+      writes.push(
+        getDb()
+          .insert(projectHighlights)
+          .values(
+            parsed.data.highlights.map((highlight, index) => ({
+              projectId,
+              body: highlight.body,
+              displayOrder: index,
+            })),
+          ),
       );
     }
+    await getDb().batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
     refreshPublicContent();
-    return { ok: true, id: row.id };
+    return { ok: true, id: projectId };
   } catch (error) {
     logServer("error", "crud.project_failed", { id, error: String(error) });
     return { ok: false, message: "The project could not be saved." };

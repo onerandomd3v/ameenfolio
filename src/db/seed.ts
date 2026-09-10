@@ -11,6 +11,7 @@ const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is required to seed the database.");
 
 const db = drizzle(neon(url));
+const includePreviewExperiences = process.env.SEED_PREVIEW_EXPERIENCES === "1";
 
 // Preview-only entries make the responsive experience timeline easy to review
 // locally. Replace or remove these from the admin before using the seed script
@@ -121,18 +122,22 @@ async function main() {
         published: false,
       })
       .onConflictDoNothing({ target: nowSection.id }),
-    ...previewExperiences.map((experience) =>
-      db
-        .insert(experiences)
-        .values(experience)
-        .onConflictDoNothing({ target: experiences.id }),
-    ),
-    ...previewHighlights.map((highlight) =>
-      db
-        .insert(experienceHighlights)
-        .values(highlight)
-        .onConflictDoNothing({ target: experienceHighlights.id }),
-    ),
+    ...(includePreviewExperiences
+      ? [
+          ...previewExperiences.map((experience) =>
+            db
+              .insert(experiences)
+              .values(experience)
+              .onConflictDoNothing({ target: experiences.id }),
+          ),
+          ...previewHighlights.map((highlight) =>
+            db
+              .insert(experienceHighlights)
+              .values(highlight)
+              .onConflictDoNothing({ target: experienceHighlights.id }),
+          ),
+        ]
+      : []),
   ]);
 
   console.info(

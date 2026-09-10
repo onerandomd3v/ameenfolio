@@ -63,7 +63,9 @@ describe("ProjectCard icons", () => {
       iconAlt: "Product logo",
     });
 
-    expect(html).toContain("Product logo");
+    // The adjacent project title labels the image, so the uploaded mark is
+    // intentionally decorative to avoid repeating the same accessible name.
+    expect(html).toContain('alt=""');
     expect(html).not.toContain(">P<");
   });
 });

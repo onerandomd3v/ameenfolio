@@ -42,10 +42,10 @@
   position: absolute;
   inset: 20px;
   border-radius: 32px;
-  background: rgb(var(--bippy-coding-rgb) / 18%);
+  background: var(--bippy-coding-color-18);
   box-shadow:
-    0 0 18px rgb(var(--bippy-coding-rgb) / 32%),
-    0 0 34px rgb(var(--bippy-coding-rgb) / 18%);
+    0 0 18px var(--bippy-coding-color-32),
+    0 0 34px var(--bippy-coding-color-18);
   filter: blur(9px);
   pointer-events: none;
   content: "";
@@ -56,8 +56,8 @@
 .companionActor[data-coding="true"] .companionScale {
   filter: drop-shadow(0 1px 0 rgb(0 0 0 / 55%))
     drop-shadow(0 0 2px rgb(0 0 0 / 35%))
-    drop-shadow(0 0 6px rgb(var(--bippy-coding-rgb) / 55%))
-    drop-shadow(0 0 14px rgb(var(--bippy-coding-rgb) / 30%));
+    drop-shadow(0 0 6px var(--bippy-coding-color-55))
+    drop-shadow(0 0 14px var(--bippy-coding-color-30));
 }
 
 .companionMessage {

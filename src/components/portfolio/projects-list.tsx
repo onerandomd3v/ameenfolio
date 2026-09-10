@@ -2,20 +2,19 @@
 
 import { createElement, useState } from "react";
 import type { ReactNode } from "react";
-import { ChevronDown, Github, Globe2 } from "lucide-react";
+import { ChevronDown, Globe2 } from "lucide-react";
 import { AssetIcon } from "@/components/portfolio/asset-icon";
+import { GitHubIcon } from "@/components/icons/brand-icons";
 import { getProjectIcon } from "@/config/project-icons";
-import type { Project, ProjectHighlight } from "@/db/schema";
+import type { PublicProject } from "@/db/queries";
 import { cn } from "@/lib/utils";
-
-type PublicProject = Project & { highlights: ProjectHighlight[] };
 
 function ProjectMark({ project }: { project: PublicProject }) {
   if (project.iconKey) {
     return (
       <AssetIcon
         objectKey={project.iconKey}
-        alt={project.iconAlt ?? ""}
+        alt=""
         size="project"
         fallbackLabel="P"
       />
@@ -120,7 +119,7 @@ export function ProjectsList({ projects }: { projects: PublicProject[] }) {
                   </span>
                   <span className="flex shrink-0 items-center gap-1.5">
                     <ActionLink href={githubUrl} label="GitHub">
-                      <Github className="size-4" aria-hidden="true" />
+                      <GitHubIcon className="size-4" aria-hidden="true" />
                     </ActionLink>
                     <ActionLink href={liveUrl} label="Live project">
                       <Globe2 className="size-4" aria-hidden="true" />

@@ -26,7 +26,12 @@ export type McpExternalActivitySummary = {
   toolName: string;
   status: "running" | "completed" | "failed";
   approvalStatus:
-    "pending" | "approved" | "rejected" | "executed" | "failed" | null;
+    | "pending"
+    | "approved"
+    | "rejected"
+    | "executed"
+    | "failed"
+    | null;
   actionType: string | null;
   createdAt: string;
   finishedAt: string | null;

@@ -208,12 +208,18 @@ export function ProjectForm({
             Optional details shown when a project is expanded.
           </FieldNote>
           {fields.map((field, index) => (
-            <FieldRow key={field.id} label={`Point ${index + 1}`} align="start">
+            <FieldRow
+              key={field.id}
+              label={`Point ${index + 1}`}
+              align="start"
+              note={errors.highlights?.[index]?.body ? "required" : undefined}
+            >
               <div className="flex gap-2">
                 <LineInput
                   as="textarea"
                   rows={2}
                   placeholder="What you built"
+                  invalid={Boolean(errors.highlights?.[index]?.body)}
                   {...register(`highlights.${index}.body`)}
                 />
                 <Button

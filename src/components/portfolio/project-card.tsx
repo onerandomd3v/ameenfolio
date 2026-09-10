@@ -21,7 +21,7 @@ function ProjectIconMark({ project }: { project: Project }) {
     return (
       <AssetIcon
         objectKey={project.iconKey}
-        alt={project.iconAlt ?? ""}
+        alt=""
         size="project"
         fallbackLabel="P"
       />
@@ -42,7 +42,7 @@ function ProjectIconMark({ project }: { project: Project }) {
   return (
     <AssetIcon
       objectKey={project.iconKey}
-      alt={project.iconAlt ?? ""}
+      alt=""
       size="project"
       fallbackLabel="P"
     />

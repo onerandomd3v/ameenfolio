@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { eq, ne, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import {
   refreshPublicContent,
@@ -63,7 +63,15 @@ export async function saveExperience(
 
     const experienceId = id ?? randomUUID();
     const experienceMutation = id
-      ? db.update(experiences).set(data).where(eq(experiences.id, id))
+      ? db
+          .update(experiences)
+          .set(data)
+          .where(
+            value.pinned
+              ? eq(experiences.id, id)
+              : and(eq(experiences.id, id), eq(experiences.pinned, false)),
+          )
+          .returning({ id: experiences.id })
       : db
           .insert(experiences)
           .values({ id: experienceId, ...data, displayOrder: 0 });
@@ -97,7 +105,19 @@ export async function saveExperience(
     // neon-http has no callback transaction API. Its batch endpoint executes
     // the statements atomically, matching the established writing and
     // recognition save paths in this repository.
-    await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+    const results = await db.batch(
+      writes as [BatchItem<"pg">, ...BatchItem<"pg">[]],
+    );
+    if (
+      id &&
+      results.some((result) => Array.isArray(result) && result.length === 0)
+    ) {
+      return {
+        ok: false,
+        message:
+          "The current status changed while saving. Reload the experience and try again.",
+      };
+    }
     refreshPublicContent();
     return { ok: true, id: experienceId };
   } catch (error) {
@@ -122,9 +142,21 @@ export async function deleteExperience(id: string): Promise<ActionResult> {
     }
     const [row] = await getDb()
       .delete(experiences)
-      .where(eq(experiences.id, id))
+      .where(and(eq(experiences.id, id), eq(experiences.pinned, false)))
       .returning({ id: experiences.id });
-    if (!row) return { ok: false, message: "Experience not found." };
+    if (!row) {
+      const [current] = await getDb()
+        .select({ pinned: experiences.pinned })
+        .from(experiences)
+        .where(eq(experiences.id, id))
+        .limit(1);
+      return current?.pinned
+        ? {
+            ok: false,
+            message: "The current status cannot be deleted. Unpin it first.",
+          }
+        : { ok: false, message: "Experience not found." };
+    }
     refreshPublicContent();
     return { ok: true };
   } catch (error) {

@@ -26,9 +26,21 @@ const optionalHttpsUrl = z
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 
+export const githubUrlSchema = z.url().refine((value) => {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "github.com" || url.hostname.endsWith(".github.com"))
+    );
+  } catch {
+    return false;
+  }
+}, "Enter a GitHub HTTPS URL.");
+
 export const iconObjectKeySchema = z
   .string()
-  .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp|svg)$/)
+  .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
   .optional();
 
 export const profileImageObjectKeySchema = z
@@ -56,9 +68,7 @@ export const projectSchema = z
       .max(500)
       .refine(withinCardWordLimit, cardWordLimitMessage),
     url: z.url().startsWith("https://"),
-    githubUrl: z
-      .union([z.url().startsWith("https://"), z.literal("")])
-      .optional(),
+    githubUrl: z.union([githubUrlSchema, z.literal("")]).optional(),
     highlights: z.array(projectHighlightSchema).max(12).optional(),
     ...iconFields,
     iconName: z.enum(projectIconValues),

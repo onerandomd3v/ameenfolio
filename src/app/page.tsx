@@ -410,7 +410,7 @@ export default async function HomePage() {
           the end of the page. */}
       <section id="contact" className="mt-14" aria-label="Get in touch">
         <p className="text-center text-sm leading-7 text-muted-foreground">
-          Open to a nice conversation.
+          Open to a nice conversation, send a message.
         </p>
         <div className="mt-2 flex justify-center">
           <SendMessageDialog

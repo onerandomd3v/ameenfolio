@@ -40,7 +40,7 @@ export function NowSection({ section }: { section: PublicNow | null }) {
                           chosen in the admin, which defaults to the globe. */}
                       <AssetIcon
                         objectKey={item.iconKey}
-                        alt={item.iconAlt ?? ""}
+                        alt=""
                         size="xs"
                         fallbackIcon={getNowLinkIcon(item.iconName)}
                       />

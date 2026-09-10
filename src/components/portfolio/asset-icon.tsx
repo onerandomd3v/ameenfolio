@@ -56,7 +56,7 @@ export function AssetIcon({
               : size === "xs"
                 ? "text-[10px]"
                 : size === "project"
-                  ? "text-sm"
+                  ? "size-7 text-sm"
                   : "text-sm",
           )}
           aria-hidden="true"
