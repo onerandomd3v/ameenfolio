@@ -9,6 +9,7 @@ import {
   ChevronDown,
   RefreshCw,
   Unplug,
+  Wrench,
   X,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -38,6 +39,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { McpConnectionSummary } from "@/lib/mcp/connections";
+import { mcpToolCatalog } from "@/lib/mcp/tool-catalog";
 import type { McpPendingApproval } from "@/lib/ai/types";
 import { CopilotMarkdown } from "@/components/admin/copilot-markdown";
 import { useAdminBase } from "@/lib/use-admin-base";
@@ -285,6 +287,8 @@ function ConnectionsContent({
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
   const showingHistory = params.get("view") === "history";
+  const showingTools = params.get("view") === "tools";
+  const toolFilter = params.get("toolFilter") ?? "all";
   const visibleConnections = showingHistory
     ? connections
     : connections.filter((connection) => connection.active);
@@ -322,13 +326,36 @@ function ConnectionsContent({
     });
   }
 
-  function selectView(next: "now" | "history") {
+  function selectView(next: "now" | "history" | "tools") {
     const query = new URLSearchParams(params);
-    if (next === "history") query.set("view", "history");
-    else query.delete("view");
+    if (next === "now") query.delete("view");
+    else query.set("view", next);
+    if (next !== "tools") query.delete("toolFilter");
     const search = query.toString();
     router.replace(search ? `${pathname}?${search}` : pathname);
   }
+
+  function selectToolFilter(next: string) {
+    const query = new URLSearchParams(params);
+    if (next === "all") query.delete("toolFilter");
+    else query.set("toolFilter", next);
+    const search = query.toString();
+    router.replace(search ? `${pathname}?${search}` : pathname);
+  }
+
+  const visibleTools = mcpToolCatalog.filter((tool) => {
+    if (toolFilter === "read") return tool.scope === "portfolio:read";
+    if (toolFilter === "draft") return tool.scope === "portfolio:draft";
+    if (toolFilter === "propose") return tool.scope === "portfolio:propose";
+    return true;
+  });
+  const toolFilterLabel =
+    {
+      all: "All tools",
+      read: "Read",
+      draft: "Draft",
+      propose: "Propose",
+    }[toolFilter] ?? "All tools";
 
   return (
     <div>
@@ -340,7 +367,7 @@ function ConnectionsContent({
             authorization is not a live app session.
           </p>
         </div>
-        {activeLocalCodex.length > 1 && newestLocalCodex ? (
+        {!showingTools && activeLocalCodex.length > 1 && newestLocalCodex ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" disabled={pending}>
@@ -374,10 +401,10 @@ function ConnectionsContent({
         <div className="ml-auto flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger
-              aria-label={`Showing ${showingHistory ? "history" : "current authorizations"}. Change view`}
+              aria-label={`Showing ${showingTools ? "tool catalogue" : showingHistory ? "history" : "current authorizations"}. Change view`}
               className="inline-flex h-8 items-center gap-1 text-[12px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {showingHistory ? "History" : "Now"}
+              {showingTools ? "Tools" : showingHistory ? "History" : "Now"}
               <ChevronDown className="size-3.5" aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="admin-theme w-44">
@@ -399,26 +426,114 @@ function ConnectionsContent({
                   {connections.length}
                 </span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className={showingTools ? "bg-accent text-foreground" : ""}
+                onSelect={() => selectView("tools")}
+              >
+                Tools
+                <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {mcpToolCatalog.length}
+                </span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clean}
-            disabled={pending}
-            title="Remove expired credentials and abandoned inactive clients"
-          >
-            <RefreshCw
-              className={pending ? "animate-spin" : undefined}
-              aria-hidden="true"
-            />
-            Clean expired
-          </Button>
+          {!showingTools ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clean}
+              disabled={pending}
+              title="Remove expired credentials and abandoned inactive clients"
+            >
+              <RefreshCw
+                className={pending ? "animate-spin" : undefined}
+                aria-hidden="true"
+              />
+              Clean expired
+            </Button>
+          ) : null}
         </div>
       </div>
 
       <div className="mt-5">
-        {visibleConnections.length ? (
+        {showingTools ? (
+          <section aria-labelledby="mcp-tools-heading">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div>
+                <h2
+                  id="mcp-tools-heading"
+                  className="text-[13px] font-semibold"
+                >
+                  Exposed tools
+                </h2>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">
+                  Scope required for each portfolio capability.
+                </p>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex h-8 items-center gap-1 text-[12px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                  <span className="font-mono tabular-nums">
+                    {visibleTools.length}
+                  </span>
+                  {toolFilterLabel}
+                  <ChevronDown className="size-3.5" aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="admin-theme w-44">
+                  {[
+                    ["all", "All tools"],
+                    ["read", "Read"],
+                    ["draft", "Draft"],
+                    ["propose", "Propose"],
+                  ].map(([value, label]) => (
+                    <DropdownMenuItem
+                      key={value}
+                      className={
+                        toolFilter === value ? "bg-accent text-foreground" : ""
+                      }
+                      onSelect={() => selectToolFilter(value)}
+                    >
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="mt-3 border-t border-border/60">
+              {visibleTools.map((tool) => (
+                <article
+                  key={tool.name}
+                  className="border-b border-border/60 py-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <Wrench
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-[13.5px] font-medium">
+                          {tool.title}
+                        </h3>
+                        <Badge
+                          variant="secondary"
+                          className="rounded-sm font-mono text-[9px]"
+                        >
+                          {tool.scope.replace("portfolio:", "")}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-[12px] text-muted-foreground">
+                        {tool.description}
+                      </p>
+                      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                        {tool.name}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : visibleConnections.length ? (
           visibleConnections.map((connection) => (
             <ConnectionRow key={connection.clientId} connection={connection} />
           ))
