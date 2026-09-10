@@ -65,7 +65,7 @@ describe("server environment", () => {
       NEXT_PUBLIC_APP_URL: "",
     });
 
-    expect(parsed.ADMIN_GITHUB_USER_ID).toBe("231661599");
+    expect(parsed.ADMIN_GITHUB_USER_ID).toBe("0");
     expect(parsed.NEXT_PUBLIC_APP_URL).toBe("http://localhost:3000");
     expect(parsed.OPENAI_COMPACTION_THRESHOLD_TOKENS).toBe(20_000);
   });

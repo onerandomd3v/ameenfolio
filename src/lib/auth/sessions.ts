@@ -49,13 +49,38 @@ function iso(value: Date | string) {
   ).toISOString();
 }
 
+type RawSession = {
+  id: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  expiresAt: Date | string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+};
+
+function toSessionView(session: RawSession, currentSessionId: string) {
+  const device = describeSessionDevice(session.userAgent);
+  return {
+    id: session.id,
+    current: session.id === currentSessionId,
+    deviceLabel: device.label,
+    deviceKind: device.kind,
+    maskedIp: maskSessionIp(session.ipAddress),
+    createdAt: iso(session.createdAt),
+    lastActiveAt: iso(session.updatedAt),
+    expiresAt: iso(session.expiresAt),
+  } satisfies AdminSessionView;
+}
+
 export async function getAdminSessions(): Promise<AdminSessionsResult> {
   await requireAdmin();
 
   try {
     const auth = getAuth();
     const [currentResult, sessionsResult] = await Promise.all([
-      auth.getSession(),
+      // Do not let the five-minute signed session-data cookie hide a newly
+      // refreshed session while the settings page is being reloaded.
+      auth.getSession({ query: { disableCookieCache: "true" } }),
       auth.listSessions(),
     ]);
 
@@ -66,17 +91,12 @@ export async function getAdminSessions(): Promise<AdminSessionsResult> {
     const sessionsFailure = describeApiError(sessionsResult.error);
     const apiFailure = currentFailure ?? sessionsFailure;
 
-    if (apiFailure || !currentResult.data || !sessionsResult.data) {
+    if (currentFailure || !currentResult.data) {
       // Derived from what actually went wrong rather than from whichever
       // branch was checked first: when neither call reported an error and the
       // data is simply absent, naming one of them would be a guess printed as
       // a fact — the exact failure this logging was written to stop.
-      const failedCall =
-        currentFailure || !currentResult.data
-          ? sessionsFailure || !sessionsResult.data
-            ? "both"
-            : "getSession"
-          : "listSessions";
+      const failedCall = "getSession";
 
       logAuthFailure(
         "auth.sessions_list_failed",
@@ -87,29 +107,41 @@ export async function getAdminSessions(): Promise<AdminSessionsResult> {
       );
       return {
         sessions: [],
-        error: bannerFor(apiFailure ?? missingDataFailure),
+        error: bannerFor(currentFailure ?? missingDataFailure),
       };
     }
 
     const currentSessionId = currentResult.data.session.id;
-    const sessions = sessionsResult.data
-      .map((session): AdminSessionView => {
-        const device = describeSessionDevice(session.userAgent);
-        return {
-          id: session.id,
-          current: session.id === currentSessionId,
-          deviceLabel: device.label,
-          deviceKind: device.kind,
-          maskedIp: maskSessionIp(session.ipAddress),
-          createdAt: iso(session.createdAt),
-          lastActiveAt: iso(session.updatedAt),
-          expiresAt: iso(session.expiresAt),
-        };
-      })
-      .sort((left, right) => {
-        if (left.current !== right.current) return left.current ? -1 : 1;
-        return right.lastActiveAt.localeCompare(left.lastActiveAt);
-      });
+    const currentSession = toSessionView(
+      currentResult.data.session,
+      currentSessionId,
+    );
+
+    if (sessionsFailure || !sessionsResult.data) {
+      logAuthFailure(
+        "auth.sessions_list_failed",
+        sessionsFailure ?? missingDataFailure,
+        {
+          failedCall: "listSessions",
+          fallback: "current_session",
+        },
+      );
+      return {
+        sessions: [currentSession],
+        error:
+          "Other active sessions could not be loaded right now. This device is still shown; try refreshing again later.",
+      };
+    }
+
+    const sessions = [
+      currentSession,
+      ...sessionsResult.data
+        .filter((session) => session.id !== currentSessionId)
+        .map((session) => toSessionView(session, currentSessionId)),
+    ].sort((left, right) => {
+      if (left.current !== right.current) return left.current ? -1 : 1;
+      return right.lastActiveAt.localeCompare(left.lastActiveAt);
+    });
 
     return { sessions, error: null };
   } catch (error) {

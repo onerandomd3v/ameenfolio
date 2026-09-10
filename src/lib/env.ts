@@ -4,7 +4,8 @@ const serverEnvShape = z.object({
   DATABASE_URL: z.string().url().optional(),
   NEON_AUTH_BASE_URL: z.string().url().optional(),
   NEON_AUTH_COOKIE_SECRET: z.string().min(32).optional(),
-  ADMIN_GITHUB_USER_ID: z.string().regex(/^\d+$/).default("231661599"),
+  // A non-admin-safe sentinel keeps a missing local secret from authorizing anyone.
+  ADMIN_GITHUB_USER_ID: z.string().regex(/^\d+$/).default("0"),
   R2_ACCOUNT_ID: z.string().min(1).optional(),
   R2_ACCESS_KEY_ID: z.string().min(1).optional(),
   R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
