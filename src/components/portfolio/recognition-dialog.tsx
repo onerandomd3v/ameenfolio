@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { ArrowUpRight, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { GenerativeImageLoader } from "@/components/ui/generative-loader";
 import { recognitionImageAlt } from "@/lib/recognition";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +44,7 @@ export function RecognitionDialog({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "w-[calc(100vw-2rem)] max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:w-auto sm:max-w-[min(90vw,900px)]",
+          "w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-hidden border-0 bg-transparent p-0 shadow-none sm:w-auto sm:max-w-[min(90vw,900px)]",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
           "[&_[data-slot=dialog-close]]:bg-background/70 [&_[data-slot=dialog-close]]:p-1",
           "[&_[data-slot=dialog-close]]:opacity-90 [&_[data-slot=dialog-close]]:backdrop-blur-sm",
@@ -95,6 +96,9 @@ function Carousel({
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const [index, setIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(
+    () => new Set(),
+  );
   const single = images.length === 1;
 
   // Derived from the scroll offset rather than tracked separately, so the dots
@@ -106,7 +110,7 @@ function Carousel({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid w-full min-w-0 gap-3">
       <ul
         ref={trackRef}
         onScroll={syncIndex}
@@ -115,16 +119,21 @@ function Carousel({
         tabIndex={single ? undefined : 0}
         aria-label={single ? undefined : `${images.length} images`}
         className={cn(
-          "flex snap-x snap-mandatory overflow-x-auto",
+          "flex w-full min-w-0 snap-x snap-mandatory overflow-x-auto",
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         )}
       >
-        {images.map((image, index) => (
+        {images.map((image, imageIndex) => (
           <li
             key={image.objectKey}
-            className="flex w-full shrink-0 justify-center snap-center"
+            className="relative flex min-h-48 min-w-0 flex-[0_0_100%] snap-center items-center justify-center overflow-hidden sm:min-h-64"
           >
+            {!loadedImages.has(image.objectKey) ? (
+              <GenerativeImageLoader
+                label={`Loading image ${imageIndex + 1}`}
+              />
+            ) : null}
             {/* The stored file keeps its original proportions, so let the
                 browser size it naturally instead of forcing a square frame. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -142,10 +151,20 @@ function Carousel({
               })}
               // Serving the prepared WebP directly avoids an optimizer request
               // that otherwise starts only after the dialog opens.
-              loading={index === 0 ? "eager" : "lazy"}
-              fetchPriority={index === 0 ? "high" : "auto"}
+              loading={imageIndex === 0 ? "eager" : "lazy"}
+              fetchPriority={imageIndex === 0 ? "high" : "auto"}
               decoding="async"
-              className="h-auto max-h-[75vh] max-w-full w-auto object-contain sm:max-h-[70vh]"
+              onLoad={() =>
+                setLoadedImages((current) => {
+                  const next = new Set(current);
+                  next.add(image.objectKey);
+                  return next;
+                })
+              }
+              className={cn(
+                "h-auto max-h-[75vh] max-w-full w-auto object-contain transition-opacity duration-200 sm:max-h-[70vh]",
+                loadedImages.has(image.objectKey) ? "opacity-100" : "opacity-0",
+              )}
             />
           </li>
         ))}

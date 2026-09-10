@@ -468,6 +468,101 @@ button {
   margin-top: 2em;
 }
 
+.generative-inline-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16em;
+  min-width: 1.15em;
+}
+
+.generative-inline-loader > span {
+  width: 0.28em;
+  height: 0.28em;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.35;
+  animation: generative-loader-pulse 1s ease-in-out infinite;
+}
+
+.generative-inline-loader > span:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.generative-inline-loader > span:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+.generative-image-loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+
+.generative-image-loader::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    color-mix(in srgb, var(--foreground) 10%, transparent) 48%,
+    transparent 75%
+  );
+  content: "";
+  animation: generative-image-scan 1.35s ease-in-out infinite;
+}
+
+.generative-image-loader > span {
+  z-index: 1;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-top-color: var(--foreground);
+  border-radius: 999px;
+  animation: generative-image-spin 0.9s linear infinite;
+}
+
+@keyframes generative-image-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes generative-image-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes generative-loader-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-0.16em) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .generative-inline-loader > span {
+    animation: none;
+    opacity: 0.75;
+  }
+
+  .generative-image-loader::after,
+  .generative-image-loader > span {
+    animation: none;
+  }
+}
+
 /* Syntax highlighting. A small palette keyed to this site's accent rather than
    a highlight.js theme, which would bring its own background and greys. */
 .post-body .hljs-comment,
