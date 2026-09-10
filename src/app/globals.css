@@ -416,8 +416,27 @@ button {
   display: block;
   width: 100%;
   height: auto;
+  min-height: 8rem;
+  object-fit: contain;
   border-radius: 0.5rem;
   border: 1px solid var(--border);
+  background: linear-gradient(
+    105deg,
+    var(--muted) 20%,
+    color-mix(in srgb, var(--foreground) 10%, var(--muted)) 48%,
+    var(--muted) 75%
+  );
+  background-size: 220% 100%;
+  opacity: 0;
+  animation: generative-image-scan 1.35s ease-in-out infinite;
+  transition: opacity 200ms ease;
+}
+
+.post-body img.is-loaded {
+  min-height: 0;
+  background: transparent;
+  opacity: 1;
+  animation: none;
 }
 
 .post-body code {
