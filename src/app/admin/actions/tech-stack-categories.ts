@@ -51,10 +51,6 @@ export async function saveTechStackCategory(
             updatedAt,
           })
           .where(eq(techStackCategories.id, id)),
-        db
-          .update(techStackItems)
-          .set({ groupKey: key, updatedAt })
-          .where(eq(techStackItems.groupKey, current[0].key)),
       ]);
     } else {
       await getDb()

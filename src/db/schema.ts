@@ -238,7 +238,12 @@ export const techStackItems = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     iconKey: text("icon_key"),
-    groupKey: text("group_key").notNull(),
+    groupKey: text("group_key")
+      .notNull()
+      .references(() => techStackCategories.key, {
+        onUpdate: "cascade",
+        onDelete: "restrict",
+      }),
     displayOrder: integer("display_order").notNull().default(0),
     featured: boolean("featured").notNull().default(false),
     visible: boolean("visible").notNull().default(true),

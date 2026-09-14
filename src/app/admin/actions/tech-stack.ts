@@ -1,13 +1,13 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
   refreshPublicContent,
   validationFailure,
   type ActionResult,
 } from "@/app/admin/actions/shared";
 import { getDb } from "@/db/client";
-import { techStackItems } from "@/db/schema";
+import { techStackCategories, techStackItems } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/server";
 import { logServer } from "@/lib/logger";
 import {
@@ -25,6 +25,15 @@ export async function saveTechStackItem(
   if (!parsed.success) return validationFailure(parsed.error);
 
   try {
+    const category = await getDb()
+      .select({ key: techStackCategories.key })
+      .from(techStackCategories)
+      .where(eq(techStackCategories.key, parsed.data.groupKey))
+      .limit(1);
+    if (!category[0]) {
+      return { ok: false, message: "Choose an existing category." };
+    }
+
     if (id) {
       await getDb()
         .update(techStackItems)
@@ -74,6 +83,17 @@ export async function reorderTechStack(
   try {
     const db = getDb();
     const updatedAt = new Date();
+    const groupKeys = [...new Set(parsed.data.map((row) => row.groupKey))];
+    const categories = await db
+      .select({ key: techStackCategories.key })
+      .from(techStackCategories)
+      .where(inArray(techStackCategories.key, groupKeys));
+    if (categories.length !== groupKeys.length) {
+      return {
+        ok: false,
+        message: "Choose existing categories for every item.",
+      };
+    }
     const writes = parsed.data.map((row) =>
       db
         .update(techStackItems)

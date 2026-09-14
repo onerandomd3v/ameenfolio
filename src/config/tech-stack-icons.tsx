@@ -29,12 +29,10 @@ for (const icon of Object.values(simpleIcons) as SimpleIcon[]) {
   simpleIconMap.set(normalizeIconName(icon.slug), icon);
 }
 
-const simpleIconEntries = Array.from(simpleIconMap.entries())
-  .filter(
-    ([key], index, entries) =>
-      entries.findIndex(([entryKey]) => entryKey === key) === index,
-  )
-  .map(([key, icon]) => ({ key, icon }));
+const simpleIconEntries = Array.from(simpleIconMap, ([key, icon]) => ({
+  key,
+  icon,
+}));
 
 const explicitIcons: Record<string, SimpleIcon> = {
   aws: awsIcon,
@@ -75,7 +73,7 @@ export function TechStackIcon({
   name: string;
   iconKey?: string | null;
 }) {
-  if (normalizeIconName(name) === "vps") {
+  if (!iconKey?.trim() && normalizeIconName(name) === "vps") {
     return (
       <Server
         aria-hidden="true"

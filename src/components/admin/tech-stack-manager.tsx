@@ -152,8 +152,8 @@ export function TechStackManager({
               (highest, row) => Math.max(highest, row.displayOrder),
               -1,
             ) + 1,
-          featured: false,
-          visible: true,
+          featured: editing?.featured ?? false,
+          visible: editing?.visible ?? true,
         },
         editing?.id,
       );

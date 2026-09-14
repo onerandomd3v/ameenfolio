@@ -87,7 +87,7 @@ export function TechStackCategoryManager({
         {
           name,
           displayOrder: editing?.displayOrder ?? categories.length,
-          visible: true,
+          visible: editing?.visible ?? true,
         },
         editing?.id,
       );
@@ -175,7 +175,7 @@ export function TechStackCategoryManager({
               aria-hidden="true"
             />
             {category.name}
-            <span className="inline-flex items-center gap-0.5 sm:hidden">
+            <span className="inline-flex items-center gap-0.5">
               <button
                 type="button"
                 aria-label={`Move ${category.name} up`}
