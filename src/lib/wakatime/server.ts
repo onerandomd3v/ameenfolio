@@ -19,9 +19,9 @@ import {
 const WAKATIME_API_URL = "https://wakatime.com/api/v1/users/current";
 const WAKATIME_TODAY_URL = `${WAKATIME_API_URL}/status_bar/today`;
 const REQUEST_TIMEOUT_MS = 8_000;
-// Keep the server-side dedupe short enough that a returning tab sees presence
-// changes promptly while still avoiding duplicate WakaTime API requests.
-const STATUS_CACHE_MS = 30_000;
+// Keep this shorter than the client poll interval so a scheduled poll does
+// not routinely receive the same cached presence window twice.
+const STATUS_CACHE_MS = 15_000;
 const HISTORY_CACHE_MAX_ENTRIES = 64;
 
 type CachedStatus = { value: PublicWakaTimeStatus; expiresAt: number };
