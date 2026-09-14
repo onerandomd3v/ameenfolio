@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/brand-icons";
 import { ChatBubbleGlyph, MailGlyph } from "@/components/icons/glyph-icons";
@@ -20,12 +20,22 @@ type SendMessageDialogProps = {
   showTrigger?: boolean;
 };
 
+// The trigger is server-rendered before Radix can respond to it. Separate
+// server/client snapshots keep it disabled during that short hydration window
+// without an effect-driven state update or a mismatched first render.
+const subscribeToHydration = () => () => {};
+
 export function SendMessageDialog({
   email,
   whatsappUrl,
   showTrigger = true,
 }: SendMessageDialogProps) {
   const [open, setOpen] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     const openDialog = () => setOpen(true);
@@ -65,6 +75,7 @@ export function SendMessageDialog({
             this reason. */}
           <button
             type="button"
+            disabled={!hydrated}
             data-bippy-reaction="curious"
             data-bippy-dialogue="contact"
             data-bippy-safe-zone

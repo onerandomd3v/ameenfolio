@@ -3,6 +3,11 @@ import "server-only";
 import { z } from "zod";
 import { deleteProject, saveProject } from "@/app/admin/actions/projects";
 import {
+  deleteExperience,
+  reorderExperiences,
+  saveExperience,
+} from "@/app/admin/actions/experiences";
+import {
   deleteRecognition,
   saveRecognition,
 } from "@/app/admin/actions/recognitions";
@@ -30,6 +35,8 @@ import {
 import { executeBippyMcpTool } from "@/lib/ai/bippy-mcp";
 import {
   nowSectionSchema,
+  experienceSchema,
+  recognitionFormSchema,
   profileSchema,
   projectSchema,
   recognitionSchema,
@@ -40,6 +47,7 @@ import {
 import { postLinkIconValues } from "@/config/post-link-icons";
 import {
   getAdminProject,
+  getAdminExperience,
   getAdminRecognitions,
   getAdminSettings,
   getTakenSlugs,
@@ -70,6 +78,8 @@ const contactPatchSchema = z.object({
   tiktok: z.url().startsWith("https://").nullable().optional(),
   youtube: z.url().startsWith("https://").nullable().optional(),
   linkedin: z.url().startsWith("https://").nullable().optional(),
+  discord: z.url().startsWith("https://").nullable().optional(),
+  telegram: z.url().startsWith("https://").nullable().optional(),
   whatsapp: z.url().startsWith("https://").nullable().optional(),
 });
 
@@ -92,6 +102,7 @@ async function currentProfile() {
     introduction: identity.introduction,
     email: settings.email,
     contactLinks: settings.contactLinks ?? {},
+    location: settings.location,
     profileImageKey: settings.profileImageKey ?? undefined,
     resumeKey: settings.resumeKey ?? undefined,
     resumeFilename: settings.resumeFilename ?? undefined,
@@ -112,7 +123,20 @@ async function cleanupRejectedUpload(approval: {
             .object({ iconKey: z.string().nullable().optional() })
             .safeParse(approval.payload).data?.iconKey
         : null;
-  if (key && !(await isReferencedManagedObject(key))) await deleteObject(key);
+  const recognitionKeys =
+    approval.actionType === "update_recognition_images"
+      ? (z
+          .object({ images: recognitionFormSchema.shape.images })
+          .safeParse(approval.payload)
+          .data?.images?.map((image) => image.objectKey) ?? [])
+      : [];
+  const keys = key ? [key] : recognitionKeys;
+  await Promise.all(
+    keys.map(async (objectKey) => {
+      if (!(await isReferencedManagedObject(objectKey)))
+        await deleteObject(objectKey);
+    }),
+  );
 }
 
 export const proposedPostSchema = z.object({
@@ -184,6 +208,65 @@ async function executeApprovalDecision(
               ? await deletePost(input.id)
               : await deleteRecognition(input.id);
         actionError(result);
+        break;
+      }
+      case "delete_experience": {
+        const input = z.object({ id: z.uuid() }).parse(approval.payload);
+        actionError(await deleteExperience(input.id));
+        break;
+      }
+      case "reorder_experiences": {
+        const input = z
+          .object({ ids: z.array(z.uuid()).min(1).max(100) })
+          .parse(approval.payload);
+        actionError(await reorderExperiences(input.ids));
+        break;
+      }
+      case "update_experience": {
+        const input = z
+          .object({ id: z.uuid(), values: experienceSchema })
+          .parse(approval.payload);
+        const current = await getAdminExperience(input.id);
+        if (!current) throw new Error("Experience not found.");
+        actionError(
+          await saveExperience(
+            input.values,
+            input.id,
+            current.experience.published,
+          ),
+        );
+        break;
+      }
+      case "create_experience_draft": {
+        actionError(
+          await saveExperience(
+            experienceSchema.parse(approval.payload),
+            undefined,
+            false,
+          ),
+        );
+        break;
+      }
+      case "update_recognition_images": {
+        const input = z
+          .object({ id: z.uuid(), images: recognitionFormSchema.shape.images })
+          .parse(approval.payload);
+        const recognition = (await getAdminRecognitions()).find(
+          (item) => item.id === input.id,
+        );
+        if (!recognition) throw new Error("Recognition not found.");
+        actionError(
+          await saveRecognition(
+            recognitionFormSchema.parse({
+              title: recognition.title,
+              iconName: recognition.iconName,
+              verificationUrl: recognition.verificationUrl ?? undefined,
+              articlePostId: recognition.articlePostId ?? undefined,
+              images: input.images,
+            }),
+            recognition.id,
+          ),
+        );
         break;
       }
       case "delete_memory": {
@@ -259,9 +342,8 @@ async function executeApprovalDecision(
             projectSchema.parse({
               title: project.title,
               shortDescription: project.shortDescription,
-              contribution: project.contribution ?? undefined,
-              statusLabel: project.statusLabel ?? undefined,
               url: project.url,
+              githubUrl: project.githubUrl ?? undefined,
               iconName: values.iconName,
               iconKey: values.iconKey ?? undefined,
               iconAlt: values.iconAlt ?? undefined,

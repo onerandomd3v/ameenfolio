@@ -2,15 +2,31 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Activity, Cable, Check, RefreshCw, Unplug, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Activity,
+  Cable,
+  Check,
+  ChevronDown,
+  RefreshCw,
+  Unplug,
+  Wrench,
+  X,
+} from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   cleanMcpCredentials,
   disconnectMcpConnection,
+  keepNewestLocalCodexConnection,
 } from "@/app/admin/actions/mcp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +39,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { McpConnectionSummary } from "@/lib/mcp/connections";
+import { mcpToolCatalog } from "@/lib/mcp/tool-catalog";
 import type { McpPendingApproval } from "@/lib/ai/types";
 import { CopilotMarkdown } from "@/components/admin/copilot-markdown";
 import { useAdminBase } from "@/lib/use-admin-base";
@@ -58,8 +75,8 @@ function ConnectionRow({ connection }: { connection: McpConnectionSummary }) {
               variant={connection.active ? "outline" : "secondary"}
               className="rounded-sm font-mono text-[9px]"
             >
-              {connection.status === "connected"
-                ? "Connected"
+              {connection.status === "authorized"
+                ? "Authorized"
                 : connection.status === "pending"
                   ? "Pending authorization"
                   : "Inactive"}
@@ -83,7 +100,7 @@ function ConnectionRow({ connection }: { connection: McpConnectionSummary }) {
             ))}
           </div>
           <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-            Last activity: {dateTime(connection.lastUsedAt)} · Registered:{" "}
+            Last MCP request: {dateTime(connection.lastUsedAt)} · Registered:{" "}
             {dateTime(connection.connectedAt)}
           </p>
         </div>
@@ -266,7 +283,23 @@ function ConnectionsContent({
   connections: McpConnectionSummary[];
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const showingHistory = params.get("view") === "history";
+  const showingTools = params.get("view") === "tools";
+  const toolFilter = params.get("toolFilter") ?? "all";
+  const visibleConnections = showingHistory
+    ? connections
+    : connections.filter((connection) => connection.active);
+  const activeLocalCodex = connections
+    .filter((connection) => connection.active && connection.isLocalCodex)
+    .sort(
+      (a, b) =>
+        new Date(b.lastUsedAt ?? b.connectedAt).getTime() -
+        new Date(a.lastUsedAt ?? a.connectedAt).getTime(),
+    );
+  const newestLocalCodex = activeLocalCodex[0];
 
   function clean() {
     startTransition(async () => {
@@ -284,34 +317,224 @@ function ConnectionsContent({
     });
   }
 
+  function keepNewestCodex() {
+    if (!newestLocalCodex) return;
+    startTransition(async () => {
+      const result = await keepNewestLocalCodexConnection();
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  function selectView(next: "now" | "history" | "tools") {
+    const query = new URLSearchParams(params);
+    if (next === "now") query.delete("view");
+    else query.set("view", next);
+    if (next !== "tools") query.delete("toolFilter");
+    const search = query.toString();
+    router.replace(search ? `${pathname}?${search}` : pathname);
+  }
+
+  function selectToolFilter(next: string) {
+    const query = new URLSearchParams(params);
+    if (next === "all") query.delete("toolFilter");
+    else query.set("toolFilter", next);
+    const search = query.toString();
+    router.replace(search ? `${pathname}?${search}` : pathname);
+  }
+
+  const visibleTools = mcpToolCatalog.filter((tool) => {
+    if (toolFilter === "read") return tool.scope === "portfolio:read";
+    if (toolFilter === "draft") return tool.scope === "portfolio:draft";
+    if (toolFilter === "propose") return tool.scope === "portfolio:propose";
+    return true;
+  });
+  const toolFilterLabel =
+    {
+      all: "All tools",
+      read: "Read",
+      draft: "Draft",
+      propose: "Propose",
+    }[toolFilter] ?? "All tools";
+
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <h1 className="text-[15px] font-semibold">MCP</h1>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
-            Registered clients and their access to the portfolio tools.
+            Registered clients and their portfolio-tool authorizations. An
+            authorization is not a live app session.
           </p>
         </div>
-        <Button
-          className="ml-auto"
-          variant="outline"
-          size="sm"
-          onClick={clean}
-          disabled={pending}
-          title="Remove expired credentials and abandoned inactive clients"
-        >
-          <RefreshCw
-            className={pending ? "animate-spin" : undefined}
-            aria-hidden="true"
-          />
-          Clean expired
-        </Button>
+        {!showingTools && activeLocalCodex.length > 1 && newestLocalCodex ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={pending}>
+                Keep newest Codex
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Keep only the newest local Codex?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This revokes the {activeLocalCodex.length - 1} older local
+                  Codex authorization{activeLocalCodex.length === 2 ? "" : "s"}.
+                  The registration with the most recent MCP request remains
+                  authorized.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={keepNewestCodex}
+                >
+                  Keep newest
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : null}
+        <div className="ml-auto flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={`Showing ${showingTools ? "tool catalogue" : showingHistory ? "history" : "current authorizations"}. Change view`}
+              className="inline-flex h-8 items-center gap-1 text-[12px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {showingTools ? "Tools" : showingHistory ? "History" : "Now"}
+              <ChevronDown className="size-3.5" aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="admin-theme w-44">
+              <DropdownMenuItem
+                className={showingHistory ? "" : "bg-accent text-foreground"}
+                onSelect={() => selectView("now")}
+              >
+                Now
+                <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {connections.filter((connection) => connection.active).length}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={showingHistory ? "bg-accent text-foreground" : ""}
+                onSelect={() => selectView("history")}
+              >
+                History
+                <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {connections.length}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={showingTools ? "bg-accent text-foreground" : ""}
+                onSelect={() => selectView("tools")}
+              >
+                Tools
+                <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {mcpToolCatalog.length}
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {!showingTools ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clean}
+              disabled={pending}
+              title="Remove expired credentials and abandoned inactive clients"
+            >
+              <RefreshCw
+                className={pending ? "animate-spin" : undefined}
+                aria-hidden="true"
+              />
+              Clean expired
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-5">
-        {connections.length ? (
-          connections.map((connection) => (
+        {showingTools ? (
+          <section aria-labelledby="mcp-tools-heading">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div>
+                <h2
+                  id="mcp-tools-heading"
+                  className="text-[13px] font-semibold"
+                >
+                  Exposed tools
+                </h2>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">
+                  Scope required for each portfolio capability.
+                </p>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex h-8 items-center gap-1 text-[12px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                  <span className="font-mono tabular-nums">
+                    {visibleTools.length}
+                  </span>
+                  {toolFilterLabel}
+                  <ChevronDown className="size-3.5" aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="admin-theme w-44">
+                  {[
+                    ["all", "All tools"],
+                    ["read", "Read"],
+                    ["draft", "Draft"],
+                    ["propose", "Propose"],
+                  ].map(([value, label]) => (
+                    <DropdownMenuItem
+                      key={value}
+                      className={
+                        toolFilter === value ? "bg-accent text-foreground" : ""
+                      }
+                      onSelect={() => selectToolFilter(value)}
+                    >
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="mt-3 border-t border-border/60">
+              {visibleTools.map((tool) => (
+                <article
+                  key={tool.name}
+                  className="border-b border-border/60 py-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <Wrench
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-[13.5px] font-medium">
+                          {tool.title}
+                        </h3>
+                        <Badge
+                          variant="secondary"
+                          className="rounded-sm font-mono text-[9px]"
+                        >
+                          {tool.scope.replace("portfolio:", "")}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-[12px] text-muted-foreground">
+                        {tool.description}
+                      </p>
+                      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                        {tool.name}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : visibleConnections.length ? (
+          visibleConnections.map((connection) => (
             <ConnectionRow key={connection.clientId} connection={connection} />
           ))
         ) : (
@@ -322,10 +545,10 @@ function ConnectionsContent({
                 aria-hidden="true"
               />
               <p className="mt-3 text-[13.5px] font-medium">
-                No MCP connections
+                No current authorizations
               </p>
               <p className="mt-1 text-[12px] text-muted-foreground">
-                Authorized ChatGPT, Codex, or Claude clients will appear here.
+                Switch to History to review inactive or pending registrations.
               </p>
             </div>
           </div>

@@ -23,6 +23,14 @@
      list this short is what stops it becoming general decoration. */
   --color-accent-lime: #7fff00;
 
+  /* Bippy's coding glow follows the active theme: blue on light surfaces,
+     the portfolio's lime accent on dark surfaces. */
+  --bippy-coding-color: rgb(59 130 246);
+  --bippy-coding-color-18: rgb(59 130 246 / 18%);
+  --bippy-coding-color-32: rgb(59 130 246 / 32%);
+  --bippy-coding-color-55: rgb(59 130 246 / 55%);
+  --bippy-coding-color-30: rgb(59 130 246 / 30%);
+
   /* Theme-aware, unlike the lime above: see --signal. */
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
@@ -105,7 +113,7 @@
 }
 
 .dark {
-  --background: #000000;
+  --background: #0b0b0b;
   --foreground: #ffffff;
   --card: #09090b;
   --card-foreground: #ffffff;
@@ -125,6 +133,11 @@
   --ring: rgba(255, 255, 255, 0.45);
   --signal: #7fff00;
   --signal-foreground: #000000;
+  --bippy-coding-color: rgb(127 255 0);
+  --bippy-coding-color-18: rgb(127 255 0 / 18%);
+  --bippy-coding-color-32: rgb(127 255 0 / 32%);
+  --bippy-coding-color-55: rgb(127 255 0 / 55%);
+  --bippy-coding-color-30: rgb(127 255 0 / 30%);
   --sidebar: #09090b;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #fafafa;
@@ -146,31 +159,58 @@
   }
 }
 
-/* Only while the theme is switching, set by toggleTheme in lib/theme.ts.
+/* Only for browsers without View Transition support, set by toggleTheme in
+   lib/theme.ts.
 
    Everything eases together rather than the body easing while its contents
    snap, which is the tearing that makes a theme switch read as a flash. It is
    scoped to that window so hovers and focus rings keep their own timing, and
    so a fresh page never animates in from the previous theme's colours. */
-html[data-theme-transition],
-html[data-theme-transition] *,
-html[data-theme-transition] *::before,
-html[data-theme-transition] *::after {
+html[data-theme-transition="fallback"],
+html[data-theme-transition="fallback"] *,
+html[data-theme-transition="fallback"] *::before,
+html[data-theme-transition="fallback"] *::after {
   transition:
-    background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    fill 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    stroke 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color 220ms ease-in-out,
+    border-color 220ms ease-in-out,
+    color 220ms ease-in-out,
+    fill 220ms ease-in-out,
+    stroke 220ms ease-in-out,
+    text-decoration-color 220ms ease-in-out !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+html[data-theme-transition="active"]::view-transition-new(root) {
+  clip-path: var(--theme-transition-clip-from);
+}
+
+html[data-theme-transition="active"]::view-transition-group(root) {
+  animation-duration: var(--theme-transition-duration, 400ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-theme-transition],
-  html[data-theme-transition] *,
-  html[data-theme-transition] *::before,
-  html[data-theme-transition] *::after {
+  html[data-theme-transition="fallback"],
+  html[data-theme-transition="fallback"] *,
+  html[data-theme-transition="fallback"] *::before,
+  html[data-theme-transition="fallback"] *::after {
     transition: none !important;
+  }
+
+  html[data-theme-transition="active"]::view-transition-new(root) {
+    clip-path: none !important;
   }
 }
 
@@ -376,8 +416,27 @@ button {
   display: block;
   width: 100%;
   height: auto;
+  min-height: 8rem;
+  object-fit: contain;
   border-radius: 0.5rem;
   border: 1px solid var(--border);
+  background: linear-gradient(
+    105deg,
+    var(--muted) 20%,
+    color-mix(in srgb, var(--foreground) 10%, var(--muted)) 48%,
+    var(--muted) 75%
+  );
+  background-size: 220% 100%;
+  opacity: 0;
+  animation: generative-image-scan 1.35s ease-in-out infinite;
+  transition: opacity 200ms ease;
+}
+
+.post-body img.is-loaded {
+  min-height: 0;
+  background: transparent;
+  opacity: 1;
+  animation: none;
 }
 
 .post-body code {
@@ -426,6 +485,105 @@ button {
   border: 0;
   border-top: 1px solid var(--border);
   margin-top: 2em;
+}
+
+.generative-inline-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16em;
+  min-width: 1.15em;
+}
+
+.generative-inline-loader > span {
+  width: 0.28em;
+  height: 0.28em;
+  border-radius: 999px;
+  background: currentcolor;
+  opacity: 0.35;
+  animation: generative-loader-pulse 1s ease-in-out infinite;
+}
+
+.generative-inline-loader > span:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.generative-inline-loader > span:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+.generative-image-loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+
+.generative-image-loader::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    color-mix(in srgb, var(--foreground) 10%, transparent) 48%,
+    transparent 75%
+  );
+  content: "";
+  animation: generative-image-scan 1.35s ease-in-out infinite;
+}
+
+.generative-image-loader > span {
+  z-index: 1;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-top-color: var(--foreground);
+  border-radius: 999px;
+  animation: generative-image-spin 0.9s linear infinite;
+}
+
+@keyframes generative-image-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes generative-image-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes generative-loader-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-0.16em) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recognition-dialog-image {
+    transition: none;
+  }
+
+  .generative-inline-loader > span {
+    animation: none;
+    opacity: 0.75;
+  }
+
+  .generative-image-loader::after,
+  .generative-image-loader > span {
+    animation: none;
+  }
 }
 
 /* Syntax highlighting. A small palette keyed to this site's accent rather than

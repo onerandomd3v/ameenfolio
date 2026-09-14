@@ -23,7 +23,7 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={toggleTheme}
+      onClick={(event) => toggleTheme(event.currentTarget)}
       aria-label="Toggle dark mode"
       data-bippy-safe-zone
       data-theme-toggle=""

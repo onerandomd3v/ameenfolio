@@ -28,7 +28,7 @@ export async function revokeAdminSession(sessionId: string) {
   try {
     const auth = getAuth();
     const [currentResult, sessionsResult] = await Promise.all([
-      auth.getSession(),
+      auth.getSession({ query: { disableCookieCache: "true" } }),
       auth.listSessions(),
     ]);
 
@@ -97,7 +97,7 @@ export async function revokeOtherAdminSessions() {
 
   try {
     const [currentResult, sessionsResult] = await Promise.all([
-      auth.getSession(),
+      auth.getSession({ query: { disableCookieCache: "true" } }),
       auth.listSessions(),
     ]);
     const lookupFailure =

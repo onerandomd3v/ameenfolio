@@ -46,6 +46,7 @@ export async function GET() {
       "## Machine-readable indexes",
       "",
       `- [Published writing JSON](${baseUrl}/api/public/writing)`,
+      `- [Writing RSS feed](${baseUrl}/feed.xml)`,
       `- [Sitemap](${baseUrl}/sitemap.xml)`,
       "",
       "Only public, published content is listed here. Admin data, drafts, MCP proposals, and private media are excluded.",

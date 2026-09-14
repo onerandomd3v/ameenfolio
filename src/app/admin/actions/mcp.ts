@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/server";
 import {
   cleanupExpiredMcpCredentials,
   disconnectMcpClient,
+  keepNewestLocalCodexConnection as keepNewestLocalCodexConnectionInStore,
 } from "@/lib/mcp/connections";
 import {
   issueAuthorizationCode,
@@ -33,6 +34,18 @@ export async function cleanMcpCredentials() {
   const removed = await cleanupExpiredMcpCredentials();
   refreshConnections();
   return { ok: true as const, removed };
+}
+
+export async function keepNewestLocalCodexConnection() {
+  await requireAdmin();
+  const revoked = await keepNewestLocalCodexConnectionInStore();
+  refreshConnections();
+  return {
+    ok: true as const,
+    message: revoked
+      ? `Revoked ${revoked} older local Codex authorization${revoked === 1 ? "" : "s"}.`
+      : "No other local Codex authorizations were active.",
+  };
 }
 
 export async function decideMcpAuthorization(formData: FormData) {

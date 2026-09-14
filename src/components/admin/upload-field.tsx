@@ -85,7 +85,7 @@ export function UploadField({
             Uploading…
           </span>
         ) : resourceType === "icon" ? (
-          "PNG, JPEG, or WebP up to 2 MB."
+          "PNG, JPEG, WebP, or SVG up to 2 MB."
         ) : (
           "PDF up to 10 MB. Downloads as an attachment."
         )}

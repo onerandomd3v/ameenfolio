@@ -6,7 +6,7 @@ import {
   type PublicWakaTimeStatus,
 } from "@/lib/wakatime/status";
 
-const REFRESH_INTERVAL_MS = 60_000;
+const REFRESH_INTERVAL_MS = 30_000;
 
 export function useWakaTimeStatus() {
   const [status, setStatus] = useState<PublicWakaTimeStatus | null>(null);
@@ -39,12 +39,18 @@ export function useWakaTimeStatus() {
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") void refresh();
     };
+    const onFocus = () => void refresh();
+    const onPageShow = () => void refresh();
     document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
 
     return () => {
       controller.abort();
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 

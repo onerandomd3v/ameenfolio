@@ -30,6 +30,8 @@ after the new discovery surfaces are recrawled.
 - `/writing/[slug].md` — clean Markdown with `text/markdown` content type.
 - `/api/public/writing` — published article summaries only.
 - `/api/public/writing/[slug]` — one complete published article as JSON.
+- `/feed.xml` — RSS 2.0 feed containing published article summaries and
+  canonical article URLs.
 - `/sitemap.xml` — canonical portfolio pages and published HTML articles only.
 - `/llms.txt` — a compact portfolio summary and links to public pages and
   Markdown articles.
@@ -61,7 +63,8 @@ publication controls, storage keys, admin data, MCP proposals, audit events,
 and credentials. Unknown, draft, or unpublished slugs return 404 from HTML,
 Markdown, and JSON routes.
 
-The sitemap and `llms.txt` are generated from the same published-only query.
+The sitemap, RSS feed, and `llms.txt` are generated from published-only
+queries.
 The sitemap deliberately excludes Markdown duplicates, APIs, media routes,
 admin pages, MCP routes, and drafts. Private R2 objects remain protected by the
 existing database-reference check: only media attached to published records is
@@ -85,6 +88,7 @@ curl -i https://onerandomdev.cv/writing/building-bippy.md
 curl -sS https://onerandomdev.cv/api/public/writing
 curl -sS https://onerandomdev.cv/api/public/writing/building-bippy
 curl -sS https://onerandomdev.cv/robots.txt
+curl -sS https://onerandomdev.cv/feed.xml
 curl -sS https://onerandomdev.cv/sitemap.xml
 curl -sS https://onerandomdev.cv/llms.txt
 

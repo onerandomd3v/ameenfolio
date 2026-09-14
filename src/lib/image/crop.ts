@@ -53,6 +53,32 @@ async function cropToSquare(source: string, area: Area, size: number) {
   });
 }
 
+// Recognition media can be certificates, screenshots, or landscape photos.
+// Keep the complete source and only scale very large files down for delivery.
+async function resizeRecognitionImage(source: string, maxSize = 1600) {
+  const image = await loadImage(source);
+  const scale = Math.min(
+    1,
+    maxSize / Math.max(image.naturalWidth, image.naturalHeight),
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("This browser cannot resize the image.");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (result) =>
+        result ? resolve(result) : reject(new Error("Image resize failed.")),
+      "image/webp",
+      0.9,
+    );
+  });
+}
+
 export async function cropProfileImage(source: string, area: Area) {
   const blob = await cropToSquare(source, area, PROFILE_IMAGE_SIZE);
   return new File([blob], "profile.webp", { type: "image/webp" });
@@ -63,8 +89,8 @@ export async function cropIconImage(source: string, area: Area) {
   return new File([blob], "icon.webp", { type: "image/webp" });
 }
 
-export async function cropRecognitionImage(source: string, area: Area) {
-  const blob = await cropToSquare(source, area, RECOGNITION_IMAGE_SIZE);
+export async function cropRecognitionImage(source: string) {
+  const blob = await resizeRecognitionImage(source);
   return new File([blob], "recognition.webp", { type: "image/webp" });
 }
 

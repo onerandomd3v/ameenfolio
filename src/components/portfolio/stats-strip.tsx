@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Github } from "lucide-react";
+import { GitHubIcon } from "@/components/icons/brand-icons";
 import { StarGlyph } from "@/components/icons/glyph-icons";
 import type { StatsSnapshot } from "@/db/schema";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ type StatsStripProps = {
   // fall back to a dash while the other two keep showing real numbers.
   snapshot: StatsSnapshot | null;
   hackathonWins: number;
-  publishedProjectCount: number;
+  projectCount: number;
 };
 
 const utc = (options: Intl.DateTimeFormatOptions) =>
@@ -61,7 +61,7 @@ function sinceLabel(date: Date | null) {
 export function StatsStrip({
   snapshot,
   hackathonWins,
-  publishedProjectCount,
+  projectCount,
 }: StatsStripProps) {
   const cells: StatCell[] = [
     {
@@ -69,13 +69,13 @@ export function StatsStrip({
       // a real measurement — a broken streak or a quiet year — and rendering it
       // as a dash claims the data is missing when it is simply zero.
       label: "Contributions",
-      icon: <Github className="size-3 shrink-0" aria-hidden="true" />,
+      icon: <GitHubIcon className="size-3 shrink-0" aria-hidden="true" />,
       value: snapshot ? snapshot.contributions.toLocaleString("en-US") : null,
       subs: [sinceLabel(snapshot?.firstContributionAt ?? null)],
     },
     {
       label: "Current streak",
-      icon: <Github className="size-3 shrink-0" aria-hidden="true" />,
+      icon: <GitHubIcon className="size-3 shrink-0" aria-hidden="true" />,
       value: snapshot ? `${snapshot.currentStreak}d` : null,
       valueNote: dateRange(
         snapshot?.currentStreakStart ?? null,
@@ -113,10 +113,8 @@ export function StatsStrip({
       value: hackathonWins ? `${hackathonWins}×` : null,
     },
     {
-      label: "Projects (prod)",
-      value: publishedProjectCount
-        ? publishedProjectCount.toLocaleString("en-US")
-        : null,
+      label: "Projects",
+      value: projectCount.toLocaleString("en-US"),
     },
   ];
 
@@ -131,8 +129,8 @@ export function StatsStrip({
           wrapped two-column layout — Tailwind's divide-* utilities instead put
           a rule on the first cell of every wrapped row. overflow-hidden is what
           lets the corner cells be clipped by the radius. */}
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        {cells.map((cell) => {
+      <dl className="grid grid-cols-2 overflow-hidden rounded-[4px] border border-border bg-card sm:grid-cols-4">
+        {cells.map((cell, index) => {
           // Filtered on their own content rather than on the value. Gating
           // them behind the value meant a broken streak hid the record beneath
           // it — the one line still worth reading at that moment.
@@ -141,7 +139,16 @@ export function StatsStrip({
           const stacked = subs.length > 0 || Boolean(valueNote);
 
           return (
-            <div key={cell.label} className="flex flex-col bg-card px-4 py-5">
+            <div
+              key={cell.label}
+              className={cn(
+                "flex flex-col bg-card px-4 py-5",
+                index < 2 && "border-b border-border sm:border-b-0",
+                index % 2 === 0 && "border-r border-border",
+                index === 1 && "sm:border-r sm:border-border",
+                index === 2 && "sm:border-r sm:border-border",
+              )}
+            >
               {/* Tracking is tighter than the other mono-caps headings on the
                   page: the icon costs 16px of a 98.6px cell, and without it
                   "Current streak" wraps to a second line, which drops that one
@@ -165,7 +172,7 @@ export function StatsStrip({
                     to wrap: at four across the row has 99px and the pair needed
                     102, so the date dropped under the figure. A smaller note
                     and a tighter gap fit it back on the baseline. */}
-                <span className="flex items-baseline gap-x-1.5">
+                <span className="flex items-baseline gap-x-1 sm:gap-x-1.5">
                   <span
                     className={cn(
                       "text-2xl font-medium tabular-nums",
@@ -175,7 +182,7 @@ export function StatsStrip({
                     {cell.value ?? "—"}
                   </span>
                   {valueNote ? (
-                    <span className="ml-auto shrink-0 whitespace-nowrap text-[10px] leading-4 text-muted-foreground">
+                    <span className="ml-0 shrink-0 whitespace-nowrap text-[10px] leading-4 text-muted-foreground sm:ml-auto">
                       {valueNote}
                     </span>
                   ) : null}

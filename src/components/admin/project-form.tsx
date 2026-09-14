@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm, useWatch } from "react-hook-form";
-import { LoaderCircle } from "lucide-react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteProject, saveProject } from "@/app/admin/actions/projects";
@@ -18,7 +18,7 @@ import { LineInput, LineSelect } from "@/components/admin/line-input";
 import { UploadField } from "@/components/admin/upload-field";
 import { Button } from "@/components/ui/button";
 import { projectIconOptions } from "@/config/project-icons";
-import type { Project } from "@/db/schema";
+import type { Project, ProjectHighlight } from "@/db/schema";
 import { cleanupUpload } from "@/lib/storage/cleanup-upload";
 import { useAdminBase } from "@/lib/use-admin-base";
 import { projectSchema, type ProjectInput } from "@/lib/validation";
@@ -29,9 +29,16 @@ const emptyProject: ProjectInput = {
   shortDescription: "",
   url: "https://",
   iconName: "custom",
+  highlights: [],
 };
 
-export function ProjectForm({ project }: { project?: Project }) {
+export function ProjectForm({
+  project,
+  highlights = [],
+}: {
+  project?: Project;
+  highlights?: ProjectHighlight[];
+}) {
   const router = useRouter();
   const base = useAdminBase();
   const [leaving, setLeaving] = useState(false);
@@ -44,12 +51,15 @@ export function ProjectForm({ project }: { project?: Project }) {
       ? {
           title: project.title,
           shortDescription: project.shortDescription,
-          contribution: project.contribution ?? undefined,
-          statusLabel: project.statusLabel ?? undefined,
           url: project.url,
+          githubUrl: project.githubUrl ?? undefined,
           iconKey: project.iconKey ?? undefined,
           iconAlt: project.iconAlt ?? undefined,
           iconName: project.iconName,
+          highlights: highlights.map((item, index) => ({
+            body: item.body,
+            displayOrder: index,
+          })),
         }
       : emptyProject,
   });
@@ -67,6 +77,10 @@ export function ProjectForm({ project }: { project?: Project }) {
   const iconKey = useWatch({ control, name: "iconKey" });
   const description = useWatch({ control, name: "shortDescription" }) ?? "";
   const title = useWatch({ control, name: "title" }) ?? "";
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "highlights",
+  });
 
   // What "unsaved work" means: anything typed. An untouched form has nothing
   // worth keeping, so leaving it needs no decision.
@@ -189,15 +203,52 @@ export function ProjectForm({ project }: { project?: Project }) {
               {...register("shortDescription")}
             />
           </FieldRow>
-          <FieldRow label="Contribution" note="optional">
-            <LineInput
-              placeholder="e.g. Founding Engineer"
-              {...register("contribution")}
-            />
-          </FieldRow>
-          <FieldRow label="Status label" note="optional">
-            <LineInput placeholder="e.g. Live" {...register("statusLabel")} />
-          </FieldRow>
+          <SectionHeading
+            className="mt-8"
+            action={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  append({ body: "", displayOrder: fields.length })
+                }
+              >
+                Add
+              </Button>
+            }
+          >
+            Highlights
+          </SectionHeading>
+          <FieldNote>
+            Optional details shown when a project is expanded.
+          </FieldNote>
+          <div className="divide-y divide-border/60">
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="flex min-w-0 items-center gap-2 py-2.5"
+              >
+                <LineInput
+                  aria-label={`Highlight ${index + 1}`}
+                  className="min-w-0 flex-1"
+                  placeholder="What you built"
+                  invalid={Boolean(errors.highlights?.[index]?.body)}
+                  {...register(`highlights.${index}.body`)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label="Remove highlight"
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
           <FieldRow label="URL" note={errors.url ? "https:// only" : undefined}>
             <LineInput
               mono
@@ -207,8 +258,19 @@ export function ProjectForm({ project }: { project?: Project }) {
             />
           </FieldRow>
           <FieldNote>
-            One destination — clicking the card on the site follows this.
+            This is the live project URL. GitHub can be added separately below.
           </FieldNote>
+          <FieldRow
+            label="GitHub URL"
+            note={errors.githubUrl ? "https:// only" : "optional"}
+          >
+            <LineInput
+              mono
+              placeholder="https://github.com/..."
+              invalid={Boolean(errors.githubUrl)}
+              {...register("githubUrl")}
+            />
+          </FieldRow>
 
           <SectionHeading className="mt-8">Icon</SectionHeading>
           <FieldRow label="Source" note="for a project with no logo">

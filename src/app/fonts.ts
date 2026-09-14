@@ -1,4 +1,4 @@
-import { Instrument_Serif, Inter, Newsreader } from "next/font/google";
+import { Instrument_Serif, Inter, Plus_Jakarta_Sans } from "next/font/google";
 
 export const inter = Inter({
   subsets: ["latin"],
@@ -15,7 +15,8 @@ export const instrumentSerif = Instrument_Serif({
 // the body face rather than merely bolded. Exported under a role name, not a
 // typeface name, so trying a different one is a single-line change here rather
 // than a hunt through the components.
-export const nowFont = Newsreader({
+export const nowFont = Plus_Jakarta_Sans({
+  weight: ["500", "700"],
   subsets: ["latin"],
   display: "swap",
 });

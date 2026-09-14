@@ -9,7 +9,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpRight, RotateCcw, X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import {
   bippyDialogues,
   isBippyDialogueKey,
@@ -154,7 +154,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
   const movingRef = useRef(false);
   const suppressActivationRef = useRef(false);
   const hasCustomPositionRef = useRef(false);
-  const seenSectionsRef = useRef(new Set<string>());
   const previousPathRef = useRef(pathname);
   const messageTimeoutRef = useRef<number | null>(null);
   const dialogueDelayRef = useRef<number | null>(null);
@@ -715,63 +714,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
   }, [send, showDialogue, stopMovement]);
 
   useEffect(() => {
-    if (pathname !== "/") return;
-    seenSectionsRef.current.clear();
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting || entry.intersectionRatio < 0.25) continue;
-          const section = (entry.target as HTMLElement).dataset.bippySection;
-          if (!section || seenSectionsRef.current.has(section)) continue;
-
-          seenSectionsRef.current.add(section);
-          if (isBippyDialogueKey(section)) showDialogue(section);
-          lastActivityRef.current = Date.now();
-          stopMovement();
-          if (section === "recognitions") {
-            send({ type: "ACTIVATE" });
-          } else if (section === "stack") {
-            send({ type: "START_WORK" });
-          } else {
-            send({ type: "NOTICE" });
-          }
-        }
-      },
-      { threshold: [0.25], rootMargin: "-10% 0px" },
-    );
-
-    const observedSections = new Set<HTMLElement>();
-    const observeSections = () => {
-      document
-        .querySelectorAll<HTMLElement>("[data-bippy-section]")
-        .forEach((section) => {
-          if (observedSections.has(section)) return;
-          observedSections.add(section);
-          observer.observe(section);
-        });
-    };
-
-    let scanFrame = 0;
-    const scheduleScan = () => {
-      if (scanFrame) return;
-      scanFrame = window.requestAnimationFrame(() => {
-        scanFrame = 0;
-        observeSections();
-      });
-    };
-
-    observeSections();
-    const mutations = new MutationObserver(scheduleScan);
-    mutations.observe(document.body, { childList: true, subtree: true });
-    return () => {
-      window.cancelAnimationFrame(scanFrame);
-      mutations.disconnect();
-      observer.disconnect();
-    };
-  }, [pathname, send, showDialogue, stopMovement]);
-
-  useEffect(() => {
     const routeChanged = previousPathRef.current !== pathname;
     let routeUpdateDelay: number | undefined;
     stopMovement();
@@ -882,19 +824,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
     send({ type: "ACTIVATE" });
   }
 
-  function resetPosition() {
-    try {
-      window.localStorage.removeItem(POSITION_STORAGE_KEY);
-    } catch {
-      // A blocked storage API must not prevent the visible reset.
-    }
-    hasCustomPositionRef.current = false;
-    lastActivityRef.current = Date.now();
-    stopMovement();
-    placeAtDefault();
-    send({ type: "RESET" });
-  }
-
   return (
     <div
       ref={actorRef}
@@ -907,8 +836,8 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
       // Double-click flips the theme. Undocumented on purpose: it is a thing
       // to find, and the button in the nav is the discoverable way to do it.
       //
-      // Scoped to his body. This element also wraps the speech bubble's link,
-      // its dismiss button and the reset control, and a double-click on any of
+      // Scoped to his body. This element also wraps the speech bubble's link
+      // and its dismiss button, and a double-click on any of
       // those would otherwise bubble up here and change the theme.
       onDoubleClick={(event) => {
         const target = event.target as HTMLElement;
@@ -978,24 +907,6 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
           ) : null}
         </div>
       ) : null}
-      <div
-        className={styles.companionControls}
-        role="group"
-        aria-label="Bippy controls"
-        data-testid="bippy-companion-controls"
-      >
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-xs"
-          className="bg-background/90"
-          aria-label="Reset Bippy position"
-          title="Reset Bippy position"
-          onClick={resetPosition}
-        >
-          <RotateCcw aria-hidden="true" />
-        </Button>
-      </div>
     </div>
   );
 }

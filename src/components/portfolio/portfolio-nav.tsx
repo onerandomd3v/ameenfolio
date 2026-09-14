@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/components/portfolio/theme-toggle";
 import { cn } from "@/lib/utils";
 
 type PortfolioNavProps = {
-  current: "home" | "projects";
+  current: "home" | "projects" | "writing";
 };
 
 const links = [

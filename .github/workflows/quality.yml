@@ -48,4 +48,4 @@ jobs:
         env:
           NEON_AUTH_BASE_URL: ${{ secrets.NEON_AUTH_BASE_URL }}
           NEON_AUTH_COOKIE_SECRET: ${{ secrets.NEON_AUTH_COOKIE_SECRET }}
-          ADMIN_GITHUB_USER_ID: "231661599"
+          ADMIN_GITHUB_USER_ID: "0"

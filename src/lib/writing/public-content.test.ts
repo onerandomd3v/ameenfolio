@@ -51,7 +51,9 @@ describe("public writing representations", () => {
     const markdown = articleAsMarkdown(article);
     const jsonLd = articleJsonLd(article, {
       name: "Aliameen Kareem",
+      role: "Full-Stack Engineer",
       url: "https://onerandomdev.cv",
+      sameAs: ["https://github.com/onerandomd3v"],
     });
 
     expect(markdown).toContain("# Building Bippy");
@@ -61,6 +63,13 @@ describe("public writing representations", () => {
       headline: "Building Bippy",
       datePublished: "2026-08-13T00:00:00.000Z",
       dateModified: "2026-08-21T12:00:00.000Z",
+      author: {
+        "@type": "Person",
+        "@id": "https://onerandomdev.cv/#person",
+        name: "Aliameen Kareem",
+        alternateName: "onerandomd3v",
+        sameAs: ["https://github.com/onerandomd3v"],
+      },
     });
   });
 });

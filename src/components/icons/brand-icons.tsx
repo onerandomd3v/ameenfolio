@@ -40,6 +40,22 @@ export function LinkedInIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function DiscordIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" {...props}>
+      <path d="M19.54 5.28A16.7 16.7 0 0 0 15.4 4l-.5 1.02a15.2 15.2 0 0 0-5.8 0L8.6 4a16.7 16.7 0 0 0-4.14 1.28C1.84 9.13 1.13 12.87 1.49 16.56a16.7 16.7 0 0 0 5.1 2.57l1.24-1.68a10.7 10.7 0 0 1-1.95-.94l.48-.37c3.76 1.75 7.83 1.75 11.54 0l.49.37c-.62.37-1.27.68-1.96.94l1.24 1.68a16.7 16.7 0 0 0 5.1-2.57c.42-4.28-.72-7.98-3.23-11.28ZM8.7 14.47c-1.1 0-2-.99-2-2.2s.88-2.2 2-2.2c1.13 0 2.02.99 2 2.2 0 1.21-.88 2.2-2 2.2Zm6.6 0c-1.1 0-2-.99-2-2.2s.88-2.2 2-2.2c1.13 0 2.02.99 2 2.2s-.88 2.2-2 2.2Z" />
+    </svg>
+  );
+}
+
+export function TelegramIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" {...props}>
+      <path d="m21.7 3.3-3.1 17.1c-.23 1.2-.88 1.5-1.79.94l-4.94-3.64-2.38 2.29c-.26.26-.48.48-.99.48l.35-5.03 9.16-8.28c.4-.35-.09-.55-.62-.2L6.06 13.85l-4.9-1.54c-1.07-.34-1.09-1.07.22-1.58L20.54 3.2c.88-.32 1.65.2 1.16.1Z" />
+    </svg>
+  );
+}
+
 // Stroked rather than a solid disc with the graticule cut out. Both cut-out
 // techniques fail here: a <mask> needs a document-unique id and this renders
 // in the contact row and as a recognition icon, while fill-rule="evenodd"

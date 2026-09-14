@@ -3,6 +3,7 @@ import {
   computeStreaks,
   contributionWindows,
   mergeContributionDays,
+  recentContributionDays,
   summarizeContributions,
   type ContributionCalendar,
 } from "@/lib/stats/contributions";
@@ -207,5 +208,19 @@ describe("summarizeContributions", () => {
 
   it("reports no first contribution for an empty history", () => {
     expect(summarizeContributions(days([0, 0])).firstContributionAt).toBeNull();
+  });
+});
+
+describe("recentContributionDays", () => {
+  it("keeps the 53-week window used by the public activity grid", () => {
+    const entries = days(
+      Array.from({ length: 380 }, (_, index) => index),
+      "2025-08-01",
+    );
+    const recent = recentContributionDays(entries);
+
+    expect(recent).toHaveLength(371);
+    expect(recent[0]).toEqual(entries[9]);
+    expect(recent.at(-1)).toEqual(entries.at(-1));
   });
 });

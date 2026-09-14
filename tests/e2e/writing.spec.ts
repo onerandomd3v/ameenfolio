@@ -14,7 +14,7 @@ test("the homepage always offers the writing section", async ({ page }) => {
 test("the writing index is reachable and accessible", async ({ page }) => {
   await page.goto("/writing");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Writing" }),
+    page.getByText("Notes, articles, and the things I learn while building."),
   ).toBeVisible();
 
   const results = await new AxeBuilder({ page }).analyze();

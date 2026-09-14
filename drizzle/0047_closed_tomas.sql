@@ -1,0 +1,2 @@
+ALTER TABLE "tech_stack_items" DROP CONSTRAINT "tech_stack_group_key_valid";--> statement-breakpoint
+ALTER TABLE "tech_stack_items" ADD CONSTRAINT "tech_stack_group_key_valid" CHECK ("tech_stack_items"."group_key" in ('core', 'tools', 'workflow', 'design'));

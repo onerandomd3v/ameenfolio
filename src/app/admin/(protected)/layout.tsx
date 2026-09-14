@@ -4,7 +4,13 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { getDb } from "@/db/client";
 import { getAdminSettings } from "@/db/queries";
-import { posts, projects, recognitions, techStackItems } from "@/db/schema";
+import {
+  experiences,
+  posts,
+  projects,
+  recognitions,
+  techStackItems,
+} from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
@@ -13,18 +19,21 @@ export const dynamic = "force-dynamic";
 // says how much is in each area without opening it.
 async function sectionCounts() {
   const db = getDb();
-  const [projectRows, postRows, recognitionRows, techRows] = await Promise.all([
-    db.select({ value: count() }).from(projects),
-    db.select({ value: count() }).from(posts),
-    db.select({ value: count() }).from(recognitions),
-    db
-      .select({ value: count() })
-      .from(techStackItems)
-      .where(eq(techStackItems.visible, true)),
-  ]);
+  const [projectRows, experienceRows, postRows, recognitionRows, techRows] =
+    await Promise.all([
+      db.select({ value: count() }).from(projects),
+      db.select({ value: count() }).from(experiences),
+      db.select({ value: count() }).from(posts),
+      db.select({ value: count() }).from(recognitions),
+      db
+        .select({ value: count() })
+        .from(techStackItems)
+        .where(eq(techStackItems.visible, true)),
+    ]);
 
   return {
     "/projects": Number(projectRows[0]?.value ?? 0),
+    "/experience": Number(experienceRows[0]?.value ?? 0),
     "/writing": Number(postRows[0]?.value ?? 0),
     "/recognitions": Number(recognitionRows[0]?.value ?? 0),
     "/tech-stack": Number(techRows[0]?.value ?? 0),

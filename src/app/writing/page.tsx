@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import {
   getPublishedPostSummaries,
   getPublishedRecognitions,
 } from "@/db/queries";
 import { RecognitionRow } from "@/components/portfolio/recognition-row";
+import { PortfolioNav } from "@/components/portfolio/portfolio-nav";
 import { SectionHeading } from "@/components/portfolio/section-heading";
-import { ThemeToggle } from "@/components/portfolio/theme-toggle";
 import { WritingIndexRow } from "@/components/portfolio/writing-index-row";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +14,10 @@ export const metadata: Metadata = {
   title: "Writing",
   description:
     "Notes, articles and what I am learning while building — by Aliameen Kareem.",
-  alternates: { canonical: "/writing" },
+  alternates: {
+    canonical: "/writing",
+    types: { "application/rss+xml": "/feed.xml" },
+  },
 };
 
 export default async function WritingPage() {
@@ -24,26 +25,15 @@ export default async function WritingPage() {
     getPublishedPostSummaries(),
     getPublishedRecognitions(),
   ]);
+  const mediaBase = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl px-5 pb-20 pt-8 sm:px-6 sm:pt-12">
-      {/* The toggle sits where the nav's would be on the pages that have one,
-          so its position is the same wherever you are. */}
-      <div className="flex min-h-11 items-center justify-between gap-4">
-        <Link
-          href="/"
-          data-bippy-reaction="curious"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-3.5" aria-hidden="true" />
-          Go back
-        </Link>
-        <ThemeToggle />
-      </div>
+      <PortfolioNav current="writing" />
 
-      <header className="mt-8">
-        <h1 className="text-xl font-semibold text-foreground">Writing</h1>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+      <header className="mt-7">
+        <h1 className="sr-only">Writing</h1>
+        <p className="text-sm leading-6 text-muted-foreground">
           Notes, articles, and the things I learn while building.
         </p>
       </header>
@@ -88,6 +78,7 @@ export default async function WritingPage() {
                   verificationUrl={recognition.verificationUrl}
                   articleSlug={recognition.articleSlug}
                   images={recognition.images}
+                  mediaBase={mediaBase}
                 />
               </li>
             ))}

@@ -2,10 +2,9 @@
 
 import { useRef, useState } from "react";
 import { ArrowUpRight, Newspaper } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { RECOGNITION_IMAGE_SIZE } from "@/lib/image/crop";
+import { GenerativeImageLoader } from "@/components/ui/generative-loader";
 import { recognitionImageAlt } from "@/lib/recognition";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +21,7 @@ type RecognitionDialogProps = {
   images: RecognitionDialogImage[];
   articleSlug: string | null;
   verificationUrl: string | null;
+  mediaBase?: string;
 };
 
 export function RecognitionDialog({
@@ -31,6 +31,7 @@ export function RecognitionDialog({
   images,
   articleSlug,
   verificationUrl,
+  mediaBase,
 }: RecognitionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,29 +42,32 @@ export function RecognitionDialog({
           changed in the shared component, where every other dialog still opens
           onto a plain background and needs nothing. */}
       <DialogContent
+        showCloseButton={false}
         className={cn(
-          "sm:max-w-md",
+          "w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-hidden border-0 bg-transparent p-0 shadow-none sm:w-auto sm:max-w-[min(90vw,900px)]",
           "[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:rounded-full",
           "[&_[data-slot=dialog-close]]:bg-background/70 [&_[data-slot=dialog-close]]:p-1",
           "[&_[data-slot=dialog-close]]:opacity-90 [&_[data-slot=dialog-close]]:backdrop-blur-sm",
           "[&_[data-slot=dialog-close]]:hover:opacity-100",
         )}
       >
-        {images.length ? <Carousel images={images} title={title} /> : null}
+        {images.length ? (
+          <Carousel images={images} title={title} mediaBase={mediaBase} />
+        ) : null}
 
-        {/* Under the carousel rather than above it: the image is what the
-            reader opened this for, and the title reads as its caption.
-            DialogHeader is not used — its sm:text-left would undo the
-            centring, and it exists only to stack a title and description. */}
-        <DialogTitle className="text-center text-base leading-6 text-balance">
-          {title}
-        </DialogTitle>
+        {/* The image and carousel dots stay visually free-standing. Only the
+            caption and outward actions receive a card surface. */}
+        <div className="mt-3 grid gap-3 rounded-[3px] border border-border bg-card p-4">
+          <DialogTitle className="text-center text-base leading-6 text-balance">
+            {title}
+          </DialogTitle>
 
-        <RecognitionActions
-          articleSlug={articleSlug}
-          verificationUrl={verificationUrl}
-          onNavigate={() => onOpenChange(false)}
-        />
+          <RecognitionActions
+            articleSlug={articleSlug}
+            verificationUrl={verificationUrl}
+            onNavigate={() => onOpenChange(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -84,12 +88,20 @@ export function RecognitionDialog({
 function Carousel({
   images,
   title,
+  mediaBase,
 }: {
   images: RecognitionDialogImage[];
   title: string;
+  mediaBase?: string;
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const [index, setIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [failedImages, setFailedImages] = useState<Set<string>>(
+    () => new Set(),
+  );
   const single = images.length === 1;
 
   // Derived from the scroll offset rather than tracked separately, so the dots
@@ -101,7 +113,7 @@ function Carousel({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid w-full min-w-0 gap-3">
       <ul
         ref={trackRef}
         onScroll={syncIndex}
@@ -110,27 +122,73 @@ function Carousel({
         tabIndex={single ? undefined : 0}
         aria-label={single ? undefined : `${images.length} images`}
         className={cn(
-          "flex snap-x snap-mandatory overflow-x-auto rounded-lg",
+          "flex w-full min-w-0 snap-x snap-mandatory overflow-x-auto",
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         )}
       >
-        {images.map((image, index) => (
-          <li key={image.objectKey} className="w-full shrink-0 snap-center">
-            {/* Every image is stored square at a known size, so the frame is
-                  reserved before anything loads and the dialog never jumps. */}
-            <Image
-              src={`/media/${image.objectKey}`}
+        {images.map((image, imageIndex) => (
+          <li
+            key={image.objectKey}
+            className="relative flex min-h-48 min-w-0 flex-[0_0_100%] snap-center items-center justify-center overflow-hidden sm:min-h-64"
+          >
+            {!loadedImages.has(image.objectKey) &&
+            !failedImages.has(image.objectKey) ? (
+              <GenerativeImageLoader
+                label={`Loading image ${imageIndex + 1}`}
+              />
+            ) : null}
+            {failedImages.has(image.objectKey) ? (
+              <p className="px-5 text-center text-sm text-muted-foreground">
+                {recognitionImageAlt({
+                  alt: image.alt,
+                  title,
+                  index: imageIndex,
+                  total: images.length,
+                })}
+              </p>
+            ) : null}
+            {/* The stored file keeps its original proportions, so let the
+                browser size it naturally instead of forcing a square frame. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={
+                mediaBase
+                  ? `${mediaBase}/${image.objectKey}`
+                  : `/media/${image.objectKey}`
+              }
               alt={recognitionImageAlt({
                 alt: image.alt,
                 title,
                 index,
                 total: images.length,
               })}
-              width={RECOGNITION_IMAGE_SIZE}
-              height={RECOGNITION_IMAGE_SIZE}
-              sizes="(min-width: 640px) 28rem, 100vw"
-              className="aspect-square w-full bg-muted object-cover"
+              // Serving the prepared WebP directly avoids an optimizer request
+              // that otherwise starts only after the dialog opens.
+              loading={imageIndex === 0 ? "eager" : "lazy"}
+              fetchPriority={imageIndex === 0 ? "high" : "auto"}
+              decoding="async"
+              onLoad={() =>
+                setLoadedImages((current) => {
+                  const next = new Set(current);
+                  next.add(image.objectKey);
+                  return next;
+                })
+              }
+              onError={() =>
+                setFailedImages((current) => {
+                  const next = new Set(current);
+                  next.add(image.objectKey);
+                  return next;
+                })
+              }
+              className={cn(
+                "recognition-dialog-image h-auto max-h-[75vh] max-w-full w-auto object-contain transition-opacity duration-200 sm:max-h-[70vh]",
+                loadedImages.has(image.objectKey) &&
+                  !failedImages.has(image.objectKey)
+                  ? "opacity-100"
+                  : "opacity-0",
+              )}
             />
           </li>
         ))}
@@ -200,7 +258,7 @@ function RecognitionActions({
       {actions.map((action) => {
         const Icon = action.icon;
         const className =
-          "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent focus-visible:bg-accent";
+          "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[3px] border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent focus-visible:bg-accent";
 
         return action.external ? (
           <a

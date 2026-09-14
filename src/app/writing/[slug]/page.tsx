@@ -5,12 +5,14 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/portfolio/theme-toggle";
 import { ArticleShareButton } from "@/components/writing/article-share-button";
+import { ArticleBody } from "@/components/writing/article-body";
 import { getIdentitySettings, getPublishedPost } from "@/db/queries";
 import { getPostLinkIcon } from "@/config/post-link-icons";
 import { formatPostDate, toDateAttribute } from "@/lib/writing/format";
 import { getSocialPreviewVersion } from "@/lib/writing/social-preview";
 import { getServerEnv } from "@/lib/env";
 import { resolveIdentity } from "@/lib/identity";
+import { publicPerson } from "@/lib/seo/person";
 import { articleJsonLd, toPublicArticle } from "@/lib/writing/public-content";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,7 @@ export async function generateMetadata({
       canonical: `/writing/${found.post.slug}`,
       types: {
         "text/markdown": `/writing/${found.post.slug}.md`,
+        "application/rss+xml": "/feed.xml",
       },
     },
     robots: { index: true, follow: true },
@@ -80,12 +83,13 @@ export default async function PostPage({ params }: PageProps) {
 
   const { post, links } = found;
   const baseUrl = getServerEnv().CANONICAL_SITE_URL;
-  const identity = resolveIdentity(await getIdentitySettings());
+  const identitySettings = await getIdentitySettings();
+  const identity = resolveIdentity(identitySettings);
   const publicArticle = toPublicArticle(post, links, baseUrl);
-  const jsonLd = articleJsonLd(publicArticle, {
-    name: identity.name,
-    url: baseUrl,
-  });
+  const jsonLd = articleJsonLd(
+    publicArticle,
+    publicPerson(identity, identitySettings.contactLinks, baseUrl),
+  );
   const shareVersion = getSocialPreviewVersion(post.updatedAt);
   // Only the top level: a contents list that mirrors every subheading stops
   // being a summary of the piece.
@@ -158,10 +162,7 @@ export default async function PostPage({ params }: PageProps) {
 
         {/* Sanitised when the post was saved, not when it is read — see
             lib/writing/markdown.ts. */}
-        <article
-          className="post-body mt-8"
-          dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
-        />
+        <ArticleBody html={post.bodyHtml} />
 
         {links.length ? (
           <footer className="mt-12 border-t border-border pt-5">

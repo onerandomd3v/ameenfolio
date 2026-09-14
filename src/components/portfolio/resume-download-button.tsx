@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type ResumeDownloadButtonProps = {
   hasResume: boolean;
   filename: string | null;
+  label?: string;
   // The caller positions it. This used to hard-code the absolute placement it
   // needed beside the old footer separator, which is exactly what made it
   // unusable anywhere else.
@@ -17,6 +18,7 @@ type ResumeDownloadButtonProps = {
 export function ResumeDownloadButton({
   hasResume,
   filename,
+  label = "view resume",
   className,
 }: ResumeDownloadButtonProps) {
   const [downloading, setDownloading] = useState(false);
@@ -85,7 +87,7 @@ export function ResumeDownloadButton({
       ) : (
         <Download className="size-3.5 shrink-0" aria-hidden="true" />
       )}
-      view resume
+      {label}
     </button>
   );
 }

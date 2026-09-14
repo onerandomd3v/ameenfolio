@@ -18,14 +18,24 @@ import {
   postLinks,
   posts,
   projects,
+  projectHighlights,
+  experiences,
+  experienceHighlights,
   recognitionImages,
   recognitions,
   siteSettings,
   statsSnapshot,
+  techStackCategories,
   techStackItems,
+  type ContactLinks,
   type Recognition,
   type SiteSettings,
   type TechStackItem,
+  type TechStackCategory,
+  type Experience,
+  type ExperienceHighlight,
+  type ProjectHighlight,
+  type Project,
 } from "@/db/schema";
 import { defaultAvailability } from "@/config/availability";
 import { toPublicNow } from "@/lib/now";
@@ -45,6 +55,7 @@ const defaultSiteSettings: SiteSettings = {
   introduction: null,
   email: "hello@example.com",
   contactLinks: {},
+  location: "Lagos, Nigeria",
   profileImageKey: null,
   resumeKey: null,
   resumeFilename: null,
@@ -79,9 +90,11 @@ export async function getPublicPortfolio() {
       settings: defaultSiteSettings,
       now: null,
       projects: [],
+      experiences: [],
       recognitions: [],
       techStack: [] as TechStackItem[],
-      publishedProjectCount: 0,
+      techStackCategories: [] as TechStackCategory[],
+      projectCount: 0,
       statsSnapshot: null,
     };
   }
@@ -90,8 +103,10 @@ export async function getPublicPortfolio() {
   const [
     settingsRows,
     nowSectionRows,
+    techStackCategoryRows,
     nowLinkRows,
     projectRows,
+    experienceRows,
     recognitionRows,
     techStackRows,
     publishedProjectRows,
@@ -99,6 +114,14 @@ export async function getPublicPortfolio() {
   ] = await Promise.all([
     db.select().from(siteSettings).where(eq(siteSettings.id, 1)).limit(1),
     db.select().from(nowSection).where(eq(nowSection.id, 1)).limit(1),
+    db
+      .select()
+      .from(techStackCategories)
+      .where(eq(techStackCategories.visible, true))
+      .orderBy(
+        asc(techStackCategories.displayOrder),
+        asc(techStackCategories.createdAt),
+      ),
     db
       .select()
       .from(nowLinks)
@@ -114,6 +137,15 @@ export async function getPublicPortfolio() {
       .limit(MAX_PINNED_PROJECTS),
     db
       .select()
+      .from(experiences)
+      .where(eq(experiences.published, true))
+      .orderBy(
+        desc(experiences.pinned),
+        asc(experiences.displayOrder),
+        desc(experiences.startDate),
+      ),
+    db
+      .select()
       .from(recognitions)
       .where(
         and(eq(recognitions.published, true), isNotNull(recognitions.pinnedAt)),
@@ -127,7 +159,8 @@ export async function getPublicPortfolio() {
       .from(techStackItems)
       .where(eq(techStackItems.visible, true))
       .orderBy(asc(techStackItems.displayOrder), asc(techStackItems.createdAt)),
-    // Every project row counts, not just the twelve the homepage shows.
+    // The strip reports every published project, not a manually maintained
+    // production label.
     db
       .select({ value: count() })
       .from(projects)
@@ -153,11 +186,69 @@ export async function getPublicPortfolio() {
     settings: settingsRows[0] ?? defaultSiteSettings,
     now: toPublicNow(nowSectionRows[0], nowLinkRows),
     projects: projectRows,
+    experiences: await withExperienceDetails(experienceRows),
     recognitions: await withRecognitionDetails(recognitionRows),
     techStack: techStackRows,
-    publishedProjectCount: publishedProjectRows[0]?.value ?? 0,
+    techStackCategories: techStackCategoryRows,
+    projectCount: publishedProjectRows[0]?.value ?? 0,
     statsSnapshot: snapshotRows[0] ?? null,
   };
+}
+
+export type PublicExperience = Experience & {
+  highlights: ExperienceHighlight[];
+};
+
+async function withExperienceDetails(
+  rows: Experience[],
+): Promise<PublicExperience[]> {
+  if (!rows.length) return [];
+  const highlights = await getDb()
+    .select()
+    .from(experienceHighlights)
+    .where(
+      inArray(
+        experienceHighlights.experienceId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(
+      asc(experienceHighlights.displayOrder),
+      asc(experienceHighlights.createdAt),
+    );
+  const byExperience = new Map<string, ExperienceHighlight[]>();
+  for (const highlight of highlights) {
+    const list = byExperience.get(highlight.experienceId) ?? [];
+    list.push(highlight);
+    byExperience.set(highlight.experienceId, list);
+  }
+  return rows.map((row) => ({
+    ...row,
+    highlights: byExperience.get(row.id) ?? [],
+  }));
+}
+
+export async function getAdminExperiences() {
+  return getDb()
+    .select()
+    .from(experiences)
+    .orderBy(
+      desc(experiences.pinned),
+      asc(experiences.displayOrder),
+      desc(experiences.startDate),
+    );
+}
+
+export async function getAdminExperience(id: string) {
+  const [experience, highlights] = await Promise.all([
+    getDb().select().from(experiences).where(eq(experiences.id, id)),
+    getDb()
+      .select()
+      .from(experienceHighlights)
+      .where(eq(experienceHighlights.experienceId, id))
+      .orderBy(asc(experienceHighlights.displayOrder)),
+  ]);
+  return experience[0] ? { experience: experience[0], highlights } : null;
 }
 
 // Deliberately uncached. /projects is force-dynamic, so the unstable_cache
@@ -166,14 +257,13 @@ export async function getPublicPortfolio() {
 // same query returned the row.
 export async function getAllPublishedProjects() {
   if (!canQueryDatabase()) return [];
-  return (
-    getDb()
-      .select()
-      .from(projects)
-      .where(eq(projects.published, true))
-      // No pin order here: the archive is everything, newest first.
-      .orderBy(desc(projects.createdAt))
-  );
+  const rows = await getDb()
+    .select()
+    .from(projects)
+    .where(eq(projects.published, true))
+    // No pin order here: the archive is everything, newest first.
+    .orderBy(desc(projects.createdAt));
+  return withProjectDetails(rows);
 }
 
 export async function getAdminProjects() {
@@ -181,8 +271,44 @@ export async function getAdminProjects() {
 }
 
 export async function getAdminProject(id: string) {
-  const rows = await getDb().select().from(projects).where(eq(projects.id, id));
-  return rows[0] ?? null;
+  const [rows, highlights] = await Promise.all([
+    getDb().select().from(projects).where(eq(projects.id, id)),
+    getDb()
+      .select()
+      .from(projectHighlights)
+      .where(eq(projectHighlights.projectId, id))
+      .orderBy(asc(projectHighlights.displayOrder)),
+  ]);
+  return rows[0] ? { ...rows[0], highlights } : null;
+}
+
+export type PublicProject = Project & { highlights: ProjectHighlight[] };
+
+async function withProjectDetails(rows: Project[]): Promise<PublicProject[]> {
+  if (!rows.length) return [];
+  const highlights = await getDb()
+    .select()
+    .from(projectHighlights)
+    .where(
+      inArray(
+        projectHighlights.projectId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(
+      asc(projectHighlights.displayOrder),
+      asc(projectHighlights.createdAt),
+    );
+  const byProject = new Map<string, ProjectHighlight[]>();
+  for (const highlight of highlights) {
+    const list = byProject.get(highlight.projectId) ?? [];
+    list.push(highlight);
+    byProject.set(highlight.projectId, list);
+  }
+  return rows.map((row) => ({
+    ...row,
+    highlights: byProject.get(row.id) ?? [],
+  }));
 }
 
 export type PublicRecognition = Recognition & {
@@ -340,6 +466,16 @@ export async function getAdminTechStack() {
     .orderBy(asc(techStackItems.displayOrder), asc(techStackItems.createdAt));
 }
 
+export async function getAdminTechStackCategories() {
+  return getDb()
+    .select()
+    .from(techStackCategories)
+    .orderBy(
+      asc(techStackCategories.displayOrder),
+      asc(techStackCategories.createdAt),
+    );
+}
+
 export async function getAdminSettings() {
   const rows = await getDb()
     .select()
@@ -348,13 +484,15 @@ export async function getAdminSettings() {
   return rows[0] ?? defaultSiteSettings;
 }
 
-// A narrow read for the places that need only the name and role — the page
-// title and the share card — so neither pays for the whole portfolio query.
+// A narrow read for the places that describe the portfolio owner — page
+// titles, share cards, and public Person/author structured data — so none of
+// them pays for the whole portfolio query.
 export async function getIdentitySettings() {
   const fallback = {
     displayName: null,
     role: null,
     introduction: null,
+    contactLinks: {} as ContactLinks,
   };
   if (!canQueryDatabase()) return fallback;
 
@@ -364,6 +502,7 @@ export async function getIdentitySettings() {
         displayName: siteSettings.displayName,
         role: siteSettings.role,
         introduction: siteSettings.introduction,
+        contactLinks: siteSettings.contactLinks,
       })
       .from(siteSettings)
       .where(eq(siteSettings.id, 1))
@@ -480,34 +619,42 @@ export async function isReferencedPublicMedia(key: string) {
 export async function isReferencedManagedObject(key: string) {
   if (!canQueryDatabase()) return false;
   const db = getDb();
-  const [project, nowLink, settings, post] = await Promise.all([
-    db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(eq(projects.iconKey, key))
-      .limit(1),
-    db
-      .select({ id: nowLinks.id })
-      .from(nowLinks)
-      .where(eq(nowLinks.iconKey, key))
-      .limit(1),
-    db
-      .select({ id: siteSettings.id })
-      .from(siteSettings)
-      .where(
-        or(
-          eq(siteSettings.profileImageKey, key),
-          eq(siteSettings.resumeKey, key),
-        ),
-      )
-      .limit(1),
-    db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(sql`position(${key} in ${posts.bodyMarkdown}) > 0`)
-      .limit(1),
-  ]);
-  return Boolean(project[0] || nowLink[0] || settings[0] || post[0]);
+  const [project, nowLink, settings, post, recognitionImage] =
+    await Promise.all([
+      db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.iconKey, key))
+        .limit(1),
+      db
+        .select({ id: nowLinks.id })
+        .from(nowLinks)
+        .where(eq(nowLinks.iconKey, key))
+        .limit(1),
+      db
+        .select({ id: siteSettings.id })
+        .from(siteSettings)
+        .where(
+          or(
+            eq(siteSettings.profileImageKey, key),
+            eq(siteSettings.resumeKey, key),
+          ),
+        )
+        .limit(1),
+      db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(sql`position(${key} in ${posts.bodyMarkdown}) > 0`)
+        .limit(1),
+      db
+        .select({ id: recognitionImages.id })
+        .from(recognitionImages)
+        .where(eq(recognitionImages.objectKey, key))
+        .limit(1),
+    ]);
+  return Boolean(
+    project[0] || nowLink[0] || settings[0] || post[0] || recognitionImage[0],
+  );
 }
 
 // --- Writing -------------------------------------------------------------

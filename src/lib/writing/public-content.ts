@@ -1,3 +1,6 @@
+import type { PublicPerson } from "@/lib/seo/person";
+import { personAuthorJsonLd } from "@/lib/seo/person";
+
 type PublicPostSource = {
   title: string;
   slug: string;
@@ -116,7 +119,7 @@ export function articleJsonLd(
     PublicArticle,
     "title" | "description" | "publishedAt" | "modifiedAt" | "url"
   >,
-  author: { name: string; url: string },
+  author: PublicPerson,
 ) {
   return {
     "@context": "https://schema.org",
@@ -127,10 +130,6 @@ export function articleJsonLd(
     dateModified: article.modifiedAt,
     mainEntityOfPage: article.url,
     url: article.url,
-    author: {
-      "@type": "Person",
-      name: author.name,
-      url: author.url,
-    },
+    author: personAuthorJsonLd(author),
   };
 }

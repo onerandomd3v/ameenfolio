@@ -36,29 +36,28 @@
     drop-shadow(0 0 2px rgb(0 0 0 / 35%));
 }
 
-/* Blue while coding, replacing the lime. The glow is the one thing that says
-   "he is working", so it stays vivid — but lime is the dark theme's accent and
-   has no place on the light one. */
+/* The coding glow is blue on light surfaces and switches to the portfolio's
+   lime accent in dark mode through the theme token. */
 .companionActor[data-coding="true"]::before {
   position: absolute;
   inset: 20px;
   border-radius: 32px;
-  background: rgb(59 130 246 / 18%);
+  background: var(--bippy-coding-color-18);
   box-shadow:
-    0 0 18px rgb(59 130 246 / 32%),
-    0 0 34px rgb(59 130 246 / 18%);
+    0 0 18px var(--bippy-coding-color-32),
+    0 0 34px var(--bippy-coding-color-18);
   filter: blur(9px);
   pointer-events: none;
   content: "";
 }
 
-/* Keeps the outline above and adds the blue to it, rather than replacing it —
+/* Keeps the outline above and adds the coding color to it, rather than replacing it —
    a filter declaration overwrites, it does not merge. */
 .companionActor[data-coding="true"] .companionScale {
   filter: drop-shadow(0 1px 0 rgb(0 0 0 / 55%))
     drop-shadow(0 0 2px rgb(0 0 0 / 35%))
-    drop-shadow(0 0 6px rgb(59 130 246 / 55%))
-    drop-shadow(0 0 14px rgb(59 130 246 / 30%));
+    drop-shadow(0 0 6px var(--bippy-coding-color-55))
+    drop-shadow(0 0 14px var(--bippy-coding-color-30));
 }
 
 .companionMessage {
@@ -124,32 +123,6 @@
 .companionMessageDismiss:hover,
 .companionMessageDismiss:focus-visible {
   color: var(--primary);
-}
-
-.companionControls {
-  position: absolute;
-  z-index: 3;
-  right: 0;
-  bottom: calc(100% - 4px);
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  pointer-events: none;
-  visibility: hidden;
-  opacity: 0;
-  transform: translateY(4px);
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease,
-    visibility 150ms;
-}
-
-.companionActor:hover .companionControls,
-.companionActor:focus-within .companionControls {
-  pointer-events: auto;
-  visibility: visible;
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .button {
@@ -389,10 +362,6 @@
   .workingEye::after,
   .typingHand {
     animation: none;
-  }
-
-  .companionControls {
-    transition: none;
   }
 
   .companionMessage {

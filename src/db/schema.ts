@@ -15,7 +15,7 @@ import type { Availability } from "@/config/availability";
 import type { PostLinkIconName } from "@/config/post-link-icons";
 import type { ProjectIconName } from "@/config/project-icons";
 import type { RecognitionIconName } from "@/config/recognition-icons";
-import type { TechStackGroupValue } from "@/config/tech-stack";
+import type { ExperienceIconName } from "@/config/experience-icons";
 
 export type ContactLinks = {
   github?: string;
@@ -24,6 +24,8 @@ export type ContactLinks = {
   tiktok?: string;
   youtube?: string;
   linkedin?: string;
+  discord?: string;
+  telegram?: string;
   whatsapp?: string;
 };
 
@@ -42,12 +44,11 @@ export const projects = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     shortDescription: text("short_description").notNull(),
-    contribution: text("contribution"),
-    statusLabel: text("status_label"),
     // One destination per project: clicking the card follows this. The
     // physical column keeps its old name so the rename costs no migration,
     // the same trade already made for contactLinks/social_links below.
     url: text("live_url").notNull(),
+    githubUrl: text("github_url"),
     iconKey: text("icon_key"),
     iconAlt: text("icon_alt"),
     iconName: text("icon_name")
@@ -71,6 +72,25 @@ export const projects = pgTable(
     check(
       "projects_icon_alt_required",
       sql`${table.iconKey} is null or length(trim(${table.iconAlt})) > 0`,
+    ),
+  ],
+);
+
+export const projectHighlights = pgTable(
+  "project_highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("project_highlights_order_idx").on(
+      table.projectId,
+      table.displayOrder,
     ),
   ],
 );
@@ -109,12 +129,70 @@ export const recognitions = pgTable(
   ],
 );
 
+export const experiences = pgTable(
+  "experiences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    company: text("company").notNull(),
+    role: text("role").notNull(),
+    startDate: timestamp("start_date", { withTimezone: true }).notNull(),
+    endDate: timestamp("end_date", { withTimezone: true }),
+    location: text("location"),
+    iconName: text("icon_name")
+      .$type<ExperienceIconName>()
+      .notNull()
+      .default("briefcase"),
+    pinned: boolean("pinned").notNull().default(false),
+    published: boolean("published").notNull().default(false),
+    displayOrder: integer("display_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("experiences_public_order_idx").on(
+      table.published,
+      table.pinned,
+      table.displayOrder,
+      table.startDate,
+    ),
+    uniqueIndex("experiences_single_pinned_idx")
+      .on(table.pinned)
+      .where(sql`${table.pinned} = true`),
+    check(
+      "experiences_icon_name_valid",
+      sql`${table.iconName} in ('briefcase', 'badge-check', 'blocks', 'bot', 'building', 'chart', 'cloud', 'code', 'cpu', 'database', 'factory', 'globe', 'graduation-cap', 'handshake', 'heart-handshake', 'landmark', 'layers', 'lightbulb', 'megaphone', 'microscope', 'palette', 'pen-tool', 'rocket', 'search', 'server', 'shield-check', 'smartphone', 'sparkles', 'terminal', 'users', 'workflow', 'wrench')`,
+    ),
+    check(
+      "experiences_date_order_valid",
+      sql`${table.endDate} is null or ${table.endDate} >= ${table.startDate}`,
+    ),
+  ],
+);
+
+export const experienceHighlights = pgTable(
+  "experience_highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    experienceId: uuid("experience_id")
+      .notNull()
+      .references(() => experiences.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("experience_highlights_order_idx").on(
+      table.experienceId,
+      table.displayOrder,
+    ),
+  ],
+);
+
 // The certificate, award photo, or screenshot behind a recognition. Same shape
 // as post_links: a child table with an explicit order, rewritten wholesale
 // when the parent is saved.
 //
-// Every image is square and stored at a fixed 1080px, so the carousel can size
-// its frame without measuring and nothing shifts as images load.
+// Images keep their original proportions; the client scales oversized sources
+// down for delivery without cropping the artefact.
 export const recognitionImages = pgTable(
   "recognition_images",
   {
@@ -141,13 +219,33 @@ export const recognitionImages = pgTable(
   ],
 );
 
+export const techStackCategories = pgTable(
+  "tech_stack_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    key: text("key").notNull(),
+    name: text("name").notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    visible: boolean("visible").notNull().default(true),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("tech_stack_categories_key_idx").on(table.key)],
+);
+
 export const techStackItems = pgTable(
   "tech_stack_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    groupKey: text("group_key").$type<TechStackGroupValue>().notNull(),
+    iconKey: text("icon_key"),
+    groupKey: text("group_key")
+      .notNull()
+      .references(() => techStackCategories.key, {
+        onUpdate: "cascade",
+        onDelete: "restrict",
+      }),
     displayOrder: integer("display_order").notNull().default(0),
+    featured: boolean("featured").notNull().default(false),
     visible: boolean("visible").notNull().default(true),
     ...timestamps,
   },
@@ -156,10 +254,6 @@ export const techStackItems = pgTable(
       table.visible,
       table.groupKey,
       table.displayOrder,
-    ),
-    check(
-      "tech_stack_group_key_valid",
-      sql`${table.groupKey} in ('core', 'tools')`,
     ),
   ],
 );
@@ -214,6 +308,7 @@ export const siteSettings = pgTable(
       .$type<ContactLinks>()
       .notNull()
       .default({}),
+    location: text("location").notNull().default("Lagos, Nigeria"),
     // NULL means never edited, so the copy in src/config/portfolio.ts keeps
     // supplying it and the wording lives in one place until then.
     displayName: text("display_name"),
@@ -265,6 +360,12 @@ export const statsSnapshot = pgTable(
     firstContributionAt: timestamp("first_contribution_at", {
       withTimezone: true,
     }),
+    // The recent daily history is the source for the public activity grid;
+    // keeping it with the cached aggregate avoids a GitHub request per visit.
+    contributionDays: jsonb("contribution_days")
+      .$type<{ date: string; count: number }[]>()
+      .notNull()
+      .default([]),
     fetchedAt: timestamp("fetched_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -686,13 +787,17 @@ export const mcpOAuthTokens = pgTable(
 );
 
 export type Project = typeof projects.$inferSelect;
+export type ProjectHighlight = typeof projectHighlights.$inferSelect;
 export type Recognition = typeof recognitions.$inferSelect;
+export type Experience = typeof experiences.$inferSelect;
+export type ExperienceHighlight = typeof experienceHighlights.$inferSelect;
 export type RecognitionImage = typeof recognitionImages.$inferSelect;
 export type NowSection = typeof nowSection.$inferSelect;
 export type NowLink = typeof nowLinks.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type StatsSnapshot = typeof statsSnapshot.$inferSelect;
 export type TechStackItem = typeof techStackItems.$inferSelect;
+export type TechStackCategory = typeof techStackCategories.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostLink = typeof postLinks.$inferSelect;
 export type AgentThread = typeof agentThreads.$inferSelect;

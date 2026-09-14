@@ -1,0 +1,1 @@
+ALTER TABLE "site_settings" ADD COLUMN "location" text DEFAULT 'Lagos, Nigeria' NOT NULL;

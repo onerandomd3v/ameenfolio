@@ -1,10 +1,9 @@
 import { z } from "zod";
-import { availabilityValues } from "@/config/availability";
 import { nowLinkIconValues } from "@/config/now-link-icons";
 import { postLinkIconValues } from "@/config/post-link-icons";
 import { projectIconValues } from "@/config/project-icons";
 import { recognitionIconNames } from "@/config/recognition-icons";
-import { techStackGroupValues } from "@/config/tech-stack";
+import { experienceIconValues } from "@/config/experience-icons";
 import { cardWordLimitMessage, withinCardWordLimit } from "@/lib/word-count";
 
 // A prefix check alone accepts the bare string "https://", which passes
@@ -26,6 +25,18 @@ const optionalHttpsUrl = z
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 
+export const githubUrlSchema = z.url().refine((value) => {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "github.com" || url.hostname.endsWith(".github.com"))
+    );
+  } catch {
+    return false;
+  }
+}, "Enter a GitHub HTTPS URL.");
+
 export const iconObjectKeySchema = z
   .string()
   .regex(/^icons\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/)
@@ -41,6 +52,11 @@ const iconFields = {
   iconAlt: optionalText(180),
 };
 
+export const projectHighlightSchema = z.object({
+  body: z.string().trim().min(1).max(500),
+  displayOrder: z.number().int().min(0).max(999),
+});
+
 export const projectSchema = z
   .object({
     title: z.string().trim().min(2).max(120),
@@ -50,9 +66,9 @@ export const projectSchema = z
       .min(10)
       .max(500)
       .refine(withinCardWordLimit, cardWordLimitMessage),
-    contribution: optionalText(500),
-    statusLabel: optionalText(60),
     url: z.url().startsWith("https://"),
+    githubUrl: z.union([githubUrlSchema, z.literal("")]).optional(),
+    highlights: z.array(projectHighlightSchema).max(12).optional(),
     ...iconFields,
     iconName: z.enum(projectIconValues),
   })
@@ -121,10 +137,59 @@ export const recognitionFormSchema = recognitionSchema.extend({
 
 export const techStackItemSchema = z.object({
   name: z.string().trim().min(1).max(40),
-  groupKey: z.enum(techStackGroupValues),
+  iconKey: z.string().trim().max(80).nullable().optional(),
+  groupKey: z.string().trim().min(1).max(48),
+  displayOrder: z.number().int().min(0).max(999),
+  featured: z.boolean(),
+  visible: z.boolean(),
+});
+
+export const techStackCategorySchema = z.object({
+  name: z.string().trim().min(1).max(40),
   displayOrder: z.number().int().min(0).max(999),
   visible: z.boolean(),
 });
+
+export const techStackCategoryOrderSchema = z.array(
+  z.object({
+    id: z.uuid(),
+    displayOrder: z.number().int().min(0).max(999),
+  }),
+);
+
+export const experienceHighlightSchema = z.object({
+  body: z.string().trim().min(1).max(500),
+  displayOrder: z.number().int().min(0).max(999),
+});
+
+export const experienceSchema = z
+  .object({
+    company: z.string().trim().min(2).max(120),
+    role: z.string().trim().max(120),
+    startDate: z.union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      z.literal(""),
+    ]),
+    endDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
+    location: z
+      .union([z.enum(["Remote", "Hybrid", "On-site"]), z.literal("")])
+      .optional(),
+    iconName: z.enum(experienceIconValues),
+    pinned: z.boolean(),
+    highlights: z.array(experienceHighlightSchema).max(12),
+  })
+  .refine((value) => value.pinned || value.startDate.length > 0, {
+    path: ["startDate"],
+    message: "Start date is required for work-history entries.",
+  })
+  .refine((value) => value.pinned || value.role.length >= 2, {
+    path: ["role"],
+    message: "Role is required for work-history entries.",
+  })
+  .refine((value) => !value.endDate || value.endDate >= value.startDate, {
+    path: ["endDate"],
+    message: "End date must be on or after start date.",
+  });
 
 export const postLinkSchema = z.object({
   label: z.string().trim().min(1).max(80),
@@ -160,7 +225,7 @@ export const postSchema = z.object({
 export const techStackOrderSchema = z.array(
   z.object({
     id: z.uuid(),
-    groupKey: z.enum(techStackGroupValues),
+    groupKey: z.string().trim().min(1).max(48),
     displayOrder: z.number().int().min(0).max(999),
   }),
 );
@@ -194,6 +259,8 @@ export const contactLinksSchema = z.object({
   tiktok: optionalHttpsUrl,
   youtube: optionalHttpsUrl,
   linkedin: optionalHttpsUrl,
+  discord: optionalHttpsUrl,
+  telegram: optionalHttpsUrl,
   whatsapp: optionalHttpsUrl,
 });
 
@@ -215,13 +282,13 @@ export const profileSchema = z.object({
     .max(600),
   email: z.email(),
   contactLinks: contactLinksSchema,
+  location: z.string().trim().min(1, "A location is required.").max(120),
   profileImageKey: profileImageObjectKeySchema,
   resumeKey: resumeObjectKeySchema,
   resumeFilename: optionalText(180),
   // Not derivable from anything the site stores, so the owner types it. Capped
   // at two digits because the strip gives the value one short line.
   hackathonWins: z.number().int().min(0).max(99),
-  availability: z.enum(availabilityValues),
 });
 
 // What search engines and link previews show. All that is left on Settings.
@@ -254,10 +321,12 @@ export const uploadRequestSchema = z.object({
 });
 
 export type ProjectInput = z.infer<typeof projectSchema>;
+export type ExperienceInput = z.infer<typeof experienceSchema>;
 export type RecognitionInput = z.infer<typeof recognitionSchema>;
 export type RecognitionFormInput = z.infer<typeof recognitionFormSchema>;
 export type RecognitionImageInput = z.infer<typeof recognitionImageSchema>;
 export type TechStackItemInput = z.infer<typeof techStackItemSchema>;
+export type TechStackCategoryInput = z.infer<typeof techStackCategorySchema>;
 export type NowSectionInput = z.infer<typeof nowSectionSchema>;
 export type NowLinkInput = z.infer<typeof nowLinkSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;

@@ -32,8 +32,8 @@ export const bippyDialogues = {
     duration: 3_800,
   },
   "project-opened": {
-    text: "Nice choice!",
-    duration: 2_000,
+    text: "Here's the short version of what I've built.",
+    duration: 4_200,
   },
   "projects-dwell": {
     text: "Want to build something together?",

@@ -29,6 +29,7 @@ export function buildSettingsWrite(
       introduction: current.introduction,
       email: current.email,
       contactLinks: current.contactLinks ?? {},
+      location: current.location,
       profileImageKey: current.profileImageKey,
       resumeKey: current.resumeKey,
       resumeFilename: current.resumeFilename,

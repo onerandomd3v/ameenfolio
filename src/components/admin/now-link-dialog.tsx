@@ -296,7 +296,7 @@ export function NowLinkDialog({
         confirmLabel="Use icon"
         pending={uploading}
         onCancel={closeCropper}
-        onConfirm={(area) => void upload(area)}
+        onConfirm={(area) => area && void upload(area)}
       />
     </>
   );

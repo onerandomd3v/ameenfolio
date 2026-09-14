@@ -12,6 +12,7 @@ export type ContributionCalendar = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+export const CONTRIBUTION_ACTIVITY_DAY_COUNT = 53 * 7;
 
 // contributionsCollection accepts at most one year between `from` and `to`, so
 // an all-time total has to be assembled from consecutive year-long windows.
@@ -130,4 +131,10 @@ export function summarizeContributions(days: ContributionDay[]) {
       ? new Date(`${firstContribution.date}T00:00:00.000Z`)
       : null,
   };
+}
+
+// The public chart renders 53 Sunday-to-Saturday columns. Keeping one fixed
+// window lets it show a whole year without storing an ever-growing history.
+export function recentContributionDays(days: ContributionDay[]) {
+  return days.slice(-CONTRIBUTION_ACTIVITY_DAY_COUNT);
 }

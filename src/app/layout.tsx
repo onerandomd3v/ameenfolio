@@ -4,13 +4,14 @@ import { Toaster } from "@/components/ui/sonner";
 import { getIdentitySettings } from "@/db/queries";
 import { resolveIdentity } from "@/lib/identity";
 import { inter } from "@/app/fonts";
+import { portfolioIdentity } from "@/config/portfolio";
 
 // Async, because the name and role are editable now. Static metadata would
 // keep naming whoever was hardcoded at build time, so a shared link could
 // introduce someone by a title they had already changed.
 export async function generateMetadata(): Promise<Metadata> {
   const { name, role } = resolveIdentity(await getIdentitySettings());
-  const description = `Selected projects, recognition, and the technologies behind ${name}'s work.`;
+  const description = `Portfolio of ${name}, known online as @${portfolioIdentity.handle} — a ${role} building products and AI systems.`;
 
   return {
     metadataBase: new URL(
