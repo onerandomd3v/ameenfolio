@@ -74,6 +74,7 @@ export default async function HomePage() {
     experiences,
     recognitions,
     techStack,
+    techStackCategories,
     projectCount,
     statsSnapshot,
   } = await getPublicPortfolio();
@@ -396,7 +397,7 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      <TechStackSection items={techStack} />
+      <TechStackSection items={techStack} categories={techStackCategories} />
 
       {/* The page closes on an invitation rather than trailing off after the
           tech stack, and it is one sentence rather than a heading over two

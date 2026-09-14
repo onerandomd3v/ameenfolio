@@ -1,18 +1,29 @@
-// The groups are fixed; their contents are not. Items live in the database and
-// are managed from the admin, so adding a technology is content editing rather
-// than a deploy.
-export const techStackGroups = [
-  { value: "core", label: "Core Stack" },
-  { value: "tools", label: "Tools & Infrastructure" },
+// These are the initial categories seeded into the database. Their contents and
+// future additions are managed from the admin, so category changes are content
+// editing rather than deploys.
+export const defaultTechStackCategories = [
+  { value: "language", label: "Language" },
+  { value: "frontend", label: "Frontend" },
+  { value: "backend", label: "Backend" },
+  { value: "tools", label: "Infrastructure" },
   { value: "workflow", label: "Workflow" },
   { value: "design", label: "Design" },
 ] as const;
 
-export type TechStackGroupValue = (typeof techStackGroups)[number]["value"];
+// Kept as a compatibility export for non-rendering integrations while the
+// database-backed category list is introduced.
+export const techStackGroups = defaultTechStackCategories;
 
-export const techStackGroupValues = techStackGroups.map(
-  (group) => group.value,
-) as unknown as readonly [TechStackGroupValue, ...TechStackGroupValue[]];
+export type TechStackGroupValue = string;
+
+export function slugifyTechStackCategory(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
 
 export function techStackGroupLabel(value: TechStackGroupValue | string) {
   return (

@@ -1,0 +1,1 @@
+ALTER TABLE "tech_stack_items" ADD CONSTRAINT "tech_stack_items_group_key_tech_stack_categories_key_fk" FOREIGN KEY ("group_key") REFERENCES "public"."tech_stack_categories"("key") ON DELETE restrict ON UPDATE cascade;

@@ -25,11 +25,13 @@ import {
   recognitions,
   siteSettings,
   statsSnapshot,
+  techStackCategories,
   techStackItems,
   type ContactLinks,
   type Recognition,
   type SiteSettings,
   type TechStackItem,
+  type TechStackCategory,
   type Experience,
   type ExperienceHighlight,
   type ProjectHighlight,
@@ -91,6 +93,7 @@ export async function getPublicPortfolio() {
       experiences: [],
       recognitions: [],
       techStack: [] as TechStackItem[],
+      techStackCategories: [] as TechStackCategory[],
       projectCount: 0,
       statsSnapshot: null,
     };
@@ -100,6 +103,7 @@ export async function getPublicPortfolio() {
   const [
     settingsRows,
     nowSectionRows,
+    techStackCategoryRows,
     nowLinkRows,
     projectRows,
     experienceRows,
@@ -110,6 +114,14 @@ export async function getPublicPortfolio() {
   ] = await Promise.all([
     db.select().from(siteSettings).where(eq(siteSettings.id, 1)).limit(1),
     db.select().from(nowSection).where(eq(nowSection.id, 1)).limit(1),
+    db
+      .select()
+      .from(techStackCategories)
+      .where(eq(techStackCategories.visible, true))
+      .orderBy(
+        asc(techStackCategories.displayOrder),
+        asc(techStackCategories.createdAt),
+      ),
     db
       .select()
       .from(nowLinks)
@@ -177,6 +189,7 @@ export async function getPublicPortfolio() {
     experiences: await withExperienceDetails(experienceRows),
     recognitions: await withRecognitionDetails(recognitionRows),
     techStack: techStackRows,
+    techStackCategories: techStackCategoryRows,
     projectCount: publishedProjectRows[0]?.value ?? 0,
     statsSnapshot: snapshotRows[0] ?? null,
   };
@@ -451,6 +464,16 @@ export async function getAdminTechStack() {
     .select()
     .from(techStackItems)
     .orderBy(asc(techStackItems.displayOrder), asc(techStackItems.createdAt));
+}
+
+export async function getAdminTechStackCategories() {
+  return getDb()
+    .select()
+    .from(techStackCategories)
+    .orderBy(
+      asc(techStackCategories.displayOrder),
+      asc(techStackCategories.createdAt),
+    );
 }
 
 export async function getAdminSettings() {

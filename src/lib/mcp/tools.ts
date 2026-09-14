@@ -32,7 +32,6 @@ import {
   techStackItemSchema,
   techStackOrderSchema,
 } from "@/lib/validation";
-import { techStackGroupValues } from "@/config/tech-stack";
 import type { McpOAuthClient } from "@/db/schema";
 import {
   getObject,
@@ -128,8 +127,9 @@ const techStackUpdateSchema = z.object({
 const techStackDeleteSchema = z.object({ id: z.uuid() });
 const techStackDraftSchema = z.object({
   name: z.string().trim().min(1).max(40),
-  groupKey: z.enum(techStackGroupValues),
+  groupKey: z.string().trim().min(1).max(48),
   displayOrder: z.number().int().min(0).max(999).default(0),
+  featured: z.boolean().default(false),
 });
 const experienceMcpSchema = experienceSchema;
 const experienceUpdateSchema = z.object({
@@ -417,11 +417,12 @@ export function createBippyMcpServer(actor: McpActor) {
               }),
             ),
             techStack: techStack.map(
-              ({ id, name, groupKey, displayOrder, visible }) => ({
+              ({ id, name, groupKey, displayOrder, featured, visible }) => ({
                 id,
                 name,
                 groupKey,
                 displayOrder,
+                featured,
                 visible,
               }),
             ),

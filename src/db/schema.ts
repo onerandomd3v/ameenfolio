@@ -16,7 +16,6 @@ import type { PostLinkIconName } from "@/config/post-link-icons";
 import type { ProjectIconName } from "@/config/project-icons";
 import type { RecognitionIconName } from "@/config/recognition-icons";
 import type { ExperienceIconName } from "@/config/experience-icons";
-import type { TechStackGroupValue } from "@/config/tech-stack";
 
 export type ContactLinks = {
   github?: string;
@@ -220,13 +219,33 @@ export const recognitionImages = pgTable(
   ],
 );
 
+export const techStackCategories = pgTable(
+  "tech_stack_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    key: text("key").notNull(),
+    name: text("name").notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    visible: boolean("visible").notNull().default(true),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("tech_stack_categories_key_idx").on(table.key)],
+);
+
 export const techStackItems = pgTable(
   "tech_stack_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    groupKey: text("group_key").$type<TechStackGroupValue>().notNull(),
+    iconKey: text("icon_key"),
+    groupKey: text("group_key")
+      .notNull()
+      .references(() => techStackCategories.key, {
+        onUpdate: "cascade",
+        onDelete: "restrict",
+      }),
     displayOrder: integer("display_order").notNull().default(0),
+    featured: boolean("featured").notNull().default(false),
     visible: boolean("visible").notNull().default(true),
     ...timestamps,
   },
@@ -235,10 +254,6 @@ export const techStackItems = pgTable(
       table.visible,
       table.groupKey,
       table.displayOrder,
-    ),
-    check(
-      "tech_stack_group_key_valid",
-      sql`${table.groupKey} in ('core', 'tools', 'workflow', 'design')`,
     ),
   ],
 );
@@ -782,6 +797,7 @@ export type NowLink = typeof nowLinks.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type StatsSnapshot = typeof statsSnapshot.$inferSelect;
 export type TechStackItem = typeof techStackItems.$inferSelect;
+export type TechStackCategory = typeof techStackCategories.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostLink = typeof postLinks.$inferSelect;
 export type AgentThread = typeof agentThreads.$inferSelect;
