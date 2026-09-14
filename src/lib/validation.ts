@@ -3,7 +3,6 @@ import { nowLinkIconValues } from "@/config/now-link-icons";
 import { postLinkIconValues } from "@/config/post-link-icons";
 import { projectIconValues } from "@/config/project-icons";
 import { recognitionIconNames } from "@/config/recognition-icons";
-import { techStackGroupValues } from "@/config/tech-stack";
 import { experienceIconValues } from "@/config/experience-icons";
 import { cardWordLimitMessage, withinCardWordLimit } from "@/lib/word-count";
 
@@ -138,10 +137,25 @@ export const recognitionFormSchema = recognitionSchema.extend({
 
 export const techStackItemSchema = z.object({
   name: z.string().trim().min(1).max(40),
-  groupKey: z.enum(techStackGroupValues),
+  iconKey: z.string().trim().max(80).nullable().optional(),
+  groupKey: z.string().trim().min(1).max(48),
+  displayOrder: z.number().int().min(0).max(999),
+  featured: z.boolean(),
+  visible: z.boolean(),
+});
+
+export const techStackCategorySchema = z.object({
+  name: z.string().trim().min(1).max(40),
   displayOrder: z.number().int().min(0).max(999),
   visible: z.boolean(),
 });
+
+export const techStackCategoryOrderSchema = z.array(
+  z.object({
+    id: z.uuid(),
+    displayOrder: z.number().int().min(0).max(999),
+  }),
+);
 
 export const experienceHighlightSchema = z.object({
   body: z.string().trim().min(1).max(500),
@@ -211,7 +225,7 @@ export const postSchema = z.object({
 export const techStackOrderSchema = z.array(
   z.object({
     id: z.uuid(),
-    groupKey: z.enum(techStackGroupValues),
+    groupKey: z.string().trim().min(1).max(48),
     displayOrder: z.number().int().min(0).max(999),
   }),
 );
@@ -312,6 +326,7 @@ export type RecognitionInput = z.infer<typeof recognitionSchema>;
 export type RecognitionFormInput = z.infer<typeof recognitionFormSchema>;
 export type RecognitionImageInput = z.infer<typeof recognitionImageSchema>;
 export type TechStackItemInput = z.infer<typeof techStackItemSchema>;
+export type TechStackCategoryInput = z.infer<typeof techStackCategorySchema>;
 export type NowSectionInput = z.infer<typeof nowSectionSchema>;
 export type NowLinkInput = z.infer<typeof nowLinkSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;

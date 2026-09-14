@@ -8,6 +8,7 @@ export function SocialScrollIndicator({
   containerId: string;
 }) {
   const [progress, setProgress] = useState(0);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
   useEffect(() => {
     const container = document.getElementById(containerId);
@@ -15,6 +16,7 @@ export function SocialScrollIndicator({
 
     const update = () => {
       const max = container.scrollWidth - container.clientWidth;
+      setHasOverflow(max > 0);
       setProgress(max > 0 ? container.scrollLeft / max : 0);
     };
 
@@ -27,9 +29,11 @@ export function SocialScrollIndicator({
     };
   }, [containerId]);
 
+  if (!hasOverflow) return null;
+
   return (
     <div
-      className="mx-auto mt-3 h-0.5 w-12 overflow-hidden rounded-full bg-muted-foreground/20 sm:hidden"
+      className="mx-auto mt-3 h-0.5 w-12 overflow-hidden rounded-full bg-muted-foreground/20"
       aria-hidden="true"
     >
       <span
