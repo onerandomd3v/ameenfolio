@@ -81,7 +81,6 @@
       "esbuild": "0.25.12"
     },
     "better-auth": "1.6.26",
-    "@vitest/mocker": "4.1.11",
     "hono": "4.13.7",
     "js-yaml": "4.3.2",
     "postcss": {
