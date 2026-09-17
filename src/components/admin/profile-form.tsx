@@ -27,12 +27,9 @@ const contactFields = [
   { name: "github", label: "GitHub" },
   { name: "x", label: "X" },
   { name: "whatsapp", label: "WhatsApp" },
-  { name: "instagram", label: "Instagram" },
   { name: "linkedin", label: "LinkedIn" },
   { name: "discord", label: "Discord" },
   { name: "telegram", label: "Telegram" },
-  { name: "youtube", label: "YouTube" },
-  { name: "tiktok", label: "TikTok" },
 ] as const;
 
 export function ProfileForm({ settings }: { settings: SiteSettings }) {

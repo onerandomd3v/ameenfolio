@@ -255,9 +255,6 @@ export const nowLinkSchema = z
 export const contactLinksSchema = z.object({
   github: optionalHttpsUrl,
   x: optionalHttpsUrl,
-  instagram: optionalHttpsUrl,
-  tiktok: optionalHttpsUrl,
-  youtube: optionalHttpsUrl,
   linkedin: optionalHttpsUrl,
   discord: optionalHttpsUrl,
   telegram: optionalHttpsUrl,

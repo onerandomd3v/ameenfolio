@@ -20,9 +20,6 @@ import type { ExperienceIconName } from "@/config/experience-icons";
 export type ContactLinks = {
   github?: string;
   x?: string;
-  instagram?: string;
-  tiktok?: string;
-  youtube?: string;
   linkedin?: string;
   discord?: string;
   telegram?: string;

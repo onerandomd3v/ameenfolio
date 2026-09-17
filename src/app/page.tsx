@@ -25,12 +25,9 @@ import {
   GitHubIcon,
   GlobeIcon,
   DiscordIcon,
-  InstagramIcon,
   LinkedInIcon,
   TelegramIcon,
-  TikTokIcon,
   XIcon,
-  YouTubeIcon,
 } from "@/components/icons/brand-icons";
 import { MailGlyph, UserGlyph } from "@/components/icons/glyph-icons";
 import { portfolioIdentity } from "@/config/portfolio";
@@ -128,24 +125,6 @@ export default async function HomePage() {
       external: false,
     },
   ];
-  const footerSocialItems = [
-    {
-      label: "Instagram",
-      href: contactLinks.instagram,
-      icon: InstagramIcon,
-    },
-    {
-      label: "YouTube",
-      href: contactLinks.youtube,
-      icon: YouTubeIcon,
-    },
-    {
-      label: "TikTok",
-      href: contactLinks.tiktok,
-      icon: TikTokIcon,
-    },
-  ];
-
   return (
     <main className="mx-auto w-full max-w-xl px-5 pb-10 pt-8 sm:px-6 sm:pt-12">
       <script
@@ -427,49 +406,12 @@ export default async function HomePage() {
           companion keys on, so he was appearing over the admin. */}
       <BippyCompanion enabled={settings.publicBippyEnabled} />
 
-      <footer className="mt-5 flex items-center justify-between gap-4 font-mono text-xs text-muted-foreground">
+      <footer className="mt-5 font-mono text-xs text-muted-foreground">
         <p>
           <span aria-hidden="true">© </span>
           <span className="font-semibold">{`@${portfolioIdentity.handle}`}</span>
           <span className="sr-only">, Aliameen Kareem</span>
         </p>
-        <nav aria-label="Footer social links">
-          {/* Pulled left by the icon box's own padding, so the first glyph
-                lines up with the text above rather than sitting inset. */}
-          <ul className="-mr-2.5 flex items-center">
-            {footerSocialItems.map((item) => {
-              const Icon = item.icon;
-              const className =
-                "inline-flex size-9 items-center justify-center text-muted-foreground transition-colors hover:text-primary focus-visible:text-primary";
-
-              return (
-                <li key={item.label}>
-                  {item.href ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={item.label}
-                      data-bippy-reaction="curious"
-                      data-bippy-safe-zone
-                      className={className}
-                    >
-                      <Icon className="size-[18px]" aria-hidden="true" />
-                    </a>
-                  ) : (
-                    <span
-                      role="img"
-                      aria-label={item.label}
-                      className="inline-flex size-9 items-center justify-center text-muted-foreground opacity-50"
-                    >
-                      <Icon className="size-[18px]" aria-hidden="true" />
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
       </footer>
     </main>
   );
