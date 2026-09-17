@@ -81,7 +81,9 @@ function TechnologyList({
             : "grid-rows-[0fr]",
         )}
       >
-        <div className="min-h-0 overflow-hidden">{renderItems(remainingRows)}</div>
+        <div className="min-h-0 overflow-hidden">
+          {renderItems(remainingRows)}
+        </div>
       </div>
     </div>
   );
