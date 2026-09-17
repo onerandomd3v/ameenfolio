@@ -77,7 +77,7 @@ export function TechStackIcon({
     return (
       <Server
         aria-hidden="true"
-        className="size-3.5 shrink-0 opacity-70 transition-opacity group-hover:opacity-100"
+        className="size-3.5 shrink-0"
         strokeWidth={2}
       />
     );
@@ -89,7 +89,7 @@ export function TechStackIcon({
   return (
     <svg
       aria-hidden="true"
-      className="size-3.5 shrink-0 opacity-70 transition-opacity group-hover:opacity-100"
+      className="size-3.5 shrink-0"
       viewBox="0 0 24 24"
       fill="currentColor"
       focusable="false"

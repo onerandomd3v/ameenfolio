@@ -78,15 +78,13 @@ describe("portfolio validation", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts configurable footer social links", () => {
+  it("accepts configurable contact links", () => {
     const result = profileSchema.safeParse({
       displayName: "Aliameen Kareem",
       role: "Full-Stack Engineer",
       introduction: "I am a **Software Engineer**.",
       email: "ameen@example.com",
       contactLinks: {
-        instagram: "https://instagram.com/onerandomdevv",
-        tiktok: "https://tiktok.com/@onerandomdevv",
         linkedin: "https://linkedin.com/in/onerandomdevv",
         whatsapp: "https://wa.me/2348000000000",
       },
