@@ -154,8 +154,10 @@ describe("portfolio MCP content contracts", () => {
       pinned: false,
     });
     dbState.inserted.length = 0;
-    await saveProject(project);
+    const projectResult = await saveProject(project);
     await saveExperience(experience);
+
+    expect(projectResult).toEqual({ ok: true, id: expect.any(String) });
 
     expect(dbState.inserted).toContainEqual([
       { projectId: expect.any(String), body: "Second", displayOrder: 20 },
@@ -175,6 +177,11 @@ describe("portfolio MCP content contracts", () => {
         published: false,
       }),
     );
+    expect(
+      dbState.inserted.some(
+        (value) => value && typeof value === "object" && "highlights" in value,
+      ),
+    ).toBe(false);
   });
 
   it("supports owner-approved Experience publication without changing draft save", async () => {
