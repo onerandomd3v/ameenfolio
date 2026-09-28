@@ -30,7 +30,8 @@ function ProjectMark({ project }: { project: PublicProject }) {
   return <AssetIcon objectKey={null} alt="" size="project" fallbackLabel="P" />;
 }
 
-function isGithubUrl(url: string) {
+function isGithubUrl(url: string | null) {
+  if (!url) return false;
   try {
     return new URL(url).hostname.toLowerCase() === "github.com";
   } catch {
@@ -92,7 +93,8 @@ export function ProjectsList({ projects }: { projects: PublicProject[] }) {
         const open = openRows.has(project.id);
         const githubUrl =
           project.githubUrl || (isGithubUrl(project.url) ? project.url : null);
-        const liveUrl = isGithubUrl(project.url) ? null : project.url;
+        const liveUrl =
+          project.url && !isGithubUrl(project.url) ? project.url : null;
         const detailsId = `project-details-${project.id}`;
         const hasHighlights = project.highlights.length > 0;
 
