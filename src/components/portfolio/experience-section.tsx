@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { getExperienceIcon } from "@/config/experience-icons";
 import type { PublicExperience } from "@/db/queries";
 import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/portfolio/section-heading";
 
 const month = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -79,12 +80,7 @@ export function ExperienceSection({ items }: { items: PublicExperience[] }) {
   if (!items.length) {
     return (
       <section className="mt-14" aria-labelledby="experience-heading">
-        <h2
-          id="experience-heading"
-          className="text-[16px] font-medium tracking-[-0.02em] text-foreground"
-        >
-          Experience
-        </h2>
+        <SectionHeading id="experience-heading" title="Experience" />
         <p className="mt-5 text-sm text-muted-foreground">
           Experience entries will appear here once published.
         </p>
@@ -103,12 +99,7 @@ export function ExperienceSection({ items }: { items: PublicExperience[] }) {
 
   return (
     <section className="mt-10" aria-labelledby="experience-heading">
-      <h2
-        id="experience-heading"
-        className="text-[16px] font-medium tracking-[-0.02em] text-foreground"
-      >
-        Experience
-      </h2>
+      <SectionHeading id="experience-heading" title="Experience" />
       <div className="mt-5">
         <ol className="space-y-5.5">
           {items.map((item) => {

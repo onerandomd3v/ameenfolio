@@ -5,6 +5,8 @@ vi.mock("server-only", () => ({}));
 import {
   describeApiError,
   describeThrownError,
+  freshSessionRequiredMessage,
+  isFreshSessionFailure,
   logAuthFailure,
   missingDataFailure,
 } from "@/lib/auth/failure";
@@ -76,6 +78,31 @@ describe("describeApiError", () => {
     expect(describeApiError({ message: "Boom", status: 400 })?.detail).toBe(
       "Boom",
     );
+  });
+});
+
+describe("isFreshSessionFailure", () => {
+  it("recognises Neon Auth's stale-session response", () => {
+    expect(
+      isFreshSessionFailure({
+        kind: "permanent",
+        code: "feature_not_supported",
+        status: 403,
+        detail: "Session is not fresh (Forbidden)",
+      }),
+    ).toBe(true);
+    expect(freshSessionRequiredMessage).toContain("sign in again");
+  });
+
+  it("does not broaden a different forbidden response", () => {
+    expect(
+      isFreshSessionFailure({
+        kind: "permanent",
+        code: "FORBIDDEN",
+        status: 403,
+        detail: "Account is not allowed",
+      }),
+    ).toBe(false);
   });
 });
 

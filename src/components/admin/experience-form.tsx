@@ -104,7 +104,17 @@ export function ExperienceForm({
   async function submit(values: ExperienceInput, publish: boolean) {
     setBusy(true);
     try {
-      const result = await saveExperience(values, experience?.id, publish);
+      const result = await saveExperience(
+        {
+          ...values,
+          highlights: values.highlights.map((highlight, index) => ({
+            ...highlight,
+            displayOrder: index,
+          })),
+        },
+        experience?.id,
+        publish,
+      );
       if (!result.ok) {
         Object.entries(result.fields ?? {}).forEach(([name, messages]) =>
           setError(name as keyof ExperienceInput, { message: messages[0] }),
