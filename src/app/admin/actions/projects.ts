@@ -23,14 +23,15 @@ export async function saveProject(
   await requireAdmin();
   const parsed = projectSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
+  const { highlights, ...projectInput } = parsed.data;
   // published is not on the form. Creating from the Post button publishes;
   // saving a draft leaves it alone, which is what `publish` carries.
   const values = {
-    ...parsed.data,
-    url: parsed.data.url || null,
-    githubUrl: parsed.data.githubUrl || null,
-    iconKey: parsed.data.iconKey ?? null,
-    iconAlt: parsed.data.iconAlt || null,
+    ...projectInput,
+    url: projectInput.url || null,
+    githubUrl: projectInput.githubUrl || null,
+    iconKey: projectInput.iconKey ?? null,
+    iconAlt: projectInput.iconAlt || null,
     ...(publish === undefined ? {} : { published: publish }),
   };
   try {
@@ -48,8 +49,8 @@ export async function saveProject(
         .where(eq(projects.id, id))
         .returning({ id: projects.id });
       if (!row) return { ok: false, message: "Project not found." };
-      if (parsed.data.highlights !== undefined) {
-        const rows = parsed.data.highlights.map((highlight) => ({
+      if (highlights !== undefined) {
+        const rows = highlights.map((highlight) => ({
           projectId: id,
           body: highlight.body,
           displayOrder: highlight.displayOrder,
@@ -79,12 +80,12 @@ export async function saveProject(
         .insert(projects)
         .values({ ...values, id: projectId }),
     ];
-    if (parsed.data.highlights?.length) {
+    if (highlights?.length) {
       writes.push(
         getDb()
           .insert(projectHighlights)
           .values(
-            parsed.data.highlights.map((highlight) => ({
+            highlights.map((highlight) => ({
               projectId,
               body: highlight.body,
               displayOrder: highlight.displayOrder,
