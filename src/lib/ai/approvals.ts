@@ -347,7 +347,7 @@ async function executeApprovalDecision(
             projectSchema.parse({
               title: project.title,
               shortDescription: project.shortDescription,
-              url: project.url,
+              url: project.url ?? undefined,
               githubUrl: project.githubUrl ?? undefined,
               iconName: values.iconName,
               iconKey: values.iconKey ?? undefined,
