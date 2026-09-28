@@ -27,7 +27,7 @@ import { MAX_CARD_WORDS, countWords } from "@/lib/word-count";
 const emptyProject: ProjectInput = {
   title: "",
   shortDescription: "",
-  url: "https://",
+  url: "",
   iconName: "custom",
   highlights: [],
 };
@@ -51,7 +51,7 @@ export function ProjectForm({
       ? {
           title: project.title,
           shortDescription: project.shortDescription,
-          url: project.url,
+          url: project.url ?? "",
           githubUrl: project.githubUrl ?? undefined,
           iconKey: project.iconKey ?? undefined,
           iconAlt: project.iconAlt ?? undefined,
