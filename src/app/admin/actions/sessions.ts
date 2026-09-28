@@ -6,6 +6,8 @@ import { getAuth, requireAdmin } from "@/lib/auth/server";
 import {
   describeApiError,
   describeThrownError,
+  freshSessionRequiredMessage,
+  isFreshSessionFailure,
   logAuthFailure,
   missingDataFailure,
 } from "@/lib/auth/failure";
@@ -37,14 +39,22 @@ export async function revokeAdminSession(sessionId: string) {
       describeApiError(sessionsResult.error);
 
     if (lookupFailure || !currentResult.data || !sessionsResult.data) {
+      const freshnessFailure = isFreshSessionFailure(
+        describeApiError(sessionsResult.error),
+      );
       logAuthFailure(
         "auth.session_revoke_lookup_failed",
         lookupFailure ?? missingDataFailure,
-        { sessionId: parsed.data },
+        {
+          sessionId: parsed.data,
+          ...(freshnessFailure ? { reauthRequired: true } : {}),
+        },
       );
       return {
         ok: false as const,
-        message: "The session could not be verified.",
+        message: freshnessFailure
+          ? freshSessionRequiredMessage
+          : "The session could not be verified.",
       };
     }
 
@@ -105,13 +115,19 @@ export async function revokeOtherAdminSessions() {
       describeApiError(sessionsResult.error);
 
     if (lookupFailure || !currentResult.data || !sessionsResult.data) {
+      const freshnessFailure = isFreshSessionFailure(
+        describeApiError(sessionsResult.error),
+      );
       logAuthFailure(
         "auth.other_sessions_revoke_lookup_failed",
         lookupFailure ?? missingDataFailure,
+        freshnessFailure ? { reauthRequired: true } : undefined,
       );
       return {
         ok: false as const,
-        message: "Other devices could not be verified.",
+        message: freshnessFailure
+          ? freshSessionRequiredMessage
+          : "Other devices could not be verified.",
       };
     }
 
