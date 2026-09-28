@@ -124,6 +124,7 @@ describe("portfolio MCP content contracts", () => {
           "prepare_experience_update",
           "prepare_experience_delete",
           "prepare_experience_reorder",
+          "prepare_experience_publication",
         ].every((name) => names.has(name)),
       ).toBe(true);
     } finally {

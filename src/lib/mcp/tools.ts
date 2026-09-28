@@ -1044,7 +1044,7 @@ export function createBippyMcpServer(actor: McpActor) {
       title: "Prepare project draft",
       description:
         "Prepare a private project draft for approval. This never publishes it.",
-      inputSchema: projectMcpSchema.shape,
+      inputSchema: projectMcpSchema,
       ...security("portfolio:draft"),
       annotations: {
         readOnlyHint: false,
