@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Ref } from "react";
 import { TechStackIcon } from "@/config/tech-stack-icons";
 import { cn } from "@/lib/utils";
@@ -14,9 +14,13 @@ export type TechStackGroup = {
 function TechnologyList({
   items,
   expanded,
+  onOverflowChange,
+  groupKey,
 }: {
   items: TechStackGroup["items"];
   expanded: boolean;
+  onOverflowChange: (groupKey: string, overflow: boolean) => void;
+  groupKey: string;
 }) {
   const probeRef = useRef<HTMLUListElement>(null);
   const [firstRowCount, setFirstRowCount] = useState(items.length);
@@ -44,6 +48,10 @@ function TechnologyList({
 
   const firstRow = items.slice(0, firstRowCount);
   const remainingRows = items.slice(firstRowCount);
+
+  useEffect(() => {
+    onOverflowChange(groupKey, remainingRows.length > 0);
+  }, [groupKey, onOverflowChange, remainingRows.length]);
 
   const renderItems = (
     list: TechStackGroup["items"],
@@ -82,7 +90,9 @@ function TechnologyList({
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          {renderItems(remainingRows)}
+          <div aria-hidden={!expanded && remainingRows.length > 0}>
+            {renderItems(remainingRows)}
+          </div>
         </div>
       </div>
     </div>
@@ -96,9 +106,11 @@ function TechnologyList({
 export function TechStackGroups({
   groups,
   expanded,
+  onOverflowChange,
 }: {
   groups: TechStackGroup[];
   expanded: boolean;
+  onOverflowChange: (groupKey: string, overflow: boolean) => void;
 }) {
   return (
     <ul id="tech-stack-groups" className="mt-5 space-y-3">
@@ -111,7 +123,12 @@ export function TechStackGroups({
             {group.label}
           </span>
           <div className="min-w-0 flex-1 text-foreground">
-            <TechnologyList items={group.items} expanded={expanded} />
+            <TechnologyList
+              groupKey={group.value}
+              items={group.items}
+              expanded={expanded}
+              onOverflowChange={onOverflowChange}
+            />
           </div>
         </li>
       ))}
