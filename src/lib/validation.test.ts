@@ -279,11 +279,19 @@ describe("portfolio validation", () => {
     ).toBe(false);
   });
 
-  it("requires HTTPS for Now links", () => {
+  it("requires a complete HTTPS URL for Now links", () => {
     expect(
       nowLinkSchema.safeParse({
         label: "Current product",
         url: "http://example.com",
+        displayOrder: 0,
+        visible: true,
+      }).success,
+    ).toBe(false);
+    expect(
+      nowLinkSchema.safeParse({
+        label: "Current product",
+        url: "https://",
         displayOrder: 0,
         visible: true,
       }).success,

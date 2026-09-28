@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { createElement, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { Area } from "react-easy-crop";
@@ -37,6 +37,15 @@ function iconSrc(key: string) {
   return mediaBase ? `${mediaBase}/${key}` : `/media/${key}`;
 }
 
+function isHttpsUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Add and edit are the same dialog: a link is three facts — a picture, a name
  * and an address — and both jobs set all three. Splitting them would mean two
@@ -57,7 +66,7 @@ export function NowLinkDialog({
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [label, setLabel] = useState(link?.label ?? "");
-  const [url, setUrl] = useState(link?.url ?? "https://");
+  const [url, setUrl] = useState(link?.url ?? "");
   const [iconKey, setIconKey] = useState<string | undefined>(
     link?.iconKey ?? undefined,
   );
@@ -78,7 +87,7 @@ export function NowLinkDialog({
     setWasOpen(open);
     if (open) {
       setLabel(link?.label ?? "");
-      setUrl(link?.url ?? "https://");
+      setUrl(link?.url ?? "");
       setIconKey(link?.iconKey ?? undefined);
       setIconName((link?.iconName as NowLinkIconName) ?? DEFAULT_NOW_LINK_ICON);
     }
@@ -116,7 +125,7 @@ export function NowLinkDialog({
       const result = await saveNowLink(
         {
           label,
-          url,
+          url: url.trim(),
           iconKey,
           iconName,
           // The label already names the thing, so asking for alt text as well
@@ -137,8 +146,7 @@ export function NowLinkDialog({
     });
   }
 
-  const SelectedIcon = getNowLinkIcon(iconName);
-  const valid = label.trim().length > 0 && url.startsWith("https://");
+  const valid = label.trim().length > 0 && isHttpsUrl(url);
 
   return (
     <>
@@ -169,7 +177,9 @@ export function NowLinkDialog({
                   className="size-full object-cover"
                 />
               ) : (
-                <SelectedIcon className="size-5 text-foreground" />
+                createElement(getNowLinkIcon(iconName), {
+                  className: "size-5 text-foreground",
+                })
               )}
             </span>
 
