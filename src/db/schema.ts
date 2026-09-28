@@ -41,10 +41,11 @@ export const projects = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     shortDescription: text("short_description").notNull(),
-    // One destination per project: clicking the card follows this. The
-    // physical column keeps its old name so the rename costs no migration,
-    // the same trade already made for contactLinks/social_links below.
-    url: text("live_url").notNull(),
+    // A project may have no live deployment yet; GitHub remains a separate
+    // optional destination. The physical column keeps its old name so the
+    // rename costs no migration, the same trade already made for
+    // contactLinks/social_links below.
+    url: text("live_url"),
     githubUrl: text("github_url"),
     iconKey: text("icon_key"),
     iconAlt: text("icon_alt"),

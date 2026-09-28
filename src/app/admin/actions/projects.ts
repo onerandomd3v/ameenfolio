@@ -27,6 +27,7 @@ export async function saveProject(
   // saving a draft leaves it alone, which is what `publish` carries.
   const values = {
     ...parsed.data,
+    url: parsed.data.url || null,
     githubUrl: parsed.data.githubUrl || null,
     iconKey: parsed.data.iconKey ?? null,
     iconAlt: parsed.data.iconAlt || null,

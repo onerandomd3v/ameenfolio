@@ -56,6 +56,18 @@ describe("portfolio validation", () => {
     expect(result.success).toBe(false);
   });
 
+  it("allows a project without a live URL", () => {
+    const result = projectSchema.safeParse({
+      title: "An unreleased project",
+      shortDescription: "A sufficiently descriptive summary.",
+      url: "",
+      iconName: "custom",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.url).toBeUndefined();
+  });
+
   it("requires icon alt text", () => {
     const result = projectSchema.safeParse({
       title: "A project",
@@ -94,6 +106,27 @@ describe("portfolio validation", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("treats cleared optional contact links as absent", () => {
+    const result = profileSchema.safeParse({
+      displayName: "Aliameen Kareem",
+      role: "Full-Stack Engineer",
+      introduction: "I am a **Software Engineer**.",
+      email: "ameen@example.com",
+      contactLinks: { github: "", linkedin: "   " },
+      location: "Lagos, Nigeria",
+      hackathonWins: 3,
+      availability: "open",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.contactLinks).toEqual({
+        github: undefined,
+        linkedin: undefined,
+      });
+    }
   });
 
   it("accepts a homepage location and rejects a blank value", () => {
