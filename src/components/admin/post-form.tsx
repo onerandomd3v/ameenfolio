@@ -255,7 +255,7 @@ export function PostForm({ post, links }: { post?: Post; links?: PostLink[] }) {
                   onClick={() =>
                     linkFields.append({
                       label: "",
-                      url: "https://",
+                      url: "",
                       iconName: "link",
                       displayOrder: linkFields.fields.length,
                     })
