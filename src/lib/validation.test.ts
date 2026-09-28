@@ -284,6 +284,7 @@ describe("portfolio validation", () => {
       nowLinkSchema.safeParse({
         label: "Current product",
         url: "http://example.com",
+        iconName: "link",
         displayOrder: 0,
         visible: true,
       }).success,
@@ -292,6 +293,7 @@ describe("portfolio validation", () => {
       nowLinkSchema.safeParse({
         label: "Current product",
         url: "https://",
+        iconName: "link",
         displayOrder: 0,
         visible: true,
       }).success,
@@ -303,6 +305,7 @@ describe("portfolio validation", () => {
       nowLinkSchema.safeParse({
         label: "Current product",
         url: "https://example.com",
+        iconName: "link",
         iconKey: `icons/2026/${"a".repeat(48)}.webp`,
         displayOrder: 0,
         visible: true,

@@ -46,6 +46,12 @@ function isHttpsUrl(value: string) {
   }
 }
 
+function normalizeHttpsUrl(value: string) {
+  const trimmed = value.trim();
+  if (!isHttpsUrl(trimmed)) return "";
+  return new URL(trimmed).toString();
+}
+
 /**
  * Add and edit are the same dialog: a link is three facts — a picture, a name
  * and an address — and both jobs set all three. Splitting them would mean two
@@ -125,7 +131,7 @@ export function NowLinkDialog({
       const result = await saveNowLink(
         {
           label,
-          url: url.trim(),
+          url: normalizedUrl,
           iconKey,
           iconName,
           // The label already names the thing, so asking for alt text as well
@@ -146,7 +152,8 @@ export function NowLinkDialog({
     });
   }
 
-  const valid = label.trim().length > 0 && isHttpsUrl(url);
+  const normalizedUrl = normalizeHttpsUrl(url);
+  const valid = label.trim().length > 0 && Boolean(normalizedUrl);
 
   return (
     <>
