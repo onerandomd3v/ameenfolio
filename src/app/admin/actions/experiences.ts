@@ -93,10 +93,10 @@ export async function saveExperience(
     if (value.highlights.length) {
       writes.push(
         db.insert(experienceHighlights).values(
-          value.highlights.map((highlight, index) => ({
+          value.highlights.map((highlight) => ({
             experienceId,
             body: highlight.body,
-            displayOrder: index,
+            displayOrder: highlight.displayOrder,
           })),
         ),
       );
@@ -165,6 +165,33 @@ export async function deleteExperience(id: string): Promise<ActionResult> {
       error: String(error),
     });
     return { ok: false, message: "The experience could not be deleted." };
+  }
+}
+
+export async function setExperiencePublished(
+  id: string,
+  published: boolean,
+): Promise<ActionResult> {
+  await requireAdmin();
+  try {
+    const [row] = await getDb()
+      .update(experiences)
+      .set({ published, updatedAt: new Date() })
+      .where(eq(experiences.id, id))
+      .returning({ id: experiences.id });
+    if (!row) return { ok: false, message: "Experience not found." };
+    refreshPublicContent();
+    return { ok: true, id: row.id };
+  } catch (error) {
+    logServer("error", "crud.experience_publish_failed", {
+      id,
+      published,
+      error: String(error),
+    });
+    return {
+      ok: false,
+      message: "The experience publication state could not be changed.",
+    };
   }
 }
 

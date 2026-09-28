@@ -77,6 +77,15 @@ export const projectSchema = z
     message: "Alt text is required when an icon is uploaded.",
   });
 
+// The MCP contract is intentionally stricter than the admin form contract:
+// tools must send the canonical ordered highlight list, and legacy fields are
+// rejected instead of being silently stripped by Zod object parsing.
+export const projectMcpSchema = projectSchema
+  .safeExtend({
+    highlights: z.array(projectHighlightSchema).max(12),
+  })
+  .strict();
+
 export const recognitionImageKeySchema = z
   .string()
   .regex(/^recognitions\/\d{4}\/[a-f0-9]{48}\.(png|jpg|webp)$/);

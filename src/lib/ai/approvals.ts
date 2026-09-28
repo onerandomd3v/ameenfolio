@@ -6,6 +6,7 @@ import {
   deleteExperience,
   reorderExperiences,
   saveExperience,
+  setExperiencePublished,
 } from "@/app/admin/actions/experiences";
 import {
   deleteRecognition,
@@ -196,6 +197,13 @@ async function executeApprovalDecision(
         );
         break;
       }
+      case "set_experience_published": {
+        const input = z
+          .object({ id: z.uuid(), published: z.boolean() })
+          .parse(approval.payload);
+        actionError(await setExperiencePublished(input.id, input.published));
+        break;
+      }
       case "delete_content": {
         const input = deleteSchema.parse(approval.payload);
         const result =
@@ -372,6 +380,10 @@ async function executeApprovalDecision(
       }
       case "update_project": {
         const input = z
+          // The Portfolio Copilot producer predates the MCP-only required
+          // highlights field. Its omission means "leave existing highlights
+          // unchanged" for an update, so keep this executor compatible while
+          // the MCP entrypoint validates the canonical contract up front.
           .object({ id: z.uuid(), values: projectSchema })
           .parse(approval.payload);
         actionError(await saveProject(input.values, input.id));

@@ -130,6 +130,13 @@ export const mcpToolCatalog: readonly McpToolCatalogItem[] = [
     scope: "portfolio:propose",
   },
   {
+    name: "prepare_experience_publication",
+    title: "Prepare experience publication",
+    description:
+      "Prepare publishing or unpublishing an experience for owner approval.",
+    scope: "portfolio:propose",
+  },
+  {
     name: "prepare_tech_stack_item_update",
     title: "Prepare Tech Stack update",
     description:
