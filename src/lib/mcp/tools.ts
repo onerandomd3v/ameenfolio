@@ -24,7 +24,7 @@ import { projectIconValues } from "@/config/project-icons";
 import { recognitionIconNames } from "@/config/recognition-icons";
 import {
   nowSectionSchema,
-  projectSchema,
+  projectMcpSchema,
   recognitionSchema,
   recognitionFormSchema,
   experienceSchema,
@@ -79,9 +79,6 @@ const contactLinkPatchSchema = z
     email: z.email().optional(),
     github: z.url().startsWith("https://").nullable().optional(),
     x: z.url().startsWith("https://").nullable().optional(),
-    instagram: z.url().startsWith("https://").nullable().optional(),
-    tiktok: z.url().startsWith("https://").nullable().optional(),
-    youtube: z.url().startsWith("https://").nullable().optional(),
     linkedin: z.url().startsWith("https://").nullable().optional(),
     discord: z.url().startsWith("https://").nullable().optional(),
     telegram: z.url().startsWith("https://").nullable().optional(),
@@ -139,6 +136,10 @@ const experienceUpdateSchema = z.object({
 const experienceDeleteSchema = z.object({ id: z.uuid() });
 const experienceOrderSchema = z.object({
   ids: z.array(z.uuid()).min(1).max(100),
+});
+const experiencePublicationSchema = z.object({
+  id: z.uuid(),
+  published: z.boolean(),
 });
 const recognitionImagesUpdateSchema = z.object({
   id: z.uuid(),
@@ -837,6 +838,49 @@ export function createBippyMcpServer(actor: McpActor) {
   );
 
   server.registerTool(
+    "prepare_experience_publication",
+    {
+      title: "Prepare experience publication",
+      description:
+        "Prepare publishing or unpublishing an experience for owner approval. Approving a draft does not publish it.",
+      inputSchema: experiencePublicationSchema.shape,
+      ...security("portfolio:propose"),
+      annotations: {
+        readOnlyHint: false,
+        openWorldHint: true,
+        destructiveHint: false,
+      },
+    },
+    async (args) => {
+      requireScope(actor, "portfolio:propose");
+      const values = experiencePublicationSchema.parse(args);
+      const before = await getAdminExperience(values.id);
+      if (!before) throw new Error("Experience not found.");
+      const pending = await proposal(
+        actor,
+        "prepare_experience_publication",
+        "set_experience_published",
+        values,
+        {
+          title: `${values.published ? "Publish" : "Unpublish"} experience: ${before.experience.company}`,
+          before,
+          after: {
+            ...before,
+            experience: {
+              ...before.experience,
+              published: values.published,
+            },
+          },
+        },
+      );
+      return result(
+        pending,
+        "Experience publication proposal created for admin approval.",
+      );
+    },
+  );
+
+  server.registerTool(
     "prepare_tech_stack_item_draft",
     {
       title: "Prepare Tech Stack item",
@@ -1000,7 +1044,7 @@ export function createBippyMcpServer(actor: McpActor) {
       title: "Prepare project draft",
       description:
         "Prepare a private project draft for approval. This never publishes it.",
-      inputSchema: projectSchema.shape,
+      inputSchema: projectMcpSchema,
       ...security("portfolio:draft"),
       annotations: {
         readOnlyHint: false,
@@ -1010,7 +1054,7 @@ export function createBippyMcpServer(actor: McpActor) {
     },
     async (args) => {
       requireScope(actor, "portfolio:draft");
-      const values = projectSchema.parse(args);
+      const values = projectMcpSchema.parse(args);
       const pending = await proposal(
         actor,
         "prepare_project_draft",
@@ -1139,7 +1183,7 @@ export function createBippyMcpServer(actor: McpActor) {
       title: "Prepare project update",
       description:
         "Prepare replacement fields for an existing project after reading it.",
-      inputSchema: { id: z.uuid(), values: projectSchema },
+      inputSchema: { id: z.uuid(), values: projectMcpSchema },
       ...security("portfolio:propose"),
       annotations: {
         readOnlyHint: false,
@@ -1151,7 +1195,7 @@ export function createBippyMcpServer(actor: McpActor) {
       requireScope(actor, "portfolio:propose");
       const before = await describeContent("project", args.id);
       if (!before) throw new Error("Project not found.");
-      const values = projectSchema.parse(args.values);
+      const values = projectMcpSchema.parse(args.values);
       const pending = await proposal(
         actor,
         "prepare_project_update",

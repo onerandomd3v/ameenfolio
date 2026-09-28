@@ -27,7 +27,7 @@ import { MAX_CARD_WORDS, countWords } from "@/lib/word-count";
 const emptyProject: ProjectInput = {
   title: "",
   shortDescription: "",
-  url: "https://",
+  url: "",
   iconName: "custom",
   highlights: [],
 };
@@ -51,7 +51,7 @@ export function ProjectForm({
       ? {
           title: project.title,
           shortDescription: project.shortDescription,
-          url: project.url,
+          url: project.url ?? "",
           githubUrl: project.githubUrl ?? undefined,
           iconKey: project.iconKey ?? undefined,
           iconAlt: project.iconAlt ?? undefined,
@@ -87,7 +87,17 @@ export function ProjectForm({
   const hasContent = Boolean(title.trim() || description.trim());
 
   async function persist(values: ProjectInput, publish: boolean) {
-    const result = await saveProject(values, project?.id, publish);
+    const result = await saveProject(
+      {
+        ...values,
+        highlights: (values.highlights ?? []).map((highlight, index) => ({
+          ...highlight,
+          displayOrder: index,
+        })),
+      },
+      project?.id,
+      publish,
+    );
     if (!result.ok) {
       if (values.iconKey && values.iconKey !== project?.iconKey) {
         await cleanupUpload(values.iconKey);

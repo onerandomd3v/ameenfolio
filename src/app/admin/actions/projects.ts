@@ -27,6 +27,7 @@ export async function saveProject(
   // saving a draft leaves it alone, which is what `publish` carries.
   const values = {
     ...parsed.data,
+    url: parsed.data.url || null,
     githubUrl: parsed.data.githubUrl || null,
     iconKey: parsed.data.iconKey ?? null,
     iconAlt: parsed.data.iconAlt || null,
@@ -48,10 +49,10 @@ export async function saveProject(
         .returning({ id: projects.id });
       if (!row) return { ok: false, message: "Project not found." };
       if (parsed.data.highlights !== undefined) {
-        const rows = parsed.data.highlights.map((highlight, index) => ({
+        const rows = parsed.data.highlights.map((highlight) => ({
           projectId: id,
           body: highlight.body,
-          displayOrder: index,
+          displayOrder: highlight.displayOrder,
         }));
         const highlightWrites: BatchItem<"pg">[] = [
           getDb()
@@ -83,10 +84,10 @@ export async function saveProject(
         getDb()
           .insert(projectHighlights)
           .values(
-            parsed.data.highlights.map((highlight, index) => ({
+            parsed.data.highlights.map((highlight) => ({
               projectId,
               body: highlight.body,
-              displayOrder: index,
+              displayOrder: highlight.displayOrder,
             })),
           ),
       );

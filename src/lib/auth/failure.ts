@@ -45,6 +45,19 @@ export type AuthFailure = {
   detail?: string;
 };
 
+/** Neon Auth requires a fresh session for session-management endpoints. */
+export function isFreshSessionFailure(failure: AuthFailure | null | undefined) {
+  return Boolean(
+    failure &&
+    failure.status === 403 &&
+    failure.code === "feature_not_supported" &&
+    /session is not fresh/i.test(failure.detail ?? ""),
+  );
+}
+
+export const freshSessionRequiredMessage =
+  "Other active sessions require a recent sign-in. Sign out and sign in again to manage them.";
+
 // 408 and 429 are the server saying "not now" rather than "not you", and any
 // 5xx is its own fault, not the request's. Everything else — 401, 403, 404,
 // a malformed request — would answer identically on a retry.

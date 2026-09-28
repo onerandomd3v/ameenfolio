@@ -4,10 +4,7 @@ import { portfolioIdentity } from "@/config/portfolio";
 const publicProfileKeys = [
   "github",
   "x",
-  "instagram",
   "linkedin",
-  "youtube",
-  "tiktok",
   "discord",
   "telegram",
 ] as const satisfies ReadonlyArray<keyof ContactLinks>;

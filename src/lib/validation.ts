@@ -10,17 +10,22 @@ import { cardWordLimitMessage, withinCardWordLimit } from "@/lib/word-count";
 // validation, saves, and renders as a link to nowhere. Parsing it means the
 // scheme and a real host both have to be there.
 const optionalHttpsUrl = z
-  .string()
-  .trim()
-  .refine((value) => {
-    if (!value) return true;
-    try {
-      const url = new URL(value);
-      return url.protocol === "https:" && url.hostname.includes(".");
-    } catch {
-      return false;
-    }
-  }, "Enter a full HTTPS URL, for example https://example.com/you.")
+  .union([
+    z.literal(""),
+    z
+      .string()
+      .trim()
+      .refine((value) => {
+        if (!value) return true;
+        try {
+          const url = new URL(value);
+          return url.protocol === "https:" && url.hostname.includes(".");
+        } catch {
+          return false;
+        }
+      }, "Enter a full HTTPS URL, for example https://example.com/you."),
+  ])
+  .transform((value) => value || undefined)
   .optional();
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
@@ -66,7 +71,7 @@ export const projectSchema = z
       .min(10)
       .max(500)
       .refine(withinCardWordLimit, cardWordLimitMessage),
-    url: z.url().startsWith("https://"),
+    url: optionalHttpsUrl,
     githubUrl: z.union([githubUrlSchema, z.literal("")]).optional(),
     highlights: z.array(projectHighlightSchema).max(12).optional(),
     ...iconFields,
@@ -76,6 +81,15 @@ export const projectSchema = z
     path: ["iconAlt"],
     message: "Alt text is required when an icon is uploaded.",
   });
+
+// The MCP contract is intentionally stricter than the admin form contract:
+// tools must send the canonical ordered highlight list, and legacy fields are
+// rejected instead of being silently stripped by Zod object parsing.
+export const projectMcpSchema = projectSchema
+  .safeExtend({
+    highlights: z.array(projectHighlightSchema).max(12),
+  })
+  .strict();
 
 export const recognitionImageKeySchema = z
   .string()
@@ -255,9 +269,6 @@ export const nowLinkSchema = z
 export const contactLinksSchema = z.object({
   github: optionalHttpsUrl,
   x: optionalHttpsUrl,
-  instagram: optionalHttpsUrl,
-  tiktok: optionalHttpsUrl,
-  youtube: optionalHttpsUrl,
   linkedin: optionalHttpsUrl,
   discord: optionalHttpsUrl,
   telegram: optionalHttpsUrl,

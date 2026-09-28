@@ -31,6 +31,17 @@ describe("ProjectCard", () => {
     expect(html).not.toContain("View live");
     expect(html).not.toContain("Source");
   });
+
+  it("does not render a dead external link when no destination exists", () => {
+    const html = renderToStaticMarkup(
+      createElement(ProjectCard, {
+        project: { ...project, url: null, githubUrl: null },
+      }),
+    );
+
+    expect(html).not.toContain('target="_blank"');
+    expect(html).toContain('href="/projects"');
+  });
 });
 
 describe("ProjectCard icons", () => {

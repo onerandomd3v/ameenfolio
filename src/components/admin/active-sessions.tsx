@@ -152,7 +152,7 @@ export function ActiveSessions({ result }: { result: AdminSessionsResult }) {
       </SectionHeading>
 
       {result.error ? (
-        <Alert variant="destructive">
+        <Alert variant={result.reauthRequired ? "default" : "destructive"}>
           <AlertDescription>{result.error}</AlertDescription>
         </Alert>
       ) : null}

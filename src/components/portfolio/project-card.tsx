@@ -50,6 +50,8 @@ function ProjectIconMark({ project }: { project: Project }) {
 }
 
 export function ProjectCard({ project }: { project: Project }) {
+  const destination = project.url ?? project.githubUrl;
+
   return (
     <div
       data-bippy-reaction="curious"
@@ -71,17 +73,19 @@ export function ProjectCard({ project }: { project: Project }) {
               <h3 className="text-sm font-semibold">{project.title}</h3>
             </CardTitle>
           </div>
-          <CardAction className="text-muted-foreground transition-colors group-hover:text-signal group-focus-visible:text-signal">
-            <a
-              href={project.url}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={`Open ${project.title}`}
-              className="inline-flex rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              <ArrowUpRight className="size-4" aria-hidden="true" />
-            </a>
-          </CardAction>
+          {destination ? (
+            <CardAction className="text-muted-foreground transition-colors group-hover:text-signal group-focus-visible:text-signal">
+              <a
+                href={destination}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Open ${project.title}`}
+                className="inline-flex rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
+            </CardAction>
+          ) : null}
         </CardHeader>
         <CardContent className="flex flex-1 flex-col px-4 pt-2">
           <p className="line-clamp-2 text-[13px] leading-6 text-muted-foreground">

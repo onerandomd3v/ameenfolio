@@ -6,6 +6,7 @@ import {
   deleteExperience,
   reorderExperiences,
   saveExperience,
+  setExperiencePublished,
 } from "@/app/admin/actions/experiences";
 import {
   deleteRecognition,
@@ -74,9 +75,6 @@ const contactPatchSchema = z.object({
   email: z.email().optional(),
   github: z.url().startsWith("https://").nullable().optional(),
   x: z.url().startsWith("https://").nullable().optional(),
-  instagram: z.url().startsWith("https://").nullable().optional(),
-  tiktok: z.url().startsWith("https://").nullable().optional(),
-  youtube: z.url().startsWith("https://").nullable().optional(),
   linkedin: z.url().startsWith("https://").nullable().optional(),
   discord: z.url().startsWith("https://").nullable().optional(),
   telegram: z.url().startsWith("https://").nullable().optional(),
@@ -197,6 +195,13 @@ async function executeApprovalDecision(
         actionError(
           await setPinned(input.kind, { id: input.id, pinned: input.value }),
         );
+        break;
+      }
+      case "set_experience_published": {
+        const input = z
+          .object({ id: z.uuid(), published: z.boolean() })
+          .parse(approval.payload);
+        actionError(await setExperiencePublished(input.id, input.published));
         break;
       }
       case "delete_content": {
@@ -342,7 +347,7 @@ async function executeApprovalDecision(
             projectSchema.parse({
               title: project.title,
               shortDescription: project.shortDescription,
-              url: project.url,
+              url: project.url ?? undefined,
               githubUrl: project.githubUrl ?? undefined,
               iconName: values.iconName,
               iconKey: values.iconKey ?? undefined,
@@ -375,6 +380,10 @@ async function executeApprovalDecision(
       }
       case "update_project": {
         const input = z
+          // The Portfolio Copilot producer predates the MCP-only required
+          // highlights field. Its omission means "leave existing highlights
+          // unchanged" for an update, so keep this executor compatible while
+          // the MCP entrypoint validates the canonical contract up front.
           .object({ id: z.uuid(), values: projectSchema })
           .parse(approval.payload);
         actionError(await saveProject(input.values, input.id));

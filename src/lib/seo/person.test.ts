@@ -9,14 +9,14 @@ describe("public person identity", () => {
   it("keeps only valid HTTPS profile URLs in stable order", () => {
     expect(
       publicProfileUrls({
-        instagram: "https://instagram.com/onerandomd3v",
         github: "https://github.com/onerandomd3v",
         x: "javascript:alert(1)",
+        linkedin: "https://linkedin.com/in/onerandomd3v",
         whatsapp: "https://wa.me/2340000000000",
       }),
     ).toEqual([
       "https://github.com/onerandomd3v",
-      "https://instagram.com/onerandomd3v",
+      "https://linkedin.com/in/onerandomd3v",
     ]);
   });
 

@@ -41,16 +41,9 @@ function ProjectRowMark({ project }: { project: Project }) {
 }
 
 export function ProjectRow({ project }: { project: Project }) {
-  return (
-    <a
-      href={project.url}
-      target="_blank"
-      rel="noreferrer"
-      data-bippy-reaction="curious"
-      data-bippy-project
-      data-bippy-safe-zone
-      className="group flex items-center gap-3 rounded-md py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-    >
+  const destination = project.url ?? project.githubUrl;
+  const content = (
+    <>
       <ProjectRowMark project={project} />
       <h3 className="shrink-0 text-sm font-semibold text-foreground">
         {project.title}
@@ -61,10 +54,37 @@ export function ProjectRow({ project }: { project: Project }) {
       <p className="min-w-0 truncate text-[13px] text-muted-foreground">
         {project.shortDescription}
       </p>
-      <ArrowUpRight
-        className="ml-auto size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-signal group-focus-visible:text-signal"
-        aria-hidden="true"
-      />
+      {destination ? (
+        <ArrowUpRight
+          className="ml-auto size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-signal group-focus-visible:text-signal"
+          aria-hidden="true"
+        />
+      ) : null}
+    </>
+  );
+  const className =
+    "group flex items-center gap-3 rounded-md py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+  return destination ? (
+    <a
+      href={destination}
+      target="_blank"
+      rel="noreferrer"
+      data-bippy-reaction="curious"
+      data-bippy-project
+      data-bippy-safe-zone
+      className={className}
+    >
+      {content}
     </a>
+  ) : (
+    <div
+      data-bippy-reaction="curious"
+      data-bippy-project
+      data-bippy-safe-zone
+      className={className}
+    >
+      {content}
+    </div>
   );
 }

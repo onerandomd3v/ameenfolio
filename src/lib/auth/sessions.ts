@@ -4,6 +4,8 @@ import { getAuth, requireAdmin } from "@/lib/auth/server";
 import {
   describeApiError,
   describeThrownError,
+  freshSessionRequiredMessage,
+  isFreshSessionFailure,
   logAuthFailure,
   missingDataFailure,
   type AuthFailure,
@@ -28,6 +30,7 @@ export type AdminSessionView = {
 export type AdminSessionsResult = {
   sessions: AdminSessionView[];
   error: string | null;
+  reauthRequired?: boolean;
 };
 
 // Says which of the two it was, because the difference decides what the reader
@@ -118,18 +121,22 @@ export async function getAdminSessions(): Promise<AdminSessionsResult> {
     );
 
     if (sessionsFailure || !sessionsResult.data) {
+      const freshnessFailure = isFreshSessionFailure(sessionsFailure);
       logAuthFailure(
         "auth.sessions_list_failed",
         sessionsFailure ?? missingDataFailure,
         {
           failedCall: "listSessions",
           fallback: "current_session",
+          ...(freshnessFailure ? { reauthRequired: true } : {}),
         },
       );
       return {
         sessions: [currentSession],
-        error:
-          "Other active sessions could not be loaded right now. This device is still shown; try refreshing again later.",
+        error: freshnessFailure
+          ? freshSessionRequiredMessage
+          : "Other active sessions could not be loaded right now. This device is still shown; try refreshing again later.",
+        ...(freshnessFailure ? { reauthRequired: true } : {}),
       };
     }
 
