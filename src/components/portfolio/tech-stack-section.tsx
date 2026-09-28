@@ -57,7 +57,7 @@ export function TechStackSection({
     });
   }
 
-  const hasOverflow = overflowGroups.size > 0;
+  const hasOverflow = groups.some((group) => overflowGroups.has(group.value));
 
   return (
     <section className="relative mt-14" aria-labelledby="stack-heading">
