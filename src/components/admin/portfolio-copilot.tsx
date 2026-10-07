@@ -274,7 +274,6 @@ export function PortfolioCopilot({
     if (!activeId) return;
     const controller = new AbortController();
     let active = true;
-    setLoadingThread(true);
     fetch(`/api/admin/assistant/threads/${activeId}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -330,7 +329,9 @@ export function PortfolioCopilot({
   }
 
   function selectConversation(id: string) {
+    if (id === activeId) return;
     setActiveId(id);
+    setLoadingThread(true);
     const thread = threads.find((item) => item.id === id);
     if (thread) setSelectedModel(thread.model);
     router.replace(`${adminBase}/assistant?thread=${id}`, { scroll: false });

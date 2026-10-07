@@ -22,6 +22,28 @@ test("homepage is mobile-first and accessible", async ({ page }) => {
   ).toBe(true);
 });
 
+test("project archive links remain tappable after mobile scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const learnMore = page.getByRole("link", { name: "Learn more" }).first();
+  if (await learnMore.count()) {
+    await learnMore.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    await learnMore.click();
+    await expect(page).toHaveURL(/\/projects$/);
+    await page.goto("/");
+  }
+
+  const viewAll = page.getByRole("link", { name: /view all projects/i });
+  await viewAll.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await viewAll.click();
+  await expect(page).toHaveURL(/\/projects$/);
+});
+
 test("homepage keeps the fixed Now heading without published copy", async ({
   page,
 }) => {

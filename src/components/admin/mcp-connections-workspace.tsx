@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -164,12 +164,13 @@ function McpApprovalQueue({
   initialApprovals: McpPendingApproval[];
 }) {
   const router = useRouter();
-  const [approvals, setApprovals] = useState(initialApprovals);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setApprovals(initialApprovals);
-  }, [initialApprovals]);
+  const approvals = initialApprovals.filter(
+    (approval) => !dismissedIds.has(approval.id),
+  );
 
   async function decide(
     approval: McpPendingApproval,
@@ -190,7 +191,7 @@ function McpApprovalQueue({
       } | null;
       if (!response.ok)
         throw new Error(body?.error || "Could not resolve approval.");
-      setApprovals((items) => items.filter((item) => item.id !== approval.id));
+      setDismissedIds((ids) => new Set(ids).add(approval.id));
       toast.success(
         decision === "approve"
           ? "MCP proposal approved and applied."
