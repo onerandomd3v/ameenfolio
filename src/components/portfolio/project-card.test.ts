@@ -28,6 +28,7 @@ describe("ProjectCard", () => {
     );
     expect(html.match(/<a\b/g)).toHaveLength(2);
     expect(html).toContain('href="/projects"');
+    expect(html).toContain("data-bippy-safe-zone");
     expect(html).not.toContain("View live");
     expect(html).not.toContain("Source");
   });
