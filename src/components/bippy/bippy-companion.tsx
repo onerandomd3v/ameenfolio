@@ -332,25 +332,25 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
       const size = companionSize();
       const bounds = viewportBounds();
       place(
-        constrainToViewport({
+        resolveTarget({
           x: saved.x * Math.max(bounds.width - size, 0),
           y: saved.y * Math.max(bounds.height - size, 0),
         }),
       );
     },
-    [constrainToViewport, place],
+    [place, resolveTarget],
   );
 
   const placeAtDefault = useCallback(() => {
     const size = companionSize();
     const bounds = viewportBounds();
     place(
-      constrainToViewport({
+      resolveTarget({
         x: Math.max(bounds.width - size - EDGE_GAP, 0),
         y: Math.max(bounds.height - size - EDGE_GAP, 0),
       }),
     );
-  }, [constrainToViewport, place]);
+  }, [place, resolveTarget]);
 
   const returnToRestingPosition = useCallback(() => {
     const persisted = parseSavedPosition(
