@@ -329,6 +329,7 @@ export function PortfolioCopilot({
   }
 
   function selectConversation(id: string) {
+    if (id === activeId) return;
     setActiveId(id);
     setLoadingThread(true);
     const thread = threads.find((item) => item.id === id);
