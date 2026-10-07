@@ -518,6 +518,7 @@ function BippyCompanionSurface({ pathname }: { pathname: string }) {
       window.clearTimeout(scrollEnd);
       scrollEnd = window.setTimeout(() => {
         scrolling = false;
+        returnToRestingPosition();
       }, 250);
     };
 
