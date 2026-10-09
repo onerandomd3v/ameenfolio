@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { SectionHeading } from "@/components/portfolio/section-heading";
 import { TechStackGroups } from "@/components/portfolio/tech-stack-groups";
@@ -17,6 +17,20 @@ export function TechStackSection({
   const [expanded, setExpanded] = useState(false);
   const [overflowGroups, setOverflowGroups] = useState<Set<string>>(
     () => new Set(),
+  );
+  // Child effects report overflow through this callback. Keep its identity
+  // stable so those reports cannot trigger a render/effect feedback loop.
+  const setGroupOverflow = useCallback(
+    (groupKey: string, overflow: boolean) => {
+      setOverflowGroups((current) => {
+        if (current.has(groupKey) === overflow) return current;
+        const next = new Set(current);
+        if (overflow) next.add(groupKey);
+        else next.delete(groupKey);
+        return next;
+      });
+    },
+    [],
   );
   // Groups with nothing in them are dropped rather than rendered as a heading
   // over empty space, so emptying one from the admin removes it cleanly.
@@ -40,21 +54,6 @@ export function TechStackSection({
 
   function toggle() {
     setExpanded((current) => !current);
-  }
-
-  function setGroupOverflow(groupKey: string, overflow: boolean) {
-    setOverflowGroups((current) => {
-      const next = new Set(current);
-      if (overflow) next.add(groupKey);
-      else next.delete(groupKey);
-      if (
-        next.size === current.size &&
-        [...next].every((key) => current.has(key))
-      ) {
-        return current;
-      }
-      return next;
-    });
   }
 
   const hasOverflow = groups.some((group) => overflowGroups.has(group.value));
