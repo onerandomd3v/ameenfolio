@@ -41,7 +41,9 @@ test.describe("project archive touch navigation", () => {
         .getByRole("link", { name: new RegExp(name, "i") })
         .first();
       test.skip(
-        name === "Learn more" && (await link.count()) === 0,
+        name === "Learn more" &&
+          !process.env.DATABASE_URL &&
+          (await link.count()) === 0,
         "Learn more requires a published pinned project; verify on the populated preview.",
       );
       await link.scrollIntoViewIfNeeded();
