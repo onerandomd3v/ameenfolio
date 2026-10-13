@@ -19,7 +19,10 @@ describe("server environment", () => {
     "R2_PUBLIC_BASE_URL",
     "GITHUB_STATS_USERNAME",
     "GITHUB_STATS_TOKEN",
-    "WAKATIME_API_KEY",
+    "WAKATIME_CLIENT_ID",
+    "WAKATIME_CLIENT_SECRET",
+    "WAKATIME_OAUTH_REDIRECT_URI",
+    "WAKATIME_TOKEN_ENCRYPTION_KEY",
     "OPENAI_API_KEY",
     "OPENAI_ALLOWED_MODELS",
     "BIPPY_MCP_ENCRYPTION_KEY",
@@ -46,7 +49,10 @@ describe("server environment", () => {
         R2_PUBLIC_BASE_URL: "",
         GITHUB_STATS_USERNAME: "",
         GITHUB_STATS_TOKEN: "",
-        WAKATIME_API_KEY: "",
+        WAKATIME_CLIENT_ID: "",
+        WAKATIME_CLIENT_SECRET: "",
+        WAKATIME_OAUTH_REDIRECT_URI: "",
+        WAKATIME_TOKEN_ENCRYPTION_KEY: "",
         OPENAI_API_KEY: "",
         OPENAI_ALLOWED_MODELS: "",
         BIPPY_MCP_ENCRYPTION_KEY: "",
@@ -103,13 +109,20 @@ describe("server environment", () => {
       ...base,
       GITHUB_STATS_USERNAME: "onerandomdevv",
       GITHUB_STATS_TOKEN: "ghp_example",
-      WAKATIME_API_KEY: "waka_example",
+      WAKATIME_CLIENT_ID: "client_example",
+      WAKATIME_CLIENT_SECRET: "secret_example",
+      WAKATIME_OAUTH_REDIRECT_URI:
+        "https://admin.example.com/api/admin/wakatime/oauth/callback",
+      WAKATIME_TOKEN_ENCRYPTION_KEY: "a".repeat(44),
       OPENAI_API_KEY: "sk-example",
     });
 
     expect(parsed.GITHUB_STATS_USERNAME).toBe("onerandomdevv");
     expect(parsed.GITHUB_STATS_TOKEN).toBe("ghp_example");
-    expect(parsed.WAKATIME_API_KEY).toBe("waka_example");
+    expect(parsed.WAKATIME_CLIENT_ID).toBe("client_example");
+    expect(parsed.WAKATIME_CLIENT_SECRET).toBe("secret_example");
+    expect(parsed.WAKATIME_OAUTH_REDIRECT_URI).toContain("/oauth/callback");
+    expect(parsed.WAKATIME_TOKEN_ENCRYPTION_KEY).toHaveLength(44);
     expect(parsed.OPENAI_API_KEY).toBe("sk-example");
   });
 });

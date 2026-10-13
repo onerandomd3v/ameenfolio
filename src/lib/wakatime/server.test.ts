@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/wakatime/oauth", () => ({
+  getWakaTimeAccessToken: vi.fn(() =>
+    Promise.resolve(process.env.WAKATIME_TEST_ACCESS_TOKEN || null),
+  ),
+}));
 
 import {
   fetchWakaTimeHistory,
@@ -48,7 +53,7 @@ describe("WakaTime server client", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const history = await fetchWakaTimeHistory(
-      "waka_secret",
+      "oauth_access_token",
       "week",
       "2026-08-02",
       "2026-08-08",
@@ -58,7 +63,7 @@ describe("WakaTime server client", () => {
       expect.stringContaining("summaries?start=2026-08-02&end=2026-08-08"),
       expect.objectContaining({
         headers: expect.objectContaining({
-          authorization: `Basic ${Buffer.from("waka_secret").toString("base64")}`,
+          authorization: "Bearer oauth_access_token",
         }),
       }),
     );
@@ -88,7 +93,9 @@ describe("WakaTime server client", () => {
       .mockResolvedValueOnce(jsonResponse(emptyWeek));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchWakaTimeStatus("waka_secret", now)).resolves.toEqual({
+    await expect(
+      fetchWakaTimeStatus("oauth_access_token", now),
+    ).resolves.toEqual({
       isCoding: true,
       statsStale: false,
       todayDate: "2026-08-09",
@@ -102,7 +109,7 @@ describe("WakaTime server client", () => {
     for (const [, init] of fetchMock.mock.calls) {
       expect(init?.headers).toEqual(
         expect.objectContaining({
-          authorization: `Basic ${Buffer.from("waka_secret").toString("base64")}`,
+          authorization: "Bearer oauth_access_token",
         }),
       );
       expect(init?.cache).toBe("no-store");
@@ -127,7 +134,9 @@ describe("WakaTime server client", () => {
       .mockResolvedValueOnce(jsonResponse(emptyWeek));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchWakaTimeStatus("waka_secret", now)).resolves.toEqual({
+    await expect(
+      fetchWakaTimeStatus("oauth_access_token", now),
+    ).resolves.toEqual({
       isCoding: true,
       statsStale: true,
       todayDate: "2026-08-09",
@@ -156,7 +165,9 @@ describe("WakaTime server client", () => {
       .mockResolvedValueOnce(jsonResponse(emptyWeek));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchWakaTimeStatus("waka_secret", now)).resolves.toEqual({
+    await expect(
+      fetchWakaTimeStatus("oauth_access_token", now),
+    ).resolves.toEqual({
       isCoding: true,
       statsStale: true,
       todayDate: "2026-08-09",
@@ -186,7 +197,7 @@ describe("WakaTime server client", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      fetchWakaTimeStatus("waka_secret", now),
+      fetchWakaTimeStatus("oauth_access_token", now),
     ).resolves.toMatchObject({
       isCoding: true,
       statsStale: true,
@@ -225,7 +236,9 @@ describe("WakaTime server client", () => {
       .mockResolvedValueOnce(jsonResponse(emptyWeek));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchWakaTimeStatus("waka_secret", now)).resolves.toEqual({
+    await expect(
+      fetchWakaTimeStatus("oauth_access_token", now),
+    ).resolves.toEqual({
       isCoding: true,
       statsStale: false,
       todayDate: "2026-08-09",
@@ -240,7 +253,7 @@ describe("WakaTime server client", () => {
 describe("WakaTime public status cache", () => {
   it("coalesces concurrent refreshes and reuses the cached result", async () => {
     vi.resetModules();
-    vi.stubEnv("WAKATIME_API_KEY", "waka_secret");
+    vi.stubEnv("WAKATIME_TEST_ACCESS_TOKEN", "oauth_access_token");
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
@@ -274,7 +287,7 @@ describe("WakaTime public status cache", () => {
     vi.resetModules();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-09T22:59:30.000Z"));
-    vi.stubEnv("WAKATIME_API_KEY", "waka_secret");
+    vi.stubEnv("WAKATIME_TEST_ACCESS_TOKEN", "oauth_access_token");
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
@@ -328,7 +341,6 @@ describe("WakaTime public status cache", () => {
 
   it("returns an inactive status when WakaTime is not configured", async () => {
     vi.resetModules();
-    vi.stubEnv("WAKATIME_API_KEY", "");
     const { getPublicWakaTimeStatus } = await import("@/lib/wakatime/server");
 
     await expect(getPublicWakaTimeStatus()).resolves.toMatchObject({

@@ -1,7 +1,7 @@
 import "server-only";
 
-import { getServerEnv } from "@/lib/env";
 import { logServer } from "@/lib/logger";
+import { getWakaTimeAccessToken } from "@/lib/wakatime/oauth";
 import {
   getSundayWeekDates,
   getWakaTimeHeartbeatDate,
@@ -41,10 +41,10 @@ async function getJson(response: Response, endpoint: string) {
 }
 
 export async function fetchWakaTimeStatus(
-  apiKey: string,
+  accessToken: string,
   now = new Date(),
 ): Promise<PublicWakaTimeStatus> {
-  const authorization = `Basic ${Buffer.from(apiKey).toString("base64")}`;
+  const authorization = `Bearer ${accessToken}`;
   const request = (url: string) =>
     fetch(url, {
       headers: { authorization, accept: "application/json" },
@@ -86,12 +86,12 @@ export async function fetchWakaTimeStatus(
 }
 
 export async function fetchWakaTimeHistory(
-  apiKey: string,
+  accessToken: string,
   mode: WakaTimeHistoryMode,
   startDate: string,
   endDate: string,
 ) {
-  const authorization = `Basic ${Buffer.from(apiKey).toString("base64")}`;
+  const authorization = `Bearer ${accessToken}`;
   const response = await fetch(
     `${WAKATIME_API_URL}/summaries?start=${startDate}&end=${endDate}`,
     {
@@ -109,8 +109,8 @@ export async function getPublicWakaTimeHistory(
   startDate: string,
   endDate: string,
 ) {
-  const env = getServerEnv();
-  if (!env.WAKATIME_API_KEY) throw new Error("WakaTime is not configured");
+  const accessToken = await getWakaTimeAccessToken();
+  if (!accessToken) throw new Error("WakaTime is not connected");
 
   const cacheKey = `${mode}:${startDate}:${endDate}`;
   const cached = historyCache.get(cacheKey);
@@ -121,7 +121,7 @@ export async function getPublicWakaTimeHistory(
 
   try {
     const value = await fetchWakaTimeHistory(
-      env.WAKATIME_API_KEY,
+      accessToken,
       mode,
       startDate,
       endDate,
@@ -150,12 +150,11 @@ export async function getPublicWakaTimeHistory(
 }
 
 async function refreshWakaTimeStatus() {
-  const env = getServerEnv();
   const now = new Date();
-  if (!env.WAKATIME_API_KEY) return inactiveWakaTimeStatus(now);
-
   try {
-    const fresh = await fetchWakaTimeStatus(env.WAKATIME_API_KEY, now);
+    const accessToken = await getWakaTimeAccessToken();
+    if (!accessToken) return inactiveWakaTimeStatus(now);
+    const fresh = await fetchWakaTimeStatus(accessToken, now);
     if (!fresh.statsStale) {
       lastCompleteStatus = fresh;
       return fresh;

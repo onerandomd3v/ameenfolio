@@ -8,6 +8,7 @@ import {
   LockKeyhole,
   RefreshCw,
 } from "lucide-react";
+import Link from "next/link";
 import {
   ListRow,
   RowMeta,
@@ -17,9 +18,19 @@ import { BippyIcon } from "@/components/bippy/bippy-icon";
 import { OpenAIIcon } from "@/components/icons/brand-icons";
 import { Badge } from "@/components/ui/badge";
 import { getServerEnv } from "@/lib/env";
+import { isWakaTimeConnected } from "@/lib/wakatime/oauth";
 
-export function SystemStatus() {
+export async function SystemStatus() {
   const env = getServerEnv();
+  const wakaTimeConfigured = Boolean(
+    env.WAKATIME_CLIENT_ID &&
+    env.WAKATIME_CLIENT_SECRET &&
+    env.WAKATIME_OAUTH_REDIRECT_URI &&
+    env.WAKATIME_TOKEN_ENCRYPTION_KEY,
+  );
+  const wakaTimeConnected = wakaTimeConfigured
+    ? await isWakaTimeConnected()
+    : false;
   const statuses = [
     {
       label: "Database",
@@ -82,10 +93,18 @@ export function SystemStatus() {
     },
     {
       label: "WakaTime",
-      description: "Public activity and Bippy's private read-only summaries",
-      ready: Boolean(env.WAKATIME_API_KEY),
+      description: "OAuth access for public activity and Bippy's summaries",
+      ready: wakaTimeConnected,
       optional: true,
       icon: Activity,
+      actions: wakaTimeConfigured ? (
+        <Link
+          href="/api/admin/wakatime/oauth/start"
+          className="text-xs text-primary underline-offset-4 hover:underline"
+        >
+          {wakaTimeConnected ? "Reconnect" : "Connect WakaTime"}
+        </Link>
+      ) : null,
     },
   ];
 
@@ -109,6 +128,7 @@ export function SystemStatus() {
                     : "Needs setup"}
               </Badge>
             }
+            actions={"actions" in status ? status.actions : undefined}
           />
         );
       })}
