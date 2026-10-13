@@ -5,6 +5,11 @@ vi.mock("@/lib/wakatime/oauth", () => ({
   getWakaTimeAccessToken: vi.fn(() =>
     Promise.resolve(process.env.WAKATIME_TEST_ACCESS_TOKEN || null),
   ),
+  getWakaTimeConnectionVersion: vi.fn(() =>
+    Promise.resolve(
+      process.env.WAKATIME_TEST_ACCESS_TOKEN ? "test-connection" : null,
+    ),
+  ),
 }));
 
 import {

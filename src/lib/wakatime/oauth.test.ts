@@ -36,7 +36,7 @@ describe("WakaTime OAuth authorization", () => {
       "https://admin.example.com/api/admin/wakatime/oauth/callback",
     );
     expect(url.searchParams.get("scope")).toBe(
-      "read_heartbeats read_summaries",
+      "read_heartbeats read_summaries email",
     );
     expect(isValidWakaTimeOAuthState(state, state)).toBe(true);
     expect(isValidWakaTimeOAuthState(state, "different-cookie-value")).toBe(

@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import {
   ListRow,
   RowMeta,
@@ -22,6 +23,13 @@ import { isWakaTimeConnected } from "@/lib/wakatime/oauth";
 
 export async function SystemStatus() {
   const env = getServerEnv();
+  const requestHost = (await headers()).get("host")?.toLowerCase();
+  const canonicalWakaTimeOrigin = env.WAKATIME_OAUTH_REDIRECT_URI
+    ? new URL(env.WAKATIME_OAUTH_REDIRECT_URI).origin
+    : null;
+  const isCanonicalWakaTimeHost =
+    canonicalWakaTimeOrigin !== null &&
+    requestHost === new URL(canonicalWakaTimeOrigin).host.toLowerCase();
   const wakaTimeConfigured = Boolean(
     env.WAKATIME_CLIENT_ID &&
     env.WAKATIME_CLIENT_SECRET &&
@@ -98,12 +106,21 @@ export async function SystemStatus() {
       optional: true,
       icon: Activity,
       actions: wakaTimeConfigured ? (
-        <Link
-          href="/api/admin/wakatime/oauth/start"
-          className="text-xs text-primary underline-offset-4 hover:underline"
-        >
-          {wakaTimeConnected ? "Reconnect" : "Connect WakaTime"}
-        </Link>
+        isCanonicalWakaTimeHost ? (
+          <Link
+            href="/api/admin/wakatime/oauth/start"
+            className="text-xs text-primary underline-offset-4 hover:underline"
+          >
+            {wakaTimeConnected ? "Reconnect" : "Connect WakaTime"}
+          </Link>
+        ) : (
+          <Link
+            href={`${canonicalWakaTimeOrigin}/settings`}
+            className="text-xs text-primary underline-offset-4 hover:underline"
+          >
+            Open the admin domain to connect
+          </Link>
+        )
       ) : null,
     },
   ];

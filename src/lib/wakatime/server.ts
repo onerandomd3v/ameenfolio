@@ -1,7 +1,10 @@
 import "server-only";
 
 import { logServer } from "@/lib/logger";
-import { getWakaTimeAccessToken } from "@/lib/wakatime/oauth";
+import {
+  getWakaTimeAccessToken,
+  getWakaTimeConnectionVersion,
+} from "@/lib/wakatime/oauth";
 import {
   getSundayWeekDates,
   getWakaTimeHeartbeatDate,
@@ -24,14 +27,31 @@ const REQUEST_TIMEOUT_MS = 8_000;
 const STATUS_CACHE_MS = 15_000;
 const HISTORY_CACHE_MAX_ENTRIES = 64;
 
-type CachedStatus = { value: PublicWakaTimeStatus; expiresAt: number };
+type CachedStatus = {
+  connectionVersion: string;
+  value: PublicWakaTimeStatus;
+  expiresAt: number;
+};
 type CachedHistory = { value: PublicWakaTimeHistory; expiresAt: number };
 
 let cachedStatus: CachedStatus | null = null;
-let inFlight: Promise<PublicWakaTimeStatus> | null = null;
-let lastCompleteStatus: PublicWakaTimeStatus | null = null;
+let inFlight: {
+  connectionVersion: string;
+  promise: Promise<PublicWakaTimeStatus>;
+} | null = null;
+let activeConnectionVersion: string | null = null;
+let lastCompleteStatus: CachedStatus | null = null;
 let lastKnownTimeZone = "UTC";
 const historyCache = new Map<string, CachedHistory>();
+
+export function invalidateWakaTimeCaches() {
+  cachedStatus = null;
+  inFlight = null;
+  lastCompleteStatus = null;
+  activeConnectionVersion = null;
+  lastKnownTimeZone = "UTC";
+  historyCache.clear();
+}
 
 async function getJson(response: Response, endpoint: string) {
   if (!response.ok) {
@@ -43,6 +63,7 @@ async function getJson(response: Response, endpoint: string) {
 export async function fetchWakaTimeStatus(
   accessToken: string,
   now = new Date(),
+  connectionVersion?: string,
 ): Promise<PublicWakaTimeStatus> {
   const authorization = `Bearer ${accessToken}`;
   const request = (url: string) =>
@@ -54,7 +75,12 @@ export async function fetchWakaTimeStatus(
 
   const userResponse = await request(WAKATIME_API_URL);
   const userPayload = await getJson(userResponse, "user endpoint");
-  lastKnownTimeZone = getWakaTimeTimeZone(userPayload);
+  if (
+    connectionVersion === undefined ||
+    connectionVersion === activeConnectionVersion
+  ) {
+    lastKnownTimeZone = getWakaTimeTimeZone(userPayload);
+  }
   const heartbeatDate = getWakaTimeHeartbeatDate(userPayload, now);
   const weekStartDate = getSundayWeekDates(heartbeatDate)[0] ?? heartbeatDate;
   const heartbeatsUrl = `${WAKATIME_API_URL}/heartbeats?date=${heartbeatDate}`;
@@ -109,10 +135,12 @@ export async function getPublicWakaTimeHistory(
   startDate: string,
   endDate: string,
 ) {
-  const accessToken = await getWakaTimeAccessToken();
-  if (!accessToken) throw new Error("WakaTime is not connected");
+  const connectionVersion = await getWakaTimeConnectionVersion();
+  if (!connectionVersion) {
+    throw new Error("WakaTime is not connected");
+  }
 
-  const cacheKey = `${mode}:${startDate}:${endDate}`;
+  const cacheKey = `${connectionVersion}:${mode}:${startDate}:${endDate}`;
   const cached = historyCache.get(cacheKey);
   if (cached) {
     if (cached.expiresAt > Date.now()) return cached.value;
@@ -120,6 +148,8 @@ export async function getPublicWakaTimeHistory(
   }
 
   try {
+    const accessToken = await getWakaTimeAccessToken();
+    if (!accessToken) throw new Error("WakaTime is not connected");
     const value = await fetchWakaTimeHistory(
       accessToken,
       mode,
@@ -149,54 +179,99 @@ export async function getPublicWakaTimeHistory(
   }
 }
 
-async function refreshWakaTimeStatus() {
+async function refreshWakaTimeStatus(connectionVersion: string) {
   const now = new Date();
   try {
     const accessToken = await getWakaTimeAccessToken();
     if (!accessToken) return inactiveWakaTimeStatus(now);
-    const fresh = await fetchWakaTimeStatus(accessToken, now);
+    const fresh = await fetchWakaTimeStatus(
+      accessToken,
+      now,
+      connectionVersion,
+    );
+    if (connectionVersion !== activeConnectionVersion) {
+      return inactiveWakaTimeStatus(now);
+    }
     if (!fresh.statsStale) {
-      lastCompleteStatus = fresh;
+      lastCompleteStatus = {
+        connectionVersion,
+        value: fresh,
+        expiresAt: 0,
+      };
       return fresh;
     }
     return lastCompleteStatus
-      ? retainLastKnownWakaTimeStats(fresh, lastCompleteStatus)
+      ? retainLastKnownWakaTimeStats(fresh, lastCompleteStatus.value)
       : fresh;
   } catch (error) {
     logServer("warn", "wakatime.status_fetch_failed", {
       error: String(error),
     });
-    if (!lastCompleteStatus) return inactiveWakaTimeStatus(now);
+    if (
+      connectionVersion !== activeConnectionVersion ||
+      !lastCompleteStatus ||
+      lastCompleteStatus.connectionVersion !== connectionVersion
+    ) {
+      return inactiveWakaTimeStatus(now);
+    }
 
     const emptyCurrentStatus: PublicWakaTimeStatus = {
       ...inactiveWakaTimeStatus(now),
       isCoding: isRecentWakaTimeHeartbeat(
-        lastCompleteStatus.lastActiveAt,
+        lastCompleteStatus.value.lastActiveAt,
         now.getTime(),
       ),
       todayDate: getWakaTimeHeartbeatDate(
         { data: { timezone: lastKnownTimeZone } },
         now,
       ),
-      lastActiveAt: lastCompleteStatus.lastActiveAt,
+      lastActiveAt: lastCompleteStatus.value.lastActiveAt,
     };
 
-    return retainLastKnownWakaTimeStats(emptyCurrentStatus, lastCompleteStatus);
+    return retainLastKnownWakaTimeStats(
+      emptyCurrentStatus,
+      lastCompleteStatus.value,
+    );
   }
 }
 
 export async function getPublicWakaTimeStatus() {
+  const connectionVersion = await getWakaTimeConnectionVersion().catch(
+    () => null,
+  );
+  if (!connectionVersion) {
+    invalidateWakaTimeCaches();
+    return inactiveWakaTimeStatus(new Date());
+  }
+  if (activeConnectionVersion !== connectionVersion) {
+    invalidateWakaTimeCaches();
+    activeConnectionVersion = connectionVersion;
+  }
   const now = Date.now();
-  if (cachedStatus && cachedStatus.expiresAt > now) return cachedStatus.value;
+  if (
+    cachedStatus?.connectionVersion === connectionVersion &&
+    cachedStatus.expiresAt > now
+  ) {
+    return cachedStatus.value;
+  }
 
-  inFlight ??= refreshWakaTimeStatus()
-    .then((value) => {
-      cachedStatus = { value, expiresAt: Date.now() + STATUS_CACHE_MS };
-      return value;
-    })
-    .finally(() => {
-      inFlight = null;
-    });
+  if (inFlight?.connectionVersion !== connectionVersion) {
+    const promise = refreshWakaTimeStatus(connectionVersion)
+      .then((value) => {
+        if (activeConnectionVersion === connectionVersion) {
+          cachedStatus = {
+            connectionVersion,
+            value,
+            expiresAt: Date.now() + STATUS_CACHE_MS,
+          };
+        }
+        return value;
+      })
+      .finally(() => {
+        if (inFlight?.promise === promise) inFlight = null;
+      });
+    inFlight = { connectionVersion, promise };
+  }
 
-  return inFlight;
+  return inFlight.promise;
 }

@@ -8,11 +8,11 @@ import {
 } from "@/lib/wakatime/assistant-view";
 
 export async function getCurrentCodingActivityForBippy() {
-  const configured = await isWakaTimeConnected();
+  const configured = await isWakaTimeConnected().catch(() => false);
   return currentCodingActivityView(await getPublicWakaTimeStatus(), configured);
 }
 
 export async function getWeeklyCodingActivityForBippy() {
-  const configured = await isWakaTimeConnected();
+  const configured = await isWakaTimeConnected().catch(() => false);
   return weeklyCodingActivityView(await getPublicWakaTimeStatus(), configured);
 }

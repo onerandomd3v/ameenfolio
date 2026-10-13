@@ -3,6 +3,7 @@ import "server-only";
 import {
   createCipheriv,
   createDecipheriv,
+  createHash,
   createHmac,
   randomBytes,
   timingSafeEqual,
@@ -14,7 +15,11 @@ import { getServerEnv } from "@/lib/env";
 
 const AUTHORIZE_URL = "https://wakatime.com/oauth/authorize";
 const TOKEN_URL = "https://wakatime.com/oauth/token";
-const REQUIRED_SCOPES = ["read_heartbeats", "read_summaries"] as const;
+const REQUIRED_SCOPES = [
+  "read_heartbeats",
+  "read_summaries",
+  "email",
+] as const;
 const STATE_MAX_AGE_SECONDS = 10 * 60;
 
 type OAuthTokens = {
@@ -211,6 +216,8 @@ export async function completeWakaTimeOAuth(code: string) {
         updatedAt: new Date(),
       },
     });
+  const { invalidateWakaTimeCaches } = await import("@/lib/wakatime/server");
+  invalidateWakaTimeCaches();
 }
 
 async function readStoredTokens() {
@@ -221,6 +228,37 @@ async function readStoredTokens() {
     .limit(1);
   const encryptedTokens = rows[0]?.encryptedTokens;
   return encryptedTokens ? decryptTokens(encryptedTokens) : null;
+}
+
+export async function getWakaTimeConnectionVersion() {
+  const env = getServerEnv();
+  if (
+    !env.WAKATIME_CLIENT_ID ||
+    !env.WAKATIME_CLIENT_SECRET ||
+    !env.WAKATIME_OAUTH_REDIRECT_URI ||
+    !env.WAKATIME_TOKEN_ENCRYPTION_KEY
+  ) {
+    return null;
+  }
+  const rows = await getDb()
+    .select({
+      encryptedTokens: wakatimeOAuthCredentials.encryptedTokens,
+      updatedAt: wakatimeOAuthCredentials.updatedAt,
+    })
+    .from(wakatimeOAuthCredentials)
+    .where(eq(wakatimeOAuthCredentials.id, 1))
+    .limit(1);
+  const credential = rows[0];
+  if (!credential) return null;
+  try {
+    decryptTokens(credential.encryptedTokens);
+    const tokenDigest = createHash("sha256")
+      .update(credential.encryptedTokens)
+      .digest("base64url");
+    return `${credential.updatedAt.toISOString()}.${tokenDigest}`;
+  } catch {
+    return null;
+  }
 }
 
 async function saveTokens(tokens: OAuthTokens) {
@@ -258,14 +296,11 @@ export async function getWakaTimeAccessToken() {
 }
 
 export async function isWakaTimeConnected() {
-  const env = getServerEnv();
-  if (
-    !env.WAKATIME_CLIENT_ID ||
-    !env.WAKATIME_CLIENT_SECRET ||
-    !env.WAKATIME_OAUTH_REDIRECT_URI ||
-    !env.WAKATIME_TOKEN_ENCRYPTION_KEY
-  ) {
+  try {
+    return Boolean(await getWakaTimeConnectionVersion());
+  } catch {
+    // A rotated encryption key or damaged token should leave the admin able
+    // to reconnect instead of failing the Settings page render.
     return false;
   }
-  return Boolean(await readStoredTokens());
 }
