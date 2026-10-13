@@ -27,7 +27,7 @@ migrations `0036` and `0037` before refreshing the connector or calling
 Keep MCP disabled on previews unless each preview has stable matching OAuth
 origins.
 
-`WAKATIME_API_KEY` is optional. When configured, keep it server-only; the public application receives only a cached, privacy-safe coding status, today and weekly totals, daily average, top language, seven-day breakdown, and timestamps. Project and branch names are excluded. Without the key, Bippy retains his normal idle behavior and the projects-page activity strip renders offline with empty totals.
+WakaTime is optional. Configure `WAKATIME_CLIENT_ID`, `WAKATIME_CLIENT_SECRET`, `WAKATIME_OAUTH_REDIRECT_URI`, and a random 32-byte Base64 `WAKATIME_TOKEN_ENCRYPTION_KEY` as server-only secrets, apply the WakaTime OAuth credential migration, and connect the account from admin Settings. The public application receives only a cached, privacy-safe coding status, today and weekly totals, daily average, top language, seven-day breakdown, and timestamps. Project and branch names are excluded. Without a connected grant, Bippy retains his normal idle behavior and the projects-page activity strip renders offline with empty totals. The editor plugin keeps its separate API key for submitting coding activity.
 
 ## Admin host
 

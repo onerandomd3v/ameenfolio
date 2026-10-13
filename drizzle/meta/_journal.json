@@ -414,6 +414,13 @@
       "when": 1790564905043,
       "tag": "0058_petite_changeling",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1791886072442,
+      "tag": "0059_wakatime_oauth_credentials",
+      "breakpoints": true
     }
   ]
 }
