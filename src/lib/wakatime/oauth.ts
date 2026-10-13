@@ -15,11 +15,7 @@ import { getServerEnv } from "@/lib/env";
 
 const AUTHORIZE_URL = "https://wakatime.com/oauth/authorize";
 const TOKEN_URL = "https://wakatime.com/oauth/token";
-const REQUIRED_SCOPES = [
-  "read_heartbeats",
-  "read_summaries",
-  "email",
-] as const;
+const REQUIRED_SCOPES = ["read_heartbeats", "read_summaries", "email"] as const;
 const STATE_MAX_AGE_SECONDS = 10 * 60;
 
 type OAuthTokens = {
