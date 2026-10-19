@@ -30,7 +30,7 @@ The model is selected in the composer before the first message. It is then
 stored on the conversation and remains fixed for every later turn, even if the
 deployment default changes.
 
-When `WAKATIME_API_KEY` is configured, Bippy also receives two native,
+When a WakaTime OAuth connection is configured, Bippy also receives two native,
 read-only tools: current coding activity and the current-week summary. They use
 the same one-minute server cache and privacy-safe projection as the public
 activity UI. Bippy can see whether Aliameen is active, today's duration, the
