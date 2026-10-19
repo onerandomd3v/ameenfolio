@@ -331,7 +331,7 @@ export default async function HomePage() {
           href="/projects"
           data-bippy-reaction="curious"
           data-bippy-safe-zone
-          className="mt-4 inline-block text-[13px] text-muted-foreground underline decoration-border underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground focus-visible:text-foreground"
+          className="mt-4 inline-flex min-h-11 items-center text-[13px] text-muted-foreground underline decoration-border underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground focus-visible:text-foreground"
         >
           View all projects →
         </Link>

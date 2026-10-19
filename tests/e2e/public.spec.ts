@@ -22,26 +22,43 @@ test("homepage is mobile-first and accessible", async ({ page }) => {
   ).toBe(true);
 });
 
-test("project archive links remain tappable after mobile scrolling", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+test.describe("project archive touch navigation", () => {
+  test.use({
+    hasTouch: true,
+    isMobile: true,
+  });
 
-  const learnMore = page.getByRole("link", { name: "Learn more" }).first();
-  if (await learnMore.count()) {
-    await learnMore.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(300);
-    await learnMore.click();
-    await expect(page).toHaveURL(/\/projects$/);
-    await page.goto("/");
+  for (const name of ["Learn more", "View all projects"]) {
+    test(`${name} opens the archive after scrolling`, async ({ page }) => {
+      test.setTimeout(90_000);
+      const renderErrors: string[] = [];
+      page.on("console", (message) => {
+        if (message.type() === "error") renderErrors.push(message.text());
+      });
+      page.on("pageerror", (error) => renderErrors.push(error.message));
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      const link = page
+        .getByRole("link", { name: new RegExp(name, "i") })
+        .first();
+      test.skip(
+        name === "Learn more" &&
+          !process.env.DATABASE_URL &&
+          (await link.count()) === 0,
+        "Learn more requires a published pinned project; verify on the populated preview.",
+      );
+      await link.scrollIntoViewIfNeeded();
+      const bounds = await link.boundingBox();
+      expect(bounds?.height).toBeGreaterThanOrEqual(44);
+      await link.tap();
+      await expect(page).toHaveURL(/\/projects$/, { timeout: 15_000 });
+      await expect(
+        page.getByText("Record of products I have built.", { exact: true }),
+      ).toBeVisible({ timeout: 15_000 });
+      expect(
+        renderErrors.filter((error) => /maximum update depth/i.test(error)),
+      ).toEqual([]);
+    });
   }
-
-  const viewAll = page.getByRole("link", { name: /view all projects/i });
-  await viewAll.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(300);
-  await viewAll.click();
-  await expect(page).toHaveURL(/\/projects$/);
 });
 
 test("homepage keeps the fixed Now heading without published copy", async ({
@@ -108,7 +125,9 @@ test("live coding keeps Bippy glowing and reveals details only when tapped", asy
   await expect(page.getByTestId("bippy-message")).toBeVisible();
 });
 
-test("homepage renders the Tech Stack groups", async ({ page }) => {
+test("populated Skills stays stable when resized and expanded", async ({
+  page,
+}) => {
   // The list is database content now, and an empty group renders nothing at
   // all, so without a database there is no section to assert against. Gated
   // the same way the admin specs gate on their Neon Auth credentials.
@@ -116,28 +135,35 @@ test("homepage renders the Tech Stack groups", async ({ page }) => {
     !process.env.DATABASE_URL,
     "A database is required: the Tech Stack is content, not configuration.",
   );
-  await page.goto("/");
+  test.setTimeout(90_000);
+  const renderErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") renderErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => renderErrors.push(error.message));
+  await page.goto("/", { waitUntil: "domcontentloaded" });
 
   const section = page.locator("section").filter({
-    has: page.getByRole("heading", { name: "Tech Stack" }),
+    has: page.getByRole("heading", { name: "Skills", exact: true }),
   });
+  await expect(section).toBeVisible();
+  expect(await section.getByRole("listitem").count()).toBeGreaterThan(0);
 
-  // Each group is a row that opens its own list, so the assertion opens them.
-  // Still scoped per group: counting across both would pass with one holding
-  // everything and the other empty.
-  for (const name of ["Core Stack", "Tools & Infrastructure"]) {
-    const row = section.getByRole("button", { name, exact: true });
-    await expect(row).toBeVisible();
-
-    // Nothing is listed until it is opened — that is the point of the redesign.
-    await row.click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    expect(await dialog.getByRole("listitem").count()).toBeGreaterThan(0);
-
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
+  for (const width of [1440, 360]) {
+    await page.setViewportSize({ width, height: 844 });
+    const expand = section.getByRole("button", { name: "Expand skills" });
+    // Short categories may already fit at this width and need no toggle.
+    if (await expand.count()) {
+      await expand.click();
+      const collapse = section.getByRole("button", { name: "Collapse skills" });
+      await expect(collapse).toHaveAttribute("aria-expanded", "true");
+      await collapse.click();
+      await expect(expand).toHaveAttribute("aria-expanded", "false");
+    }
   }
+  expect(
+    renderErrors.filter((error) => /maximum update depth/i.test(error)),
+  ).toEqual([]);
 
   expect(
     await page.evaluate(

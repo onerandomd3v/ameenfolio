@@ -94,7 +94,7 @@ export function ProjectCard({ project }: { project: Project }) {
           <Link
             href="/projects"
             data-bippy-safe-zone
-            className="mt-auto self-end pt-4 text-[12px] font-medium text-muted-foreground underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            className="mt-auto inline-flex min-h-11 items-center self-end text-[12px] font-medium text-muted-foreground underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-ring"
           >
             Learn more
           </Link>
