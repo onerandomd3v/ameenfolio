@@ -48,7 +48,16 @@ export function MarkdownEditor({
         setUploadError(result.message);
         return;
       }
-      setPreview(result.html);
+      // Public media URLs intentionally hide images that only belong to a
+      // draft. The admin preview endpoint can serve those uploaded images
+      // while keeping the public media route's published-content check.
+      setPreview(
+        result.html.replace(
+          /(<img\b[^>]*\bsrc=")\/media\/([^"]+)(")/g,
+          (_match, before: string, key: string, after: string) =>
+            `${before}/api/admin/media-preview?key=${encodeURIComponent(key)}${after}`,
+        ),
+      );
     } finally {
       setRendering(false);
     }
