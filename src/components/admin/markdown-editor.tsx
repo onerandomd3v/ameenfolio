@@ -53,9 +53,21 @@ export function MarkdownEditor({
       // while keeping the public media route's published-content check.
       setPreview(
         result.html.replace(
-          /(<img\b[^>]*\bsrc=")\/media\/([^"]+)(")/g,
-          (_match, before: string, key: string, after: string) =>
-            `${before}/api/admin/media-preview?key=${encodeURIComponent(key)}${after}`,
+          /(<img\b[^>]*\bsrc=")\/media\/([^?#"]+)([?#][^"]*)?(")/g,
+          (
+            _match,
+            before: string,
+            key: string,
+            suffix: string | undefined,
+            after: string,
+          ) => {
+            const suffixText = suffix ?? "";
+            return `${before}/api/admin/media-preview?key=${encodeURIComponent(key)}${
+              suffixText.startsWith("?")
+                ? `&${suffixText.slice(1)}`
+                : suffixText
+            }${after}`;
+          },
         ),
       );
     } finally {
