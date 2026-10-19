@@ -7,7 +7,7 @@
 5. Run `npm run db:migrate`, then `npm run db:seed`.
 6. Create private `ameenfolio-media-dev` and `ameenfolio-media-prod` R2 buckets. Create narrowly scoped S3 API credentials per environment and apply `config/r2-cors.json` after replacing its placeholder origins.
 7. Run `npm run dev` and open `/admin/login`.
-8. Optional: install the WakaTime plugin in your editor and put the secret key from `https://wakatime.com/api-key` in `WAKATIME_API_KEY`. Bippy treats a heartbeat from the last five minutes as active coding.
+8. Optional: install the WakaTime plugin in your editor. To show WakaTime stats on the portfolio, create an OAuth app at `https://wakatime.com/apps`. Set the callback URL to `https://admin.<your-domain>/api/admin/wakatime/oauth/callback` (or your local admin origin), then set that exact URL in `WAKATIME_OAUTH_REDIRECT_URI` along with the app's client ID and secret. Generate a key with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"` for `WAKATIME_TOKEN_ENCRYPTION_KEY`. After applying migrations and configuring those values, sign in to the admin and choose **Connect WakaTime** under Settings → System status. The grant requests read-only heartbeat and summary access. Bippy treats a heartbeat from the last five minutes as active coding. The editor plugin continues using its own API key to upload activity.
 9. Optional: create a project-scoped OpenAI API key and store it as the server-only `OPENAI_API_KEY` to enable Portfolio Copilot. See [portfolio-copilot.md](portfolio-copilot.md).
 
 No Sanity data is migrated. Enter development content in the admin, then repeat against production before cutover.

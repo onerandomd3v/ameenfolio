@@ -336,6 +336,21 @@ export const siteSettings = pgTable(
   ],
 );
 
+// The portfolio owner’s WakaTime OAuth grant. Tokens are encrypted at rest;
+// only the owner can create this singleton connection through admin OAuth.
+export const wakatimeOAuthCredentials = pgTable(
+  "wakatime_oauth_credentials",
+  {
+    id: integer("id").primaryKey().default(1),
+    encryptedTokens: text("encrypted_tokens").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    ...timestamps,
+  },
+  (table) => [
+    check("wakatime_oauth_credentials_singleton", sql`${table.id} = 1`),
+  ],
+);
+
 // A single cached row rather than a live fetch on render. The public pages are
 // force-dynamic, so calling GitHub per request would put the homepage's speed
 // at the mercy of api.github.com and burn the hourly rate limit under any real
