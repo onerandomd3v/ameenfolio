@@ -11,6 +11,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { uploadFile } from "@/lib/storage/client";
+import { ArticleBody } from "@/components/writing/article-body";
+import { rewriteManagedImageUrlsForAdminPreview } from "@/lib/writing/admin-preview";
 
 type MarkdownEditorProps = {
   value: string;
@@ -51,25 +53,7 @@ export function MarkdownEditor({
       // Public media URLs intentionally hide images that only belong to a
       // draft. The admin preview endpoint can serve those uploaded images
       // while keeping the public media route's published-content check.
-      setPreview(
-        result.html.replace(
-          /(<img\b[^>]*\bsrc=")\/media\/([^?#"]+)([?#][^"]*)?(")/g,
-          (
-            _match,
-            before: string,
-            key: string,
-            suffix: string | undefined,
-            after: string,
-          ) => {
-            const suffixText = suffix ?? "";
-            return `${before}/api/admin/media-preview?key=${encodeURIComponent(key)}${
-              suffixText.startsWith("?")
-                ? `&${suffixText.slice(1)}`
-                : suffixText
-            }${after}`;
-          },
-        ),
-      );
+      setPreview(rewriteManagedImageUrlsForAdminPreview(result.html));
     } finally {
       setRendering(false);
     }
@@ -157,10 +141,7 @@ export function MarkdownEditor({
       {preview !== null ? (
         // The same class the published post uses, so this is the post's own
         // styling rather than an approximation of it.
-        <article
-          className="post-body min-h-[24rem]"
-          dangerouslySetInnerHTML={{ __html: preview }}
-        />
+        <ArticleBody html={preview} className="post-body min-h-[24rem]" />
       ) : (
         /* No box. What is being written becomes a page, so a bordered field
            around it framed the text as form input rather than prose — and the

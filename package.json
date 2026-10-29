@@ -76,16 +76,19 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
-    "@better-auth/passkey": "1.6.26",
+    "@better-auth/passkey": "1.7.14",
     "@esbuild-kit/core-utils": {
       "esbuild": "0.25.12"
     },
-    "better-auth": "1.6.26",
+    "better-auth": "1.7.14",
     "@vitest/mocker": "4.1.11",
+    "body-parser": "2.4.0",
     "hono": "4.13.7",
     "js-yaml": "4.3.2",
     "postcss": {
       "nanoid": "3.3.18"
-    }
+    },
+    "vite": "8.2.4",
+    "zod": "$zod"
   }
 }
